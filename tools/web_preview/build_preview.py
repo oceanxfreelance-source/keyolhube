@@ -11,6 +11,7 @@ Usage (from backend/, with db + s3 running and both datasets ingested):
 """
 
 import base64
+import io
 import gzip
 import json
 import os
@@ -81,6 +82,14 @@ def main(out_dir: str) -> None:
         contours = c.execute(
             "select depth_m, ST_AsGeoJSON(geom, 5) from bathymetry_contours where dataset_id=%s", (ds[0],)
         ).fetchall()
+        ocean_rows = c.execute(
+            "select variable, tiles_prefix, observed_at, product, product_level, data_kind, units from "
+            "ocean_observations where is_latest"
+        ).fetchall()
+        pred_rows = c.execute(
+            "select model, tiles_prefix, valid_for, grid_key, params, validation, model_version from "
+            "fishing_predictions where is_latest"
+        ).fetchall()
         feats = c.execute(
             "select kind, depth_m, relief_m, max_slope_deg, depth_range_m, source_tid, explanation, "
             "ST_X(geom), ST_Y(geom) from bathymetry_features where dataset_id=%s",
@@ -92,6 +101,8 @@ def main(out_dir: str) -> None:
         ("s2", s2[0], ".webp"),
         ("depth", ds[1] + "/depth", ".png"),
         ("slope", ds[1] + "/slope", ".png"),
+        *[(v, pre, ".png") for v, pre, *_ in ocean_rows],
+        *[(m, pre, ".png") for m, pre, *_ in pred_rows],
     ):
         idx, packs = build_packs(data_dir, layer, prefix, ext)
         manifest["index"][layer] = idx
@@ -127,6 +138,36 @@ def main(out_dir: str) -> None:
     for f in os.listdir(tmp):
         os.remove(os.path.join(tmp, f))
     os.rmdir(tmp)
+
+    # Tuna-habitat factor grids for tap explanations (quantised, gzip, base64).
+    tuna = next(r for r in pred_rows if r[0] == "tuna_habitat")
+    z = np.load(io.BytesIO(storage.get_bytes(tuna[3])))
+
+    def q(a, scale, nan_code):
+        out = np.where(np.isfinite(a), np.clip(np.round(a * scale), 0, nan_code - 1), nan_code)
+        return out.astype("<u2")
+
+    parts = {
+        "score": q(z["score"], 1, 65535), "sst": q(z["sst"], 100, 65535), "front": q(z["front"], 10000, 65535),
+        "chl": q(z["chl"], 1000, 65535), "dist_km": q(np.minimum(z["dist_km"], 6000), 10, 65535),
+    }
+    blob = b"".join(parts[k].tobytes() for k in parts)
+    with open(os.path.join(data_dir, "ocean-gz.txt"), "wb") as fh:
+        fh.write(base64.b64encode(gzip.compress(blob, compresslevel=9)))
+    th, tw = z["score"].shape
+    manifest["ocean_grid"] = {
+        "width": int(tw), "height": int(th), "west": float(z["west"]), "north": float(z["north"]),
+        "res": float(z["res"]), "order": list(parts), "scale": {"score": 1, "sst": 100, "front": 10000, "chl": 1000,
+                                                              "dist_km": 10}, "nan": 65535,
+    }
+    manifest["ocean"] = {
+        v: {"observed_at": t.isoformat(), "product": prod, "level": lvl, "kind": kind, "units": u}
+        for v, _p, t, prod, lvl, kind, u in ocean_rows
+    }
+    manifest["predictions"] = {
+        m: {"valid_for": vf.isoformat(), "params": params, "validation": val, "version": ver}
+        for m, _p, vf, _k, params, val, ver in pred_rows
+    }
 
     manifest["grid"] = {
         "width": int(elev.shape[1]), "height": int(elev.shape[0]),

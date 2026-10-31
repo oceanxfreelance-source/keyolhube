@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.routes import admin, auth, bathymetry, health, imagery, offline, providers
+from app.api.v1.routes import admin, auth, bathymetry, health, imagery, ocean, offline, providers
 from app.api.v1.routes import map as map_routes
 from app.core import storage
 from app.core.config import get_settings
@@ -46,6 +46,7 @@ def create_app() -> FastAPI:
     v1.include_router(map_routes.router)
     v1.include_router(bathymetry.router)
     v1.include_router(imagery.router)
+    v1.include_router(ocean.router)
     v1.include_router(offline.router)
     v1.include_router(providers.router)
     v1.include_router(admin.router)

@@ -158,3 +158,75 @@ async def bathymetry_overlays(db: AsyncSession, api_base: str) -> dict | None:
         )
         meta.append(layer_meta(layers["bathymetry-features"], ["bathymetry-features"]))
     return {"sources": sources, "layers": style_layers, "metadata": meta}
+
+
+OCEAN_LAYER_INFO = {
+    "tuna_habitat": (
+        "Tuna habitat (prediction)",
+        "fishing",
+        "Potential habitat from SST, fronts, chlorophyll and structure. Not fish locations.",
+    ),
+    "jigging_zones": (
+        "Jigging zones 30-300 m",
+        "fishing",
+        "Sloping seabed at jigging depths, derived from GEBCO. Not verified.",
+    ),
+    "sst": ("Sea surface temperature", "weather", "Satellite analysis (MUR L4), daily."),
+    "chl": ("Chlorophyll", "weather", "Satellite, gap-filled (DINEOF), daily."),
+    "sst_front": ("Temperature fronts", "weather", "SST gradient derived from MUR SST."),
+}
+
+
+async def ocean_overlays(db: AsyncSession, api_base: str) -> dict | None:
+    from app.services import ocean as osvc
+
+    obs, pred = await osvc.latest(db)
+    recs = {**obs, **pred}
+    if not recs:
+        return None
+    sources, layers, meta = {}, [], []
+    for slug in ("jigging_zones", "tuna_habitat", "sst", "chl", "sst_front"):
+        rec = recs.get(slug)
+        if rec is None:
+            continue
+        name, mode, desc = OCEAN_LAYER_INFO[slug]
+        is_pred = slug in pred
+        when = rec.valid_for.isoformat() if is_pred else rec.observed_at.isoformat()
+        sources[slug] = {
+            "type": "raster",
+            "tiles": [f"{api_base}/api/v1/ocean/tiles/{slug}/{{z}}/{{x}}/{{y}}.png"],
+            "tileSize": 256,
+            "minzoom": 4,
+            "maxzoom": 10 if slug == "jigging_zones" else 9,
+            "bounds": BOUNDS,
+        }
+        layers.append(
+            {
+                "id": slug,
+                "type": "raster",
+                "source": slug,
+                "layout": {"visibility": "none"},
+                "paint": {"raster-opacity": 0.85, "raster-fade-duration": 0},
+            }
+        )
+        kind = (
+            "prediction"
+            if slug == "tuna_habitat"
+            else ("observation" if slug in ("sst", "chl") else "derived_analysis")
+        )
+        meta.append(
+            {
+                "slug": slug,
+                "name": name,
+                "style_layer_ids": [slug],
+                "data_kind": kind,
+                "description": desc,
+                "attribution": None,
+                "data_updated_at": when,
+                "default_visible": False,
+                "default_opacity": 0.85,
+                "supports_opacity": True,
+                "mode": mode,
+            }
+        )
+    return {"sources": sources, "layers": layers, "metadata": meta}

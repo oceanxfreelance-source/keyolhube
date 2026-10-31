@@ -24,7 +24,7 @@ from app.services.basemap import (
     resolve_provider,
     verify_tile_token,
 )
-from app.services.map_overlays import bathymetry_overlays
+from app.services.map_overlays import bathymetry_overlays, ocean_overlays
 
 router = APIRouter(prefix="/map", tags=["map"])
 
@@ -49,6 +49,19 @@ def _base(request: Request) -> str:
     return (get_settings().public_base_url or str(request.base_url)).rstrip("/")
 
 
+def _merge(a: dict | None, b: dict | None) -> dict | None:
+    if not a or not b:
+        return a or b
+    # Ocean/fishing rasters go below the bathymetry contours and features so lines stay readable.
+    depth_layers = [lyr for lyr in a["layers"] if lyr["type"] == "raster"]
+    other = [lyr for lyr in a["layers"] if lyr["type"] != "raster"]
+    return {
+        "sources": {**a["sources"], **b["sources"]},
+        "layers": depth_layers + b["layers"] + other,
+        "metadata": a["metadata"] + b["metadata"],
+    }
+
+
 def _usage_key() -> str:
     return f"imagery:tiles:{datetime.now(UTC):%Y-%m}"
 
@@ -64,7 +77,7 @@ async def _monthly_usage() -> int | None:
 @router.get("/config", summary="Region, basemap and overlay layer metadata")
 async def map_config(request: Request, provider: Provider, db: DbSession) -> dict:
     settings = get_settings()
-    overlays = await bathymetry_overlays(db, _base(request))
+    overlays = _merge(await bathymetry_overlays(db, _base(request)), await ocean_overlays(db, _base(request)))
     mosaic = await imagery.active_mosaic(db)
     attribution = mosaic.attribution if provider.id == "sentinel2_jigmap" and mosaic else provider.attribution
     usage = None
@@ -113,7 +126,7 @@ async def map_style(
 ) -> dict:
     settings = get_settings()
     base = _base(request)
-    overlays = await bathymetry_overlays(db, base)
+    overlays = _merge(await bathymetry_overlays(db, base), await ocean_overlays(db, base))
     if provider.id == "sentinel2_jigmap":
         mosaic = await imagery.active_mosaic(db)
         extra = {"bounds": mosaic.bounds, "minzoom": mosaic.min_zoom} if mosaic else {}

@@ -10,6 +10,9 @@ or lagoon (GEBCO depth shallower than 100 m). Each chunk is rendered at ~9.5 m/p
 (z14), compositing the per-pixel median of cloud-free observations across scenes,
 using the Sentinel-2 Scene Classification (SCL) to drop cloud, cirrus and shadow.
 
+Rendering reads the 16-bit red/green/blue surface-reflectance bands and applies a reef-enhancing
+curve (see CURVE_*), so submerged reefs and coral heads are visible rather than near-black.
+
 Run: python -m app.ingestion.sentinel2   (after the GEBCO bathymetry has been ingested)
 """
 
@@ -71,7 +74,8 @@ class MosaicParams:
     months: int = 12
     max_scene_cloud_pct: float = 60.0
     max_scenes_per_chunk: int = 8
-    min_clear_obs: int = 3  # stop reading more scenes once every pixel has this many
+    min_clear_obs: int = 4  # stop reading more scenes once every pixel has this many
+    percentile: float = 35.0  # below the median: rejects sun glint and haze over water
     cloud_buffer_px: int = 4  # dilate cloud mask (~40 m) to drop cloud edges
     shallow_threshold_m: float = -100.0
     tile_quality: int = 82
@@ -87,33 +91,64 @@ def clear_mask(scl: np.ndarray, buffer_px: int) -> np.ndarray:
     return np.isin(scl, SCL_CLEAR) & ~cloudy
 
 
-def composite(
-    stack_rgb: list[np.ndarray], stack_clear: list[np.ndarray]
-) -> tuple[np.ndarray, np.ndarray, int]:
-    """Per-pixel median of clear observations.
+# Reef-enhancing display curve, tuned on real Maldives scenes: lifts the very low reflectance of
+# water so submerged reefs, coral heads and lagoon floors (~0-25 m) become visible, while
+# compressing bright sand and land. One curve for land and water, so there are no blend halos.
+CURVE_LO = (0.011, 0.010, 0.016)  # R, G, B reflectance mapped to 0 (just below deep-water level)
+CURVE_TOP = (0.30, 0.30, 0.30)  # reflectance mapped to 255
+CURVE_GAMMA = 0.45
 
-    Pixels never observed clear fall back to the median of all valid (non-nodata)
-    observations, which still removes clouds present in fewer than half the scenes.
-    Returns (rgb uint8 HxWx3, alpha uint8 HxW, n_fallback_pixels).
+
+def nan_percentile(a: np.ndarray, q: float, axis: int = 0) -> np.ndarray:
+    """Fast nearest-rank percentile ignoring NaN (np.nanpercentile is per-pixel slow).
+
+    Sorting puts NaN last; for each pixel pick rank round(q/100 * (n_valid - 1)).
     """
-    rgb = np.stack(stack_rgb).astype(np.float32)  # N,3,H,W
-    clear = np.stack(stack_clear)  # N,H,W
-    valid = rgb.sum(axis=1) > 0  # TCI nodata is 0,0,0
-    clear &= valid
-    masked = np.where(clear[:, None], rgb, np.nan)
-    with np.errstate(all="ignore"):
-        import warnings
+    srt = np.sort(a, axis=axis)
+    n = np.sum(~np.isnan(a), axis=axis, keepdims=True)
+    k = np.clip(np.round(q / 100.0 * (n - 1)), 0, None).astype(np.intp)
+    out = np.take_along_axis(srt, k, axis=axis).squeeze(axis)
+    return np.where(n.squeeze(axis) > 0, out, np.nan)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            med = np.nanmedian(masked, axis=0)  # 3,H,W
-            fallback = np.nanmedian(np.where(valid[:, None], rgb, np.nan), axis=0)
-    need = np.isnan(med[0])
-    med[:, need] = fallback[:, need]
-    has_data = ~np.isnan(med[0])
-    out = np.nan_to_num(med, nan=0).clip(0, 255).astype(np.uint8)
+
+def composite(
+    stack: list[np.ndarray], stack_clear: list[np.ndarray], percentile: float = 35.0
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Per-pixel low percentile of clear observations (surface reflectance, NaN = no data).
+
+    A percentile below the median rejects sun glint and thin haze over water better than the
+    median. Pixels never observed clear fall back to the same statistic over all valid
+    observations. Returns (reflectance 3xHxW float32 with NaN, has_data HxW bool, n_fallback).
+    """
+    import warnings
+
+    refl = np.stack(stack).astype(np.float32)  # N,3,H,W
+    valid = ~np.isnan(refl).any(axis=1)
+    clear = np.stack(stack_clear) & valid
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        comp = nan_percentile(np.where(clear[:, None], refl, np.nan), percentile)
+        fallback = nan_percentile(np.where(valid[:, None], refl, np.nan), percentile)
+    need = np.isnan(comp[0])
+    comp[:, need] = fallback[:, need]
+    has_data = ~np.isnan(comp[0])
+    return comp.astype(np.float32), has_data, int((need & has_data).sum())
+
+
+def render(comp: np.ndarray, has_data: np.ndarray, sharpen: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    """Reflectance composite -> display RGB (HxWx3 uint8) and alpha."""
+    lo = np.array(CURVE_LO, np.float32)[:, None, None]
+    top = np.array(CURVE_TOP, np.float32)[:, None, None]
+    out = 255 * np.clip((np.nan_to_num(comp, nan=0) - lo) / (top - lo), 0, 1) ** CURVE_GAMMA
+    rgb = np.moveaxis(out.clip(0, 255).astype(np.uint8), 0, -1)
+    if sharpen:
+        from PIL import ImageFilter
+
+        rgb = np.asarray(
+            Image.fromarray(rgb).filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
+        )
     alpha = np.where(has_data, 255, 0).astype(np.uint8)
-    return np.moveaxis(out, 0, -1), alpha, int((need & has_data).sum())
+    return rgb, alpha
 
 
 def encode_tile(rgb: np.ndarray, alpha: np.ndarray, quality: int) -> bytes | None:
@@ -164,7 +199,7 @@ class Scene:
     id: str
     datetime: str
     cloud: float
-    tci: str
+    bands: tuple[str, str, str]  # red, green, blue (16-bit surface reflectance COGs)
     scl: str
 
 
@@ -195,14 +230,14 @@ def search_scenes(
     out = []
     for f in resp.json().get("features", []):
         a = f["assets"]
-        if "visual" in a and "scl" in a:
+        if all(k in a for k in ("red", "green", "blue", "scl")):
             p = f["properties"]
             out.append(
                 Scene(
                     f["id"],
                     p["datetime"],
                     float(p.get("eo:cloud_cover", 100)),
-                    a["visual"]["href"],
+                    (a["red"]["href"], a["green"]["href"], a["blue"]["href"]),
                     a["scl"]["href"],
                 )
             )
@@ -210,33 +245,25 @@ def search_scenes(
 
 
 def read_scene(scene: Scene, bounds3857, size: int) -> tuple[np.ndarray, np.ndarray]:
+    """Surface reflectance (3xHxW float32, NaN = no data) and SCL, warped to the chunk grid."""
     transform = from_bounds(*bounds3857, size, size)
+
+    def warp(href, resampling):
+        with (
+            rasterio.open(href) as src,
+            WarpedVRT(
+                src, crs="EPSG:3857", transform=transform, width=size, height=size, resampling=resampling
+            ) as v,
+        ):
+            return v.read(1)
+
     with rasterio.Env(**GDAL_ENV):
-        with (
-            rasterio.open(scene.tci) as src,
-            WarpedVRT(
-                src,
-                crs="EPSG:3857",
-                transform=transform,
-                width=size,
-                height=size,
-                resampling=Resampling.bilinear,
-            ) as v,
-        ):
-            rgb = v.read()
-        with (
-            rasterio.open(scene.scl) as src,
-            WarpedVRT(
-                src,
-                crs="EPSG:3857",
-                transform=transform,
-                width=size,
-                height=size,
-                resampling=Resampling.nearest,
-            ) as v,
-        ):
-            scl = v.read(1)
-    return rgb, scl
+        bands = [warp(h, Resampling.bilinear).astype(np.float32) for h in scene.bands]
+        scl = warp(scene.scl, Resampling.nearest)
+    valid = bands[2] > 0  # 0 = nodata
+    # Collection-1 L2A: reflectance = DN * 0.0001 - 0.1
+    refl = np.stack([np.where(valid, b * 1e-4 - 0.1, np.nan) for b in bands])
+    return refl, scl
 
 
 SceneReader = Callable[[Scene, tuple, int], tuple[np.ndarray, np.ndarray]]
@@ -254,7 +281,7 @@ def build_chunk(x: int, y: int, search: SceneSearch, reader: SceneReader, p: Mos
         if len(rgbs) >= p.max_scenes_per_chunk:
             break
         rgb, scl = reader(s, b3857, CHUNK_PX)
-        valid = rgb.sum(axis=0) > 0
+        valid = ~np.isnan(rgb).any(axis=0)
         if not valid.any():
             continue  # chunk outside this scene's footprint
         clear = clear_mask(scl, p.cloud_buffer_px) & valid
@@ -268,7 +295,8 @@ def build_chunk(x: int, y: int, search: SceneSearch, reader: SceneReader, p: Mos
             break
     if not rgbs:
         return res, None, None
-    rgb, alpha, fb = composite(rgbs, clears)
+    comp, has_data, fb = composite(rgbs, clears)
+    rgb, alpha = render(comp, has_data)
     res.fallback_px = fb
     return res, rgb, alpha
 

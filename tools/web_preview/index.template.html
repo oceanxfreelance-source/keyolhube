@@ -10,49 +10,56 @@
 /*MAPLIBRE_CSS*/
 </style>
 <style>
-/* Layout: full-bleed chart with instrument panels floating at the edges, like a chartplotter. */
+/* Layout: full-bleed chart, instrument panels at the edges, mode tabs like a chartplotter. */
 :root {
-  --navy: #06121f;        /* deep ocean / page */
-  --panel: #0c2236;       /* instrument panels */
-  --line: #1b3a57;        /* panel borders */
-  --ink: #e6f1fa;         /* primary text */
-  --muted: #8fa9c0;       /* secondary text */
-  --accent: #4fc3f7;      /* water / active */
+  --navy: #06121f;
+  --panel: #0c2236;
+  --line: #1b3a57;
+  --ink: #e6f1fa;
+  --muted: #8fa9c0;
+  --accent: #4fc3f7;
   --good: #4caf50;
   --warn: #ffc107;
   --alert: #ff7043;
-  --measure: #ffeb3b;
+  --route: #ffeb3b;
   --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: dark;
 }
+body.night {
+  --panel: #120606; --line: #3a1414; --ink: #ff8a80; --muted: #b25b52; --accent: #ff5252; --route: #ff5252;
+  --good: #ff8a80; --warn: #ff8a80;
+}
+body.night #map canvas { filter: brightness(0.45) saturate(0.4) sepia(0.6) hue-rotate(-30deg); }
 html, body { height: 100%; margin: 0; background: var(--navy); color: var(--ink); font-family: var(--body); }
 #map { position: absolute; inset: 0; }
-.chip, .panel, .btn { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); }
-.top { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; align-items: flex-start; pointer-events: none; }
-.top > * { pointer-events: auto; }
-.brand { padding: 8px 12px; border-radius: 12px; display: grid; gap: 2px; max-width: 60%; }
-.brand b { font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 17px; }
-.brand span { color: var(--muted); font-size: 12px; }
+.chip, .panel, .btn, .tabs { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); }
+.top { position: absolute; top: 10px; left: 10px; right: 10px; display: grid; gap: 8px; pointer-events: none; }
+.top * { pointer-events: auto; }
+.toprow { display: flex; gap: 8px; align-items: center; }
+.brand { padding: 6px 10px; border-radius: 12px; display: grid; }
+.brand b { font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 16px; }
+.brand span { color: var(--muted); font-size: 11.5px; }
 .spacer { flex: 1; }
-.btn { width: 46px; height: 46px; border-radius: 50%; color: var(--ink); display: grid; place-items: center; cursor: pointer; font-size: 20px; }
+.btn { width: 44px; height: 44px; border-radius: 50%; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
-.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn.on { background: var(--accent); color: var(--navy); }
 .btn svg { width: 22px; height: 22px; fill: currentColor; }
-.bottom { position: absolute; left: 12px; right: 12px; bottom: 10px; display: grid; gap: 6px; }
-.panel { border-radius: 16px; padding: 12px 16px; max-width: 560px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs { display: inline-flex; border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; }
+.tab { border: 0; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; letter-spacing: .06em;
+       text-transform: uppercase; font-size: 14px; padding: 8px 14px; border-radius: 9px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--navy); }
+.bottom { position: absolute; left: 10px; right: 10px; bottom: 8px; display: grid; gap: 6px; }
+.panel { border-radius: 16px; padding: 12px 14px; max-width: 580px; max-height: 46vh; overflow: auto; }
 .label { font-family: var(--display); font-weight: 600; letter-spacing: .08em; font-size: 12px; color: var(--muted); text-transform: uppercase; }
 .big { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .coords { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
-.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.src { font-size: 14px; }
-.src.measured { color: var(--good); }
-.src.estimated { color: var(--warn); }
+.muted { color: var(--muted); font-size: 13px; }
+.src.measured { color: var(--good); } .src.estimated { color: var(--warn); }
 .warn { margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: color-mix(in srgb, var(--alert) 12%, transparent); border: 1px solid color-mix(in srgb, var(--alert) 50%, transparent); }
 .attrib { font-size: 10.5px; color: color-mix(in srgb, var(--ink) 80%, transparent); text-shadow: 0 0 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.muted { color: var(--muted); font-size: 13px; }
-.layers { position: absolute; top: 66px; right: 12px; width: min(330px, calc(100% - 24px)); border-radius: 16px; padding: 14px 16px; display: none; max-height: calc(100% - 200px); overflow: auto; }
+.layers { position: absolute; top: 112px; right: 10px; width: min(330px, calc(100% - 20px)); border-radius: 16px; padding: 14px 16px; display: none; max-height: calc(100% - 260px); overflow: auto; z-index: 2; }
 .layers.open { display: grid; gap: 10px; }
 .layer { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
 .layer small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
@@ -61,43 +68,48 @@ html, body { height: 100%; margin: 0; background: var(--navy); color: var(--ink)
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: left .15s; }
 .switch:checked { background: var(--accent); }
 .switch:checked::after { left: 21px; background: var(--navy); }
-.measurebar { display: none; border-color: var(--measure); }
-.measurebar.open { display: flex; }
-.measurebar button, .closebtn { background: transparent; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
-.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--navy); }
+.bar { height: 10px; border-radius: 5px; margin: 6px 0 2px; }
+.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.factors { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; margin-top: 8px; font-size: 13.5px; }
+.meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.score { font-family: var(--display); font-weight: 700; font-size: 34px; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; border: 1px solid var(--line); color: var(--muted); }
+.legs { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.legs td, .legs th { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+.legs th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.legs td:first-child, .legs th:first-child { text-align: left; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row button, .closebtn { background: transparent; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.row button.on { background: var(--accent); color: var(--navy); }
+.row input[type=number] { width: 64px; background: var(--navy); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; font: inherit; }
+.nc { display: grid; gap: 4px; margin-top: 8px; }
+.nc div { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
 .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
-@media (max-width: 420px) { .big { font-size: 26px; } .brand { max-width: 52%; } }
+@media (max-width: 420px) { .big { font-size: 26px; } .tab { padding: 8px 10px; font-size: 13px; } .brand span { display: none; } }
 </style>
 </head>
 <body>
 <div id="map" role="application" aria-label="Map of the Maldives"></div>
 
 <div class="top">
-  <div class="brand chip"><b>JigMap Maldives</b><span>Preview · not for navigation</span></div>
-  <div class="spacer"></div>
-  <button class="btn" id="btn-layers" title="Map layers" aria-label="Map layers"><svg viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5Zm-7.6 8.2L2 12.4l10 5 10-5-2.4-1.2L12 15 4.4 11.2Zm0 4L2 16.4l10 5 10-5-2.4-1.2L12 19l-7.6-3.8Z"/></svg></button>
-  <button class="btn" id="btn-measure" title="Measure distance" aria-label="Measure distance"><svg viewBox="0 0 24 24"><path d="M3 7v10h18V7H3Zm16 8H5V9h2v3h2V9h2v3h2V9h2v3h2V9h2v6Z"/></svg></button>
-  <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
+  <div class="toprow">
+    <div class="brand chip"><b>JigMap Maldives</b><span>Preview · not for navigation</span></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btn-layers" title="Map layers" aria-label="Map layers"><svg viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5Zm-7.6 8.2L2 12.4l10 5 10-5-2.4-1.2L12 15 4.4 11.2Zm0 4L2 16.4l10 5 10-5-2.4-1.2L12 19l-7.6-3.8Z"/></svg></button>
+    <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" role="tab" id="tab-fishing" aria-selected="true">Fishing</button>
+    <button class="tab" role="tab" id="tab-captain" aria-selected="false">Captain</button>
+    <button class="tab" role="tab" id="tab-weather" aria-selected="false">Weather</button>
+  </div>
 </div>
 
-<div class="layers panel" id="layers" aria-label="Map layers">
-  <div class="label">Map layers</div>
-  <div class="layer"><span>Satellite (Sentinel-2)</span><input type="checkbox" class="switch" id="l-s2" checked><small id="s2-meta"></small></div>
-  <div class="layer"><span>Depth shading</span><input type="checkbox" class="switch" id="l-depth" checked><small>GEBCO 2026 · historical compilation</small><input type="range" id="o-depth" min="0.1" max="1" step="0.05" value="0.55" aria-label="Depth shading opacity"></div>
-  <div class="layer"><span>Depth contours</span><input type="checkbox" class="switch" id="l-contours" checked><small>10 – 5000 m isobaths · derived from GEBCO</small></div>
-  <div class="layer"><span>Seafloor slope</span><input type="checkbox" class="switch" id="l-slope"><small>Derived analysis · ~460 m grid smooths real reef walls</small><input type="range" id="o-slope" min="0.1" max="1" step="0.05" value="0.8" aria-label="Slope opacity"></div>
-  <div class="layer"><span>Drop-off &amp; rise candidates</span><input type="checkbox" class="switch" id="l-features" checked><small>Computed candidates, not verified structures</small></div>
-  <div class="legend"><span><i class="dot" style="background:#ff9800"></i>Drop-off</span><span><i class="dot" style="background:#00e5ff"></i>Pinnacle</span><span><i class="dot" style="background:#7c4dff"></i>Knoll</span><span><i class="dot" style="background:#e040fb"></i>Seamount</span></div>
-</div>
+<div class="layers panel" id="layers" aria-label="Map layers"></div>
 
 <div class="bottom">
-  <div class="panel measurebar row" id="measurebar">
-    <span class="label" style="color:var(--measure)">Measure</span>
-    <span id="m-text" style="flex:1;font-weight:600">Tap the map to add points</span>
-    <button id="m-undo">Undo</button><button id="m-clear">Clear</button>
-  </div>
   <div class="panel" id="info" aria-live="polite"></div>
   <div class="attrib" id="attrib"></div>
 </div>
@@ -108,9 +120,11 @@ html, body { height: 100%; margin: 0; background: var(--navy); color: var(--ink)
 "use strict";
 const $ = (id) => document.getElementById(id);
 const NM = 1852;
-let manifest, grid = null, gridPromise = null;
+let manifest, map, grid = null, gridP = null, ogrid = null, ogridP = null;
+let mode = "fishing", lastTap = null;
 const packCache = {};
 
+// ---------- helpers ----------
 function dm(v, isLat) {
   const h = isLat ? (v >= 0 ? "N" : "S") : (v >= 0 ? "E" : "W");
   const a = Math.abs(v); let d = Math.floor(a); let m = (a - d) * 60;
@@ -119,8 +133,7 @@ function dm(v, isLat) {
 }
 function haversine(a, b) {
   const R = 6371008.8, r = (x) => x * Math.PI / 180;
-  const dLat = r(b[1] - a[1]), dLon = r(b[0] - a[0]);
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(r(a[1])) * Math.cos(r(b[1])) * Math.sin(dLon / 2) ** 2;
+  const s = Math.sin(r(b[1] - a[1]) / 2) ** 2 + Math.cos(r(a[1])) * Math.cos(r(b[1])) * Math.sin(r(b[0] - a[0]) / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 function bearing(a, b) {
@@ -129,47 +142,47 @@ function bearing(a, b) {
   const x = Math.cos(r(a[1])) * Math.sin(r(b[1])) - Math.sin(r(a[1])) * Math.cos(r(b[1])) * Math.cos(r(b[0] - a[0]));
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
-function fmtDist(m) {
-  const nm = m / NM, km = m / 1000;
-  return m < 1000 ? nm.toFixed(2) + " NM · " + m.toFixed(0) + " m" : nm.toFixed(nm < 10 ? 2 : 1) + " NM · " + km.toFixed(km < 10 ? 2 : 1) + " km";
-}
-function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
-
-// Tiles come from bundled pack files: pack://layer/z/x/y
-async function loadPack(layer, n) {
-  const key = layer + n;
-  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][n]).then((r) => r.text()).then(b64ToBuf);
-  return packCache[key];
-}
-maplibregl.addProtocol("pack", async (params) => {
-  const [layer, z, x, y] = params.url.replace("pack://", "").split("/");
-  const hit = manifest.index[layer][z + "/" + x + "/" + y];
-  if (!hit) throw new Error("no tile");
-  const buf = await loadPack(layer, hit[0]);
-  return { data: buf.slice(hit[1], hit[1] + hit[2]) };
-});
-
-// Binary data is stored base64-encoded in .txt files (the host serves text, not raw binary).
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const day = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "unknown";
 function b64ToBuf(b64) {
   const bin = atob(b64.trim()), out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out.buffer;
 }
+async function gunzipText(url) {
+  const gz = b64ToBuf(await (await fetch(url)).text());
+  return new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+}
+
+// ---------- tiles from bundled packs ----------
+maplibregl.addProtocol("pack", async (params) => {
+  const [layer, z, x, y] = params.url.replace("pack://", "").split("/");
+  const idx = manifest.index[layer], hit = idx && idx[z + "/" + x + "/" + y];
+  if (!hit) throw new Error("no tile");
+  const key = layer + hit[0];
+  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][hit[0]]).then((r) => r.text()).then(b64ToBuf);
+  const buf = await packCache[key];
+  return { data: buf.slice(hit[1], hit[1] + hit[2]) };
+});
+
+// ---------- data grids ----------
 async function loadGrid() {
   if (grid) return grid;
-  if (!gridPromise) gridPromise = (async () => {
-    const gz = b64ToBuf(await (await fetch("data/grid-gz.txt")).text());
-    const buf = await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  gridP = gridP || gunzipText("data/grid-gz.txt").then((buf) => {
     const g = manifest.grid, n = g.width * g.height;
     grid = { ...g, elev: new Int16Array(buf, 0, n), tid: new Uint8Array(buf, n * 2, n) };
     return grid;
-  })();
-  return gridPromise;
+  });
+  return gridP;
 }
-function category(code) {
-  if (code === 0) return "land";
-  if (code >= 10 && code <= 17) return "measured";
-  return "estimated";
+async function loadOcean() {
+  if (ogrid) return ogrid;
+  ogridP = ogridP || gunzipText("data/ocean-gz.txt").then((buf) => {
+    const g = manifest.ocean_grid, n = g.width * g.height, out = { ...g };
+    g.order.forEach((k, i) => { out[k] = new Uint16Array(buf, i * n * 2, n); });
+    ogrid = out; return out;
+  });
+  return ogridP;
 }
 function depthAt(g, lat, lon) {
   const c = Math.floor((lon - g.west) / g.res), r = Math.floor((g.north - lat) / g.res);
@@ -182,42 +195,198 @@ function depthAt(g, lat, lon) {
   return { elev: at(r, c), tid: code, label: g.tid_labels[code] || "TID " + code,
            slope: Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI, cellM: Math.round(dy) };
 }
-
-const DISCLAIMER = "Not for navigation. GEBCO is a regional ~460 m grid; real depths at reefs, thilas and channels can differ by tens of metres.";
-function showIntro() {
-  const m = manifest.meta;
-  $("info").innerHTML =
-    '<div class="label">Tap the sea</div>' +
-    '<div style="font-size:16px;margin:4px 0 6px">Tap anywhere for the grid depth, its data source and slope. Tap a coloured dot for a drop-off or rise candidate.</div>' +
-    '<div class="muted">Satellite: ' + m.imagery_scenes + " Sentinel-2 scenes, captured " + m.imagery_from + " – " + m.imagery_to +
-    " · Bathymetry: GEBCO 2026 (released " + m.gebco_released + "), " + m.contours.toLocaleString() + " contour lines, " + m.features + " candidates</div>";
+function oceanAt(o, lat, lon) {
+  const c = Math.floor((lon - o.west) / o.res), r = Math.floor((o.north - lat) / o.res);
+  if (r < 0 || c < 0 || r >= o.height || c >= o.width) return null;
+  const i = r * o.width + c, v = (k) => (o[k][i] === o.nan ? null : o[k][i] / o.scale[k]);
+  return { score: v("score"), sst: v("sst"), front: v("front"), chl: v("chl"), dist: v("dist_km") };
 }
-function showDepth(lat, lon, d) {
-  if (!d) { $("info").innerHTML = '<div class="label">Outside coverage</div><div>No bathymetry for this point.</div>'; return; }
-  const cat = category(d.tid);
-  const depth = d.elev < 0 ? "≈ " + (-d.elev) + " m deep" : "Land / above sea level in grid";
-  const src = cat === "measured" ? "measured" : "not directly measured; lower confidence";
-  $("info").innerHTML =
-    '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
-    '<div class="big">' + depth + "</div>" +
-    '<div class="muted">Grid cell average (~' + d.cellM + " m) · slope " + d.slope.toFixed(1) + "°</div>" +
-    '<div class="src ' + (cat === "measured" ? "measured" : "estimated") + '" style="margin-top:6px">Source here: ' + esc(d.label) + " (" + src + ")</div>" +
-    '<div class="muted">GEBCO 2026 · historical compilation · released ' + manifest.meta.gebco_released + "</div>" +
-    '<div class="warn">' + DISCLAIMER + "</div>";
+// Same factor functions as the server model (app/ingestion/fishing.py).
+const sstScore = (t) => t < 20 ? 0 : t < 24 ? (t - 20) / 4 : t <= 29.5 ? 1 : t <= 31.5 ? 1 - 0.4 * (t - 29.5) / 2 : 0.6;
+const chlScore = (c) => Math.exp(-0.5 * ((Math.log10(c) - Math.log10(0.2)) / 0.35) ** 2);
+const structScore = (d) => Math.exp(-d / 8);
+
+// ---------- panels ----------
+const DISCLAIMER = "Not for navigation. GEBCO depths are a regional ~460 m grid; reefs and channels can differ by tens of metres.";
+function intro() {
+  const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
+  if (mode === "fishing") {
+    $("info").innerHTML =
+      '<div class="label">Fishing · tap the sea</div>' +
+      '<div style="font-size:15.5px;margin:4px 0">Tuna habitat (warm colours = better conditions) and jigging zones (green: 30–300 m on sloping seabed). Tap for the score and why.</div>' +
+      '<div class="bar" style="background:linear-gradient(90deg,rgba(106,27,154,.4),#c2185b,#ff6f00,#ffd600,#ffff8d)"></div>' +
+      '<div class="ticks"><span>67</span><span>73</span><span>80</span><span>87</span><span>100</span></div>' +
+      '<div class="muted" style="margin-top:6px">Prediction for ' + day(pr.tuna_habitat.valid_for) + " from sea temperature (" + day(oc.sst.observed_at) +
+      "), chlorophyll (" + day(oc.chl.observed_at) + ") and GEBCO structure. Satellites cannot see tuna; not validated against catches yet.</div>";
+  } else if (mode === "captain") {
+    renderRoute();
+  } else {
+    $("info").innerHTML =
+      '<div class="label">Weather & ocean</div>' +
+      '<div class="nc">' +
+      "<div><span>Sea surface temperature</span><span class=\"pill\">Observed " + day(oc.sst.observed_at) + "</span></div>" +
+      "<div><span>Temperature fronts</span><span class=\"pill\">Derived " + day(oc.sst_front.observed_at) + "</span></div>" +
+      "<div><span>Chlorophyll</span><span class=\"pill\">Observed, gap-filled " + day(oc.chl.observed_at) + "</span></div>" +
+      "<div><span>Wind, waves, rain</span><span class=\"pill\">Not connected yet</span></div>" +
+      "<div><span>Ocean currents</span><span class=\"pill\">Not connected yet</span></div></div>" +
+      '<div class="bar" style="background:linear-gradient(90deg,#2c7bb6,#00a6ca,#00ccbc,#90eb9d,#ffff8c,#f9d057,#f29e2e,#d7191c)"></div>' +
+      '<div class="ticks"><span>27.5 °C</span><span>29.75</span><span>32 °C</span></div>' +
+      '<div class="muted" style="margin-top:6px">Tap for values at a point. Sources: ' + esc(oc.sst.product) + "; " + esc(oc.chl.product) + ".</div>";
+  }
+}
+function depthBlock(lat, lon, d) {
+  if (!d) return '<div class="muted">No bathymetry here.</div>';
+  const measured = d.tid >= 10 && d.tid <= 17;
+  return '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
+    '<div class="big">' + (d.elev < 0 ? "≈ " + (-d.elev) + " m deep" : "Land / reef flat in grid") + "</div>" +
+    '<div class="muted">Grid cell ~' + d.cellM + " m · slope " + d.slope.toFixed(1) + "°</div>" +
+    '<div class="src ' + (measured ? "measured" : "estimated") + '">Depth source: ' + esc(d.label) + (measured ? " (measured)" : " (not directly measured)") + "</div>";
+}
+function factorRow(name, valTxt, score, weight) {
+  const s = score == null ? null : Math.max(0, Math.min(1, score));
+  return "<span>" + name + "</span><div class=\"meter\" title=\"factor score\"><i style=\"width:" + (s == null ? 0 : s * 100) + "%\"></i></div><span>" +
+    valTxt + " · " + (s == null ? "not used" : s.toFixed(2)) + " × " + weight + "</span>";
+}
+async function showFishing(lat, lon) {
+  const [g, o] = await Promise.all([loadGrid(), loadOcean()]);
+  const d = depthAt(g, lat, lon), t = oceanAt(o, lat, lon);
+  const pr = manifest.predictions, w = pr.tuna_habitat.params.weights;
+  let html = depthBlock(lat, lon, d);
+  const depth = d && d.elev < 0 ? -d.elev : 0;
+  const jig = d && depth >= 30 && depth <= 300 && d.slope >= 6;
+  html += '<div style="margin-top:8px"><span class="pill">' + (jig ? "Jigging zone: yes" : "Jigging zone: no") + "</span> " +
+    '<span class="muted">30–300 m on sloping seabed (derived from GEBCO, not verified)</span></div>';
+  if (t && t.score != null) {
+    const frontNear = t.front;
+    html += '<div class="label" style="margin-top:10px">Tuna habitat (prediction)</div>' +
+      '<div class="row"><span class="score">' + Math.round(t.score) + '</span><span class="muted">/ 100 for ' + day(pr.tuna_habitat.valid_for) + "</span></div>" +
+      '<div class="factors">' +
+      factorRow("Sea temp", t.sst.toFixed(1) + " °C", sstScore(t.sst), w.sst) +
+      factorRow("Front here", (frontNear ?? 0).toFixed(3) + " °C/km", null === frontNear ? null : Math.min(1, frontNear / 0.06), w.front) +
+      factorRow("Chlorophyll", t.chl == null ? "–" : t.chl.toFixed(2) + " mg/m³", t.chl == null ? null : chlScore(t.chl), w.chl) +
+      factorRow("Structure", t.dist == null ? "–" : t.dist.toFixed(1) + " km", t.dist == null ? null : structScore(t.dist), w.structure) +
+      "</div>" +
+      '<div class="muted" style="margin-top:6px">Front factor in the score uses the strongest front within ~4 km (smoothed). Satellites cannot see tuna: this rates conditions, not fish locations. Not validated against catches yet.</div>';
+  } else {
+    html += '<div class="muted" style="margin-top:8px">No tuna-habitat score here (lagoon, reef or shallower than 50 m).</div>';
+  }
+  $("info").innerHTML = html + '<div class="warn">' + DISCLAIMER + "</div>";
+}
+async function showWeather(lat, lon) {
+  const o = await loadOcean(), t = oceanAt(o, lat, lon), oc = manifest.ocean;
+  if (!t) { $("info").innerHTML = '<div class="muted">Outside the ocean data area.</div>'; return; }
+  $("info").innerHTML = '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
+    '<div class="big">' + (t.sst == null ? "–" : t.sst.toFixed(2) + " °C") + '</div><div class="muted">Sea surface temperature · observed ' + day(oc.sst.observed_at) + " (satellite L4 analysis, ~1 km)</div>" +
+    '<div class="nc"><div><span>Temperature front</span><span>' + (t.front == null ? "–" : t.front.toFixed(3) + " °C/km") + "</span></div>" +
+    "<div><span>Chlorophyll</span><span>" + (t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³ · " + day(oc.chl.observed_at)) + "</span></div>" +
+    "<div><span>Wind / waves / rain</span><span class=\"pill\">Not connected yet</span></div>" +
+    "<div><span>Currents</span><span class=\"pill\">Not connected yet</span></div></div>";
 }
 const KIND = { drop_off: "Drop-off candidate", pinnacle: "Pinnacle candidate", knoll: "Knoll candidate", seamount: "Seamount candidate" };
 function showFeature(p) {
   const facts = ["~" + Math.round(p.depth_m) + " m deep"];
   if (p.relief_m != null) facts.push("rises ~" + Math.round(p.relief_m) + " m");
   if (p.max_slope_deg != null) facts.push("slope ~" + Math.round(p.max_slope_deg) + "°");
-  let range = p.depth_range_m; if (typeof range === "string") range = JSON.parse(range);
-  if (range) facts.push("depth " + Math.round(range[0]) + "–" + Math.round(range[1]) + " m nearby");
-  $("info").innerHTML =
-    '<div class="label">' + (KIND[p.kind] || "Terrain candidate") + "</div>" +
+  $("info").innerHTML = '<div class="label">' + (KIND[p.kind] || "Terrain candidate") + "</div>" +
     '<div style="font-size:17px;font-weight:600;margin:2px 0">' + facts.join(" · ") + "</div>" +
-    '<div class="muted">Computed from the GEBCO grid · derived analysis, not a verified structure</div>' +
-    '<div style="margin-top:6px;font-size:14px;max-width:65ch">' + esc(p.explanation) + "</div>" +
-    '<div class="warn">' + DISCLAIMER + "</div>";
+    '<div style="font-size:14px;max-width:65ch">' + esc(p.explanation) + '</div><div class="warn">' + DISCLAIMER + "</div>";
+}
+
+// ---------- Captain: route planning ----------
+const route = [];
+let speedKn = 15;
+function routeGeo() {
+  const f = route.map((p, i) => ({ type: "Feature", properties: { n: String(i + 1) }, geometry: { type: "Point", coordinates: p } }));
+  if (route.length > 1) f.unshift({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: route } });
+  return { type: "FeatureCollection", features: f };
+}
+function legShallow(a, b) {
+  if (!grid) return false;
+  const n = Math.max(2, Math.ceil(haversine(a, b) / 200));
+  for (let i = 0; i <= n; i++) {
+    const lon = a[0] + (b[0] - a[0]) * i / n, lat = a[1] + (b[1] - a[1]) * i / n;
+    const d = depthAt(grid, lat, lon);
+    if (d && d.elev > -5) return true;
+  }
+  return false;
+}
+function renderRoute() {
+  map && map.getSource("route") && map.getSource("route").setData(routeGeo());
+  let total = 0, rows = "", shallow = 0;
+  for (let i = 1; i < route.length; i++) {
+    const d = haversine(route[i - 1], route[i]); total += d;
+    const sh = legShallow(route[i - 1], route[i]); if (sh) shallow++;
+    rows += "<tr><td>" + i + "→" + (i + 1) + (sh ? " ⚠" : "") + "</td><td>" + (d / NM).toFixed(2) + "</td><td>" +
+      String(Math.round(bearing(route[i - 1], route[i]))).padStart(3, "0") + "°</td><td>" + Math.round(d / NM / speedKn * 60) + " min</td></tr>";
+  }
+  const mins = total / NM / speedKn * 60;
+  $("info").innerHTML =
+    '<div class="label">Captain · route planner</div>' +
+    (route.length < 2 ? '<div style="font-size:15.5px;margin:4px 0">Tap the map to add waypoints. Distances in nautical miles, bearings true.</div>'
+      : '<div class="big">' + (total / NM).toFixed(1) + " NM</div>" +
+        '<div class="muted">ETA ' + Math.floor(mins / 60) + " h " + String(Math.round(mins % 60)).padStart(2, "0") + " min at " + speedKn + " kn · " + route.length + " waypoints</div>" +
+        '<table class="legs"><tr><th>Leg</th><th>NM</th><th>Brg</th><th>Time</th></tr>' + rows + "</table>") +
+    (shallow ? '<div class="warn">⚠ ' + shallow + " leg(s) cross water shallower than 5 m or land in the GEBCO grid. Re-plan around reefs and check official charts.</div>" : "") +
+    '<div class="row" style="margin-top:8px"><label for="spd" class="muted">Speed</label><input type="number" id="spd" min="1" max="60" value="' + speedKn + '"><span class="muted">kn</span>' +
+    '<button id="r-undo">Undo</button><button id="r-clear">Clear</button><button id="r-night" class="' + (document.body.classList.contains("night") ? "on" : "") + '">Night mode</button></div>' +
+    '<div class="muted" style="margin-top:6px">Live GPS, speed over ground and route deviation alerts work in the app; this preview cannot use location.</div>';
+  $("spd").onchange = (e) => { speedKn = Math.max(1, Math.min(60, Number(e.target.value) || 15)); renderRoute(); };
+  $("r-undo").onclick = () => { route.pop(); renderRoute(); };
+  $("r-clear").onclick = () => { route.length = 0; renderRoute(); };
+  $("r-night").onclick = () => { document.body.classList.toggle("night"); renderRoute(); };
+}
+
+// ---------- layers & modes ----------
+const LAYERS = [
+  { id: "s2", name: "Satellite (Sentinel-2, reef-enhanced)", ids: ["s2"] },
+  { id: "depth", name: "Depth shading", ids: ["depth"], opacity: "raster-opacity" },
+  { id: "contours", name: "Depth contours", ids: ["contours", "contour-labels"] },
+  { id: "features", name: "Drop-offs & seamounts", ids: ["features"] },
+  { id: "jig", name: "Jigging zones 30–300 m", ids: ["jigging_zones"], opacity: "raster-opacity" },
+  { id: "tuna", name: "Tuna habitat (prediction)", ids: ["tuna_habitat"], opacity: "raster-opacity" },
+  { id: "sst", name: "Sea temperature", ids: ["sst"], opacity: "raster-opacity" },
+  { id: "front", name: "Temperature fronts", ids: ["sst_front"] },
+  { id: "chl", name: "Chlorophyll", ids: ["chl"], opacity: "raster-opacity" },
+  { id: "slope", name: "Seafloor slope", ids: ["slope"], opacity: "raster-opacity" },
+];
+const PRESETS = {
+  fishing: { s2: 1, depth: 1, contours: 1, features: 1, jig: 1, tuna: 1 },
+  captain: { s2: 1, depth: 1, contours: 1 },
+  weather: { s2: 1, sst: 1, front: 1 },
+};
+const state = {};
+function setLayer(id, on) {
+  state[id] = on;
+  const L = LAYERS.find((l) => l.id === id);
+  L.ids.forEach((lid) => map.getLayer(lid) && map.setLayoutProperty(lid, "visibility", on ? "visible" : "none"));
+  const box = $("ly-" + id); if (box) box.checked = on;
+}
+function buildLayersPanel() {
+  const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
+  const sub = {
+    s2: "Captured " + m.imagery_from + " – " + m.imagery_to + " · 10 m · underwater detail lifted",
+    depth: "GEBCO 2026 · historical compilation", contours: "10 – 5000 m · derived from GEBCO",
+    features: "Computed candidates, not verified", jig: "Derived from GEBCO depth and slope",
+    tuna: "Prediction for " + day(pr.tuna_habitat.valid_for) + " · not validated yet",
+    sst: "Observed " + day(oc.sst.observed_at) + " · MUR L4 ~1 km", front: "Derived from SST " + day(oc.sst_front.observed_at),
+    chl: "Observed (gap-filled) " + day(oc.chl.observed_at) + " · ~9 km", slope: "Derived from GEBCO",
+  };
+  $("layers").innerHTML = '<div class="label">Map layers</div>' + LAYERS.map((l) =>
+    '<div class="layer"><label for="ly-' + l.id + '">' + l.name + '</label><input type="checkbox" class="switch" id="ly-' + l.id + '"><small>' + sub[l.id] + "</small>" +
+    (l.opacity ? '<input type="range" min="0.1" max="1" step="0.05" value="' + (l.id === "depth" ? 0.45 : 0.8) + '" id="op-' + l.id + '" aria-label="' + l.name + ' opacity">' : "") + "</div>").join("");
+  LAYERS.forEach((l) => {
+    $("ly-" + l.id).onchange = (e) => setLayer(l.id, e.target.checked);
+    if (l.opacity) $("op-" + l.id).oninput = (e) => l.ids.forEach((lid) => map.setPaintProperty(lid, "raster-opacity", Number(e.target.value)));
+  });
+}
+function setMode(m) {
+  mode = m;
+  ["fishing", "captain", "weather"].forEach((k) => $("tab-" + k).setAttribute("aria-selected", String(k === m)));
+  LAYERS.forEach((l) => setLayer(l.id, !!PRESETS[m][l.id]));
+  if (map.getLayer("route-line")) ["route-line", "route-pts"].forEach((lid) => map.setLayoutProperty(lid, "visibility", m === "captain" ? "visible" : "none"));
+  if (m !== "captain") document.body.classList.remove("night");
+  if (m === "captain") loadGrid().then(renderRoute);
+  intro();
 }
 
 function labelImage(text) {
@@ -233,106 +402,68 @@ function labelImage(text) {
 
 (async () => {
   manifest = await (await fetch("data/manifest.json")).json();
-  const [contours, features] = await Promise.all([
-    fetch("data/contours.json").then((r) => r.json()),
-    fetch("data/features.json").then((r) => r.json()),
-  ]);
-  const m = manifest.meta;
-  $("s2-meta").textContent = "Own cloud-free mosaic · captured " + m.imagery_from + " – " + m.imagery_to + " · 10 m";
-  $("attrib").textContent = m.imagery_attribution + " · Bathymetry: GEBCO 2026 Grid · MapLibre";
-  showIntro();
-
-  const map = new maplibregl.Map({
-    container: "map",
-    center: [73.42, 4.2], zoom: 9.6, maxZoom: 17, attributionControl: false, dragRotate: true,
+  const [contours, features] = await Promise.all([fetch("data/contours.json").then((r) => r.json()), fetch("data/features.json").then((r) => r.json())]);
+  const m = manifest.meta, B = [70, -3.5, 77.5, 8.5];
+  $("attrib").textContent = m.imagery_attribution + " · GEBCO 2026 · SST: NASA JPL MUR · Chlorophyll: NOAA STAR/CoastWatch · MapLibre";
+  const raster = (id, maxzoom, extra = {}) => ({ type: "raster", tiles: ["pack://" + id + "/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom, bounds: B, ...extra });
+  const rl = (id, opacity) => ({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+  map = new maplibregl.Map({
+    container: "map", center: [73.45, 4.22], zoom: 9.4, maxZoom: 17, attributionControl: false,
     style: {
       version: 8,
       sources: {
-        s2: { type: "raster", tiles: ["pack://s2/{z}/{x}/{y}"], tileSize: 256, minzoom: 7, maxzoom: 14, bounds: m.imagery_bounds },
-        depth: { type: "raster", tiles: ["pack://depth/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom: 10, bounds: [70, -3.5, 77.5, 8.5] },
-        slope: { type: "raster", tiles: ["pack://slope/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom: 10, bounds: [70, -3.5, 77.5, 8.5] },
-        contours: { type: "geojson", data: contours },
-        features: { type: "geojson", data: features },
-        measure: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        s2: raster("s2", 14, { minzoom: 7, bounds: m.imagery_bounds }),
+        depth: raster("depth", 10), slope: raster("slope", 10),
+        jigging_zones: raster("jigging_zones", 10), tuna_habitat: raster("tuna_habitat", 9),
+        sst: raster("sst", 9), chl: raster("chl", 9), sst_front: raster("sst_front", 9),
+        contours: { type: "geojson", data: contours }, features: { type: "geojson", data: features },
+        route: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
         tap: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
       },
       layers: [
         { id: "bg", type: "background", paint: { "background-color": "#06121f" } },
         { id: "s2", type: "raster", source: "s2", paint: { "raster-fade-duration": 0 } },
-        { id: "depth", type: "raster", source: "depth", paint: { "raster-opacity": 0.55, "raster-fade-duration": 0 } },
-        { id: "slope", type: "raster", source: "slope", layout: { visibility: "none" }, paint: { "raster-opacity": 0.8 } },
+        rl("depth", 0.45), rl("slope", 0.8), rl("sst", 0.8), rl("chl", 0.8), rl("sst_front", 0.9),
+        rl("tuna_habitat", 0.8), rl("jigging_zones", 0.8),
         { id: "contours", type: "line", source: "contours",
           filter: ["any", [">=", ["zoom"], 9], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
           layout: { "line-join": "round" },
           paint: { "line-color": ["interpolate", ["linear"], ["get", "depth_m"], 10, "#b2ebf2", 50, "#4dd0e1", 200, "#26c6da", 1000, "#0097a7", 3000, "#006064"],
-                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.2, 14, 2] } },
+                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.1, 14, 1.8], "line-opacity": 0.85 } },
         { id: "contour-labels", type: "symbol", source: "contours", minzoom: 9,
-          layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]],
-                    "icon-rotation-alignment": "viewport" } },
+          layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]], "icon-rotation-alignment": "viewport" } },
         { id: "features", type: "circle", source: "features", minzoom: 6,
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],
                    "circle-color": ["match", ["get", "kind"], "drop_off", "#ff9800", "seamount", "#e040fb", "knoll", "#7c4dff", "#00e5ff"],
                    "circle-stroke-color": "#06121f", "circle-stroke-width": 1.5 } },
-        { id: "measure-line", type: "line", source: "measure", paint: { "line-color": "#ffeb3b", "line-width": 3, "line-dasharray": [2, 1] } },
-        { id: "measure-pts", type: "circle", source: "measure", filter: ["==", ["geometry-type"], "Point"],
-          paint: { "circle-radius": 5, "circle-color": "#ffeb3b", "circle-stroke-color": "#06121f", "circle-stroke-width": 2 } },
+        { id: "route-line", type: "line", source: "route", layout: { visibility: "none" }, paint: { "line-color": "#ffeb3b", "line-width": 3.5 } },
+        { id: "route-pts", type: "circle", source: "route", filter: ["==", ["geometry-type"], "Point"], layout: { visibility: "none" },
+          paint: { "circle-radius": 7, "circle-color": "#ffeb3b", "circle-stroke-color": "#06121f", "circle-stroke-width": 2 } },
         { id: "tap", type: "circle", source: "tap", paint: { "circle-radius": 9, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } },
       ],
     },
   });
   window.jigmap = map;
   for (const d of [10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]) {
-    const { image, ratio } = labelImage(d + " m");
-    map.addImage("d" + d, image, { pixelRatio: ratio });
+    const { image, ratio } = labelImage(d + " m"); map.addImage("d" + d, image, { pixelRatio: ratio });
   }
-  map.on("load", () => $("loading").remove());
-
-  // Layers panel
+  map.on("load", () => { $("loading").remove(); buildLayersPanel(); setMode("fishing"); });
+  ["fishing", "captain", "weather"].forEach((k) => { $("tab-" + k).onclick = () => setMode(k); });
   $("btn-layers").onclick = () => { $("layers").classList.toggle("open"); $("btn-layers").classList.toggle("on"); };
-  const vis = (ids, on) => ids.forEach((id) => map.setLayoutProperty(id, "visibility", on ? "visible" : "none"));
-  $("l-s2").onchange = (e) => vis(["s2"], e.target.checked);
-  $("l-depth").onchange = (e) => vis(["depth"], e.target.checked);
-  $("l-slope").onchange = (e) => vis(["slope"], e.target.checked);
-  $("l-contours").onchange = (e) => vis(["contours", "contour-labels"], e.target.checked);
-  $("l-features").onchange = (e) => vis(["features"], e.target.checked);
-  $("o-depth").oninput = (e) => map.setPaintProperty("depth", "raster-opacity", Number(e.target.value));
-  $("o-slope").oninput = (e) => map.setPaintProperty("slope", "raster-opacity", Number(e.target.value));
-
-  // Measure
-  let measuring = false; const pts = [];
-  const drawMeasure = () => {
-    const f = pts.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p } }));
-    if (pts.length > 1) f.unshift({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: pts } });
-    map.getSource("measure").setData({ type: "FeatureCollection", features: f });
-    let total = 0; for (let i = 1; i < pts.length; i++) total += haversine(pts[i - 1], pts[i]);
-    $("m-text").textContent = pts.length < 2 ? "Tap the map to add points"
-      : fmtDist(total) + " · last leg " + String(Math.round(bearing(pts[pts.length - 2], pts[pts.length - 1]))).padStart(3, "0") + "°T";
-  };
-  $("btn-measure").onclick = () => {
-    measuring = !measuring; $("btn-measure").classList.toggle("on", measuring);
-    $("measurebar").classList.toggle("open", measuring);
-    if (!measuring) { pts.length = 0; drawMeasure(); }
-  };
-  $("m-undo").onclick = () => { pts.pop(); drawMeasure(); };
-  $("m-clear").onclick = () => { pts.length = 0; drawMeasure(); };
-
-  // GPS: browsers block location inside embedded previews; say so instead of faking a position.
   $("btn-gps").onclick = () => {
     $("info").innerHTML = '<div class="label">GPS</div><div>Your position is not available inside this preview: the page runs in a sandbox that blocks location. The JigMap app uses your phone’s GPS (position, speed in knots, course, accuracy).</div>';
   };
-
-  // Taps
   map.on("click", async (e) => {
     const ll = [e.lngLat.lng, e.lngLat.lat];
-    if (measuring) { pts.push(ll); drawMeasure(); return; }
+    if (mode === "captain") { route.push(ll); await loadGrid(); renderRoute(); return; }
     map.getSource("tap").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: ll } }] });
-    if (map.getLayoutProperty("features", "visibility") !== "none") {
+    if (state.features) {
       const hit = map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ["features"] });
       if (hit.length) { showFeature(hit[0].properties); return; }
     }
-    $("info").innerHTML = '<div class="label">Reading depth…</div><div class="muted">Loading the GEBCO grid (once).</div>';
-    try { const g = await loadGrid(); showDepth(e.lngLat.lat, e.lngLat.lng, depthAt(g, e.lngLat.lat, e.lngLat.lng)); }
-    catch (err) { $("info").innerHTML = '<div class="label">Depth unavailable</div><div>The depth grid could not be loaded: ' + esc(err.message) + "</div>"; }
+    $("info").innerHTML = '<div class="label">Reading data…</div><div class="muted">Loading grids (once).</div>';
+    try { mode === "weather" ? await showWeather(e.lngLat.lat, e.lngLat.lng) : await showFishing(e.lngLat.lat, e.lngLat.lng); }
+    catch (err) { $("info").innerHTML = '<div class="label">Data unavailable</div><div>' + esc(err.message) + "</div>"; }
   });
 })().catch((err) => { $("loading").textContent = "The map could not load: " + err.message; });
 </script>

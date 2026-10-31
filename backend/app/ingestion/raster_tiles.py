@@ -141,3 +141,30 @@ def _png(rgba: np.ndarray) -> bytes:
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+class ScalarTileRenderer:
+    """Render one float grid (lat/lon, NaN = missing) to coloured Web-Mercator PNG tiles."""
+
+    def __init__(self, data: np.ndarray, west: float, north: float, res: float, colour):
+        self.data = data.astype(np.float32)[None]
+        self.transform = from_origin(west, north, res, res)
+        self.colour = colour
+
+    def render(self, z: int, x: int, y: int) -> bytes | None:
+        dst = np.full((1, TILE, TILE), np.nan, dtype=np.float32)
+        reproject(
+            source=self.data,
+            destination=dst,
+            src_transform=self.transform,
+            src_crs=EPSG4326,
+            src_nodata=np.nan,
+            dst_transform=from_bounds(*tile_bounds_3857(z, x, y), TILE, TILE),
+            dst_crs=EPSG3857,
+            dst_nodata=np.nan,
+            resampling=Resampling.bilinear,
+        )
+        rgba = self.colour(dst[0])
+        if rgba[..., 3].max() <= 0:
+            return None
+        return _png(rgba)

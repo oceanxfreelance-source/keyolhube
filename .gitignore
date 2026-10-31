@@ -19,3 +19,4 @@ mobile/ios/Flutter/Generated.xcconfig
 e2e/node_modules/
 e2e/artifacts/
 backend/.data/
+preview_build/

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JigMap Maldives preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/*MAPLIBRE_CSS*/
+</style>
+<style>
+/* Layout: full-bleed chart with instrument panels floating at the edges, like a chartplotter. */
+:root {
+  --navy: #06121f;        /* deep ocean / page */
+  --panel: #0c2236;       /* instrument panels */
+  --line: #1b3a57;        /* panel borders */
+  --ink: #e6f1fa;         /* primary text */
+  --muted: #8fa9c0;       /* secondary text */
+  --accent: #4fc3f7;      /* water / active */
+  --good: #4caf50;
+  --warn: #ffc107;
+  --alert: #ff7043;
+  --measure: #ffeb3b;
+  --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; background: var(--navy); color: var(--ink); font-family: var(--body); }
+#map { position: absolute; inset: 0; }
+.chip, .panel, .btn { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); }
+.top { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; align-items: flex-start; pointer-events: none; }
+.top > * { pointer-events: auto; }
+.brand { padding: 8px 12px; border-radius: 12px; display: grid; gap: 2px; max-width: 60%; }
+.brand b { font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 17px; }
+.brand span { color: var(--muted); font-size: 12px; }
+.spacer { flex: 1; }
+.btn { width: 46px; height: 46px; border-radius: 50%; color: var(--ink); display: grid; place-items: center; cursor: pointer; font-size: 20px; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.on { background: var(--accent); color: var(--navy); }
+.btn svg { width: 22px; height: 22px; fill: currentColor; }
+.bottom { position: absolute; left: 12px; right: 12px; bottom: 10px; display: grid; gap: 6px; }
+.panel { border-radius: 16px; padding: 12px 16px; max-width: 560px; }
+.label { font-family: var(--display); font-weight: 600; letter-spacing: .08em; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.big { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.coords { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.src { font-size: 14px; }
+.src.measured { color: var(--good); }
+.src.estimated { color: var(--warn); }
+.warn { margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: color-mix(in srgb, var(--alert) 12%, transparent); border: 1px solid color-mix(in srgb, var(--alert) 50%, transparent); }
+.attrib { font-size: 10.5px; color: color-mix(in srgb, var(--ink) 80%, transparent); text-shadow: 0 0 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.muted { color: var(--muted); font-size: 13px; }
+.layers { position: absolute; top: 66px; right: 12px; width: min(330px, calc(100% - 24px)); border-radius: 16px; padding: 14px 16px; display: none; max-height: calc(100% - 200px); overflow: auto; }
+.layers.open { display: grid; gap: 10px; }
+.layer { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+.layer small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.layer input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.switch { appearance: none; width: 40px; height: 22px; border-radius: 11px; background: var(--line); position: relative; cursor: pointer; margin: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: left .15s; }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { left: 21px; background: var(--navy); }
+.measurebar { display: none; border-color: var(--measure); }
+.measurebar.open { display: flex; }
+.measurebar button, .closebtn { background: transparent; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--navy); }
+.loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+@media (max-width: 420px) { .big { font-size: 26px; } .brand { max-width: 52%; } }
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="Map of the Maldives"></div>
+
+<div class="top">
+  <div class="brand chip"><b>JigMap Maldives</b><span>Preview · not for navigation</span></div>
+  <div class="spacer"></div>
+  <button class="btn" id="btn-layers" title="Map layers" aria-label="Map layers"><svg viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5Zm-7.6 8.2L2 12.4l10 5 10-5-2.4-1.2L12 15 4.4 11.2Zm0 4L2 16.4l10 5 10-5-2.4-1.2L12 19l-7.6-3.8Z"/></svg></button>
+  <button class="btn" id="btn-measure" title="Measure distance" aria-label="Measure distance"><svg viewBox="0 0 24 24"><path d="M3 7v10h18V7H3Zm16 8H5V9h2v3h2V9h2v3h2V9h2v3h2V9h2v6Z"/></svg></button>
+  <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
+</div>
+
+<div class="layers panel" id="layers" aria-label="Map layers">
+  <div class="label">Map layers</div>
+  <div class="layer"><span>Satellite (Sentinel-2)</span><input type="checkbox" class="switch" id="l-s2" checked><small id="s2-meta"></small></div>
+  <div class="layer"><span>Depth shading</span><input type="checkbox" class="switch" id="l-depth" checked><small>GEBCO 2026 · historical compilation</small><input type="range" id="o-depth" min="0.1" max="1" step="0.05" value="0.55" aria-label="Depth shading opacity"></div>
+  <div class="layer"><span>Depth contours</span><input type="checkbox" class="switch" id="l-contours" checked><small>10 – 5000 m isobaths · derived from GEBCO</small></div>
+  <div class="layer"><span>Seafloor slope</span><input type="checkbox" class="switch" id="l-slope"><small>Derived analysis · ~460 m grid smooths real reef walls</small><input type="range" id="o-slope" min="0.1" max="1" step="0.05" value="0.8" aria-label="Slope opacity"></div>
+  <div class="layer"><span>Drop-off &amp; rise candidates</span><input type="checkbox" class="switch" id="l-features" checked><small>Computed candidates, not verified structures</small></div>
+  <div class="legend"><span><i class="dot" style="background:#ff9800"></i>Drop-off</span><span><i class="dot" style="background:#00e5ff"></i>Pinnacle</span><span><i class="dot" style="background:#7c4dff"></i>Knoll</span><span><i class="dot" style="background:#e040fb"></i>Seamount</span></div>
+</div>
+
+<div class="bottom">
+  <div class="panel measurebar row" id="measurebar">
+    <span class="label" style="color:var(--measure)">Measure</span>
+    <span id="m-text" style="flex:1;font-weight:600">Tap the map to add points</span>
+    <button id="m-undo">Undo</button><button id="m-clear">Clear</button>
+  </div>
+  <div class="panel" id="info" aria-live="polite"></div>
+  <div class="attrib" id="attrib"></div>
+</div>
+<div class="loading muted" id="loading">Loading map…</div>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NM = 1852;
+let manifest, grid = null, gridPromise = null;
+const packCache = {};
+
+function dm(v, isLat) {
+  const h = isLat ? (v >= 0 ? "N" : "S") : (v >= 0 ? "E" : "W");
+  const a = Math.abs(v); let d = Math.floor(a); let m = (a - d) * 60;
+  if (Number(m.toFixed(3)) >= 60) { d += 1; m = 0; }
+  return String(d).padStart(isLat ? 2 : 3, "0") + "°" + m.toFixed(3).padStart(6, "0") + "'" + h;
+}
+function haversine(a, b) {
+  const R = 6371008.8, r = (x) => x * Math.PI / 180;
+  const dLat = r(b[1] - a[1]), dLon = r(b[0] - a[0]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(r(a[1])) * Math.cos(r(b[1])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+function bearing(a, b) {
+  const r = (x) => x * Math.PI / 180;
+  const y = Math.sin(r(b[0] - a[0])) * Math.cos(r(b[1]));
+  const x = Math.cos(r(a[1])) * Math.sin(r(b[1])) - Math.sin(r(a[1])) * Math.cos(r(b[1])) * Math.cos(r(b[0] - a[0]));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function fmtDist(m) {
+  const nm = m / NM, km = m / 1000;
+  return m < 1000 ? nm.toFixed(2) + " NM · " + m.toFixed(0) + " m" : nm.toFixed(nm < 10 ? 2 : 1) + " NM · " + km.toFixed(km < 10 ? 2 : 1) + " km";
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+
+// Tiles come from bundled pack files: pack://layer/z/x/y
+async function loadPack(layer, n) {
+  const key = layer + n;
+  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][n]).then((r) => r.text()).then(b64ToBuf);
+  return packCache[key];
+}
+maplibregl.addProtocol("pack", async (params) => {
+  const [layer, z, x, y] = params.url.replace("pack://", "").split("/");
+  const hit = manifest.index[layer][z + "/" + x + "/" + y];
+  if (!hit) throw new Error("no tile");
+  const buf = await loadPack(layer, hit[0]);
+  return { data: buf.slice(hit[1], hit[1] + hit[2]) };
+});
+
+// Binary data is stored base64-encoded in .txt files (the host serves text, not raw binary).
+function b64ToBuf(b64) {
+  const bin = atob(b64.trim()), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+async function loadGrid() {
+  if (grid) return grid;
+  if (!gridPromise) gridPromise = (async () => {
+    const gz = b64ToBuf(await (await fetch("data/grid-gz.txt")).text());
+    const buf = await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    const g = manifest.grid, n = g.width * g.height;
+    grid = { ...g, elev: new Int16Array(buf, 0, n), tid: new Uint8Array(buf, n * 2, n) };
+    return grid;
+  })();
+  return gridPromise;
+}
+function category(code) {
+  if (code === 0) return "land";
+  if (code >= 10 && code <= 17) return "measured";
+  return "estimated";
+}
+function depthAt(g, lat, lon) {
+  const c = Math.floor((lon - g.west) / g.res), r = Math.floor((g.north - lat) / g.res);
+  if (r < 0 || c < 0 || r >= g.height || c >= g.width) return null;
+  const at = (rr, cc) => g.elev[Math.min(g.height - 1, Math.max(0, rr)) * g.width + Math.min(g.width - 1, Math.max(0, cc))];
+  const latC = g.north - (r + 0.5) * g.res;
+  const dx = g.res * 111320 * Math.cos(latC * Math.PI / 180), dy = g.res * 110574;
+  const gx = (at(r, c + 1) - at(r, c - 1)) / (2 * dx), gy = (at(r + 1, c) - at(r - 1, c)) / (2 * dy);
+  const code = g.tid[r * g.width + c];
+  return { elev: at(r, c), tid: code, label: g.tid_labels[code] || "TID " + code,
+           slope: Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI, cellM: Math.round(dy) };
+}
+
+const DISCLAIMER = "Not for navigation. GEBCO is a regional ~460 m grid; real depths at reefs, thilas and channels can differ by tens of metres.";
+function showIntro() {
+  const m = manifest.meta;
+  $("info").innerHTML =
+    '<div class="label">Tap the sea</div>' +
+    '<div style="font-size:16px;margin:4px 0 6px">Tap anywhere for the grid depth, its data source and slope. Tap a coloured dot for a drop-off or rise candidate.</div>' +
+    '<div class="muted">Satellite: ' + m.imagery_scenes + " Sentinel-2 scenes, captured " + m.imagery_from + " – " + m.imagery_to +
+    " · Bathymetry: GEBCO 2026 (released " + m.gebco_released + "), " + m.contours.toLocaleString() + " contour lines, " + m.features + " candidates</div>";
+}
+function showDepth(lat, lon, d) {
+  if (!d) { $("info").innerHTML = '<div class="label">Outside coverage</div><div>No bathymetry for this point.</div>'; return; }
+  const cat = category(d.tid);
+  const depth = d.elev < 0 ? "≈ " + (-d.elev) + " m deep" : "Land / above sea level in grid";
+  const src = cat === "measured" ? "measured" : "not directly measured; lower confidence";
+  $("info").innerHTML =
+    '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
+    '<div class="big">' + depth + "</div>" +
+    '<div class="muted">Grid cell average (~' + d.cellM + " m) · slope " + d.slope.toFixed(1) + "°</div>" +
+    '<div class="src ' + (cat === "measured" ? "measured" : "estimated") + '" style="margin-top:6px">Source here: ' + esc(d.label) + " (" + src + ")</div>" +
+    '<div class="muted">GEBCO 2026 · historical compilation · released ' + manifest.meta.gebco_released + "</div>" +
+    '<div class="warn">' + DISCLAIMER + "</div>";
+}
+const KIND = { drop_off: "Drop-off candidate", pinnacle: "Pinnacle candidate", knoll: "Knoll candidate", seamount: "Seamount candidate" };
+function showFeature(p) {
+  const facts = ["~" + Math.round(p.depth_m) + " m deep"];
+  if (p.relief_m != null) facts.push("rises ~" + Math.round(p.relief_m) + " m");
+  if (p.max_slope_deg != null) facts.push("slope ~" + Math.round(p.max_slope_deg) + "°");
+  let range = p.depth_range_m; if (typeof range === "string") range = JSON.parse(range);
+  if (range) facts.push("depth " + Math.round(range[0]) + "–" + Math.round(range[1]) + " m nearby");
+  $("info").innerHTML =
+    '<div class="label">' + (KIND[p.kind] || "Terrain candidate") + "</div>" +
+    '<div style="font-size:17px;font-weight:600;margin:2px 0">' + facts.join(" · ") + "</div>" +
+    '<div class="muted">Computed from the GEBCO grid · derived analysis, not a verified structure</div>' +
+    '<div style="margin-top:6px;font-size:14px;max-width:65ch">' + esc(p.explanation) + "</div>" +
+    '<div class="warn">' + DISCLAIMER + "</div>";
+}
+
+function labelImage(text) {
+  const ratio = 2, c = document.createElement("canvas"), ctx = c.getContext("2d");
+  ctx.font = "600 " + 10 * ratio + "px 'Source Sans 3', sans-serif";
+  const w = Math.ceil(ctx.measureText(text).width + 8 * ratio), h = 14 * ratio;
+  c.width = w; c.height = h;
+  ctx.fillStyle = "rgba(6,18,31,0.72)"; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 3 * ratio); ctx.fill();
+  ctx.font = "600 " + 10 * ratio + "px 'Source Sans 3', sans-serif"; ctx.fillStyle = "#e0f7fa"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 4 * ratio, h / 2 + ratio / 2);
+  return { image: ctx.getImageData(0, 0, w, h), ratio };
+}
+
+(async () => {
+  manifest = await (await fetch("data/manifest.json")).json();
+  const [contours, features] = await Promise.all([
+    fetch("data/contours.json").then((r) => r.json()),
+    fetch("data/features.json").then((r) => r.json()),
+  ]);
+  const m = manifest.meta;
+  $("s2-meta").textContent = "Own cloud-free mosaic · captured " + m.imagery_from + " – " + m.imagery_to + " · 10 m";
+  $("attrib").textContent = m.imagery_attribution + " · Bathymetry: GEBCO 2026 Grid · MapLibre";
+  showIntro();
+
+  const map = new maplibregl.Map({
+    container: "map",
+    center: [73.42, 4.2], zoom: 9.6, maxZoom: 17, attributionControl: false, dragRotate: true,
+    style: {
+      version: 8,
+      sources: {
+        s2: { type: "raster", tiles: ["pack://s2/{z}/{x}/{y}"], tileSize: 256, minzoom: 7, maxzoom: 14, bounds: m.imagery_bounds },
+        depth: { type: "raster", tiles: ["pack://depth/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom: 10, bounds: [70, -3.5, 77.5, 8.5] },
+        slope: { type: "raster", tiles: ["pack://slope/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom: 10, bounds: [70, -3.5, 77.5, 8.5] },
+        contours: { type: "geojson", data: contours },
+        features: { type: "geojson", data: features },
+        measure: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        tap: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+      },
+      layers: [
+        { id: "bg", type: "background", paint: { "background-color": "#06121f" } },
+        { id: "s2", type: "raster", source: "s2", paint: { "raster-fade-duration": 0 } },
+        { id: "depth", type: "raster", source: "depth", paint: { "raster-opacity": 0.55, "raster-fade-duration": 0 } },
+        { id: "slope", type: "raster", source: "slope", layout: { visibility: "none" }, paint: { "raster-opacity": 0.8 } },
+        { id: "contours", type: "line", source: "contours",
+          filter: ["any", [">=", ["zoom"], 9], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
+          layout: { "line-join": "round" },
+          paint: { "line-color": ["interpolate", ["linear"], ["get", "depth_m"], 10, "#b2ebf2", 50, "#4dd0e1", 200, "#26c6da", 1000, "#0097a7", 3000, "#006064"],
+                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.2, 14, 2] } },
+        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 9,
+          layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]],
+                    "icon-rotation-alignment": "viewport" } },
+        { id: "features", type: "circle", source: "features", minzoom: 6,
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],
+                   "circle-color": ["match", ["get", "kind"], "drop_off", "#ff9800", "seamount", "#e040fb", "knoll", "#7c4dff", "#00e5ff"],
+                   "circle-stroke-color": "#06121f", "circle-stroke-width": 1.5 } },
+        { id: "measure-line", type: "line", source: "measure", paint: { "line-color": "#ffeb3b", "line-width": 3, "line-dasharray": [2, 1] } },
+        { id: "measure-pts", type: "circle", source: "measure", filter: ["==", ["geometry-type"], "Point"],
+          paint: { "circle-radius": 5, "circle-color": "#ffeb3b", "circle-stroke-color": "#06121f", "circle-stroke-width": 2 } },
+        { id: "tap", type: "circle", source: "tap", paint: { "circle-radius": 9, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } },
+      ],
+    },
+  });
+  window.jigmap = map;
+  for (const d of [10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]) {
+    const { image, ratio } = labelImage(d + " m");
+    map.addImage("d" + d, image, { pixelRatio: ratio });
+  }
+  map.on("load", () => $("loading").remove());
+
+  // Layers panel
+  $("btn-layers").onclick = () => { $("layers").classList.toggle("open"); $("btn-layers").classList.toggle("on"); };
+  const vis = (ids, on) => ids.forEach((id) => map.setLayoutProperty(id, "visibility", on ? "visible" : "none"));
+  $("l-s2").onchange = (e) => vis(["s2"], e.target.checked);
+  $("l-depth").onchange = (e) => vis(["depth"], e.target.checked);
+  $("l-slope").onchange = (e) => vis(["slope"], e.target.checked);
+  $("l-contours").onchange = (e) => vis(["contours", "contour-labels"], e.target.checked);
+  $("l-features").onchange = (e) => vis(["features"], e.target.checked);
+  $("o-depth").oninput = (e) => map.setPaintProperty("depth", "raster-opacity", Number(e.target.value));
+  $("o-slope").oninput = (e) => map.setPaintProperty("slope", "raster-opacity", Number(e.target.value));
+
+  // Measure
+  let measuring = false; const pts = [];
+  const drawMeasure = () => {
+    const f = pts.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p } }));
+    if (pts.length > 1) f.unshift({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: pts } });
+    map.getSource("measure").setData({ type: "FeatureCollection", features: f });
+    let total = 0; for (let i = 1; i < pts.length; i++) total += haversine(pts[i - 1], pts[i]);
+    $("m-text").textContent = pts.length < 2 ? "Tap the map to add points"
+      : fmtDist(total) + " · last leg " + String(Math.round(bearing(pts[pts.length - 2], pts[pts.length - 1]))).padStart(3, "0") + "°T";
+  };
+  $("btn-measure").onclick = () => {
+    measuring = !measuring; $("btn-measure").classList.toggle("on", measuring);
+    $("measurebar").classList.toggle("open", measuring);
+    if (!measuring) { pts.length = 0; drawMeasure(); }
+  };
+  $("m-undo").onclick = () => { pts.pop(); drawMeasure(); };
+  $("m-clear").onclick = () => { pts.length = 0; drawMeasure(); };
+
+  // GPS: browsers block location inside embedded previews; say so instead of faking a position.
+  $("btn-gps").onclick = () => {
+    $("info").innerHTML = '<div class="label">GPS</div><div>Your position is not available inside this preview: the page runs in a sandbox that blocks location. The JigMap app uses your phone’s GPS (position, speed in knots, course, accuracy).</div>';
+  };
+
+  // Taps
+  map.on("click", async (e) => {
+    const ll = [e.lngLat.lng, e.lngLat.lat];
+    if (measuring) { pts.push(ll); drawMeasure(); return; }
+    map.getSource("tap").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: ll } }] });
+    if (map.getLayoutProperty("features", "visibility") !== "none") {
+      const hit = map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ["features"] });
+      if (hit.length) { showFeature(hit[0].properties); return; }
+    }
+    $("info").innerHTML = '<div class="label">Reading depth…</div><div class="muted">Loading the GEBCO grid (once).</div>';
+    try { const g = await loadGrid(); showDepth(e.lngLat.lat, e.lngLat.lng, depthAt(g, e.lngLat.lat, e.lngLat.lng)); }
+    catch (err) { $("info").innerHTML = '<div class="label">Depth unavailable</div><div>The depth grid could not be loaded: ' + esc(err.message) + "</div>"; }
+  });
+})().catch((err) => { $("loading").textContent = "The map could not load: " + err.message; });
+</script>
+</body>
+</html>

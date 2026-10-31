@@ -3,23 +3,31 @@
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Project structure, FastAPI, PostGIS, Redis/Celery, Docker Compose, auth foundation, MapLibre satellite map, device GPS | **Done** |
-| 2 | GEBCO 2026 bathymetry (Maldives subset), depth contours, tap-for-depth, slope / drop-off / pinnacle candidates, offline packages (S3/MinIO) | Next |
-| 3 | Copernicus Marine: SST, currents (u/v vectors), chlorophyll, waves; Celery ingestion with validation, provenance and freshness tracking | |
+| 2 | GEBCO 2026 bathymetry (Maldives subset), depth contours, tap-for-depth, slope / drop-off / pinnacle candidates, layer panel, measurement, offline packages | **Done** |
+| 3 | Copernicus Marine: SST, currents (u/v vectors), chlorophyll, waves; Celery ingestion with validation, provenance and freshness tracking | Next |
 | 4 | Marine weather provider (after coverage evaluation), ocean-conditions dashboard, timestamps and provenance in UI | |
 | 5 | Catch logbook (private by default, anonymised opt-in sharing), transparent jigging and tuna suitability scoring, validation against catches | |
 | 6 | Captain Mode: navigation display, routes, waypoints, MOB, deviation / hazard / GPS-loss / battery alerts, night mode, offline navigation, AIS gateway design | |
 | 7 | Subscriptions (configurable plans), Next.js admin dashboard, security and performance testing, production deployment | |
 
-## Next task: Phase 2, step 1
+## Next task: Phase 3, step 1 (Copernicus Marine)
 
-1. Add MinIO (S3-compatible) to Compose, plus the `bathymetry_metadata`, `map_layers` and `data_providers` tables.
-2. Write a GEBCO ingestion job that obtains the official GEBCO 2026 grid for the Maldives bounds.
-   The exact retrieval mechanism (scripted download or operator-supplied file) will be confirmed against the
-   current GEBCO download service. The job:
-   - verifies checksums;
-   - subsets to the Maldives bounds;
-   - records resolution (15″ ≈ 460 m) and source metadata;
-   - generates contour vector tiles and a hillshade/slope raster.
-3. Add a depth-query endpoint (`/bathymetry/depth?lat=&lon=`) that returns the grid value plus a TID
-   (source type) and a "not for navigation" flag.
-4. Add a bathymetry layer toggle and tap-for-depth in the app.
+1. **Credentials:** create a Copernicus Marine account and set `COPERNICUS_MARINE_USERNAME` / `_PASSWORD` on the server only.
+2. **Product selection:** verify Maldives coverage, resolution, update cadence and latency for each candidate product
+   using the `copernicusmarine describe` metadata. Record the product and dataset IDs in `data_providers`.
+   - SST: L4 analysis (observation-based) vs. model forecast.
+   - Currents: global physics analysis/forecast (u/v).
+   - Chlorophyll: ocean-colour L3/L4.
+   - Waves: global wave analysis/forecast.
+3. **Ingestion:** a Celery beat job subsets the Maldives box with `copernicusmarine subset`, validates
+   (units, fill values, time axis) and stores rasters, keeping every time step's valid time and the product's
+   observation/forecast nature.
+4. **Publishing:** time-aware layers with explicit "observed at" / "forecast for" labels and staleness warnings,
+   plus ocean values in the tap-for-depth sheet.
+
+### Phase 2 follow-ups
+
+- **Tiles:** a CDN in front of the tile endpoints.
+- **Glyph server:** self-hosted glyphs for text labels.
+- **Downloads:** resumable downloads for large packages.
+- **Ingestion schedule:** periodic re-ingestion when GEBCO publishes a new grid (annual).

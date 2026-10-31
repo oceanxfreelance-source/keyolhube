@@ -52,6 +52,25 @@ class Settings(BaseSettings):
     )
     custom_xyz_attribution: str | None = None
 
+    # Public base URL of this API, used for absolute tile URLs in map styles.
+    # If unset, the request's own base URL is used.
+    public_base_url: str | None = None
+
+    # S3-compatible object storage (MinIO locally) for rasters, tiles and offline packages.
+    s3_endpoint_url: str | None = "http://localhost:9000"
+    s3_access_key: str = "jigmap"
+    s3_secret_key: str = "jigmap-dev-secret"
+    s3_bucket: str = "jigmap-data"
+    s3_region: str = "us-east-1"
+
+    # Local working directory for ingestion jobs (temporary downloads, cached grids).
+    data_dir: str = ".data"  # containers set DATA_DIR=/data
+
+    # GEBCO 2026 grid, official distribution on CEDA (zip archives of GeoTIFF tiles).
+    gebco_version: str = "GEBCO_2026"
+    gebco_grid_zip_url: str = "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2026/ice_surface_elevation/geotiff/gebco_2026_geotiff.zip"
+    gebco_tid_zip_url: str = "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2026/type_identifier_grid/geotiff/gebco_2026_tid_geotiff.zip"
+
     @model_validator(mode="after")
     def _validate(self) -> "Settings":
         if self.environment == "production" and self.jwt_secret == DEV_JWT_SECRET:

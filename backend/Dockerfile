@@ -3,6 +3,11 @@ FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
+# libexpat is required at runtime by the GDAL bundled in the rasterio wheel.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libexpat1 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 # Optional: behind a TLS-intercepting proxy, pass its CA bundle as a build secret:
 #   docker build --secret id=extra_ca,src=/path/to/ca-bundle.crt backend
@@ -15,7 +20,9 @@ COPY alembic.ini .
 COPY alembic ./alembic
 COPY app ./app
 
-RUN useradd --create-home --uid 10001 appuser
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /data && chown appuser:appuser /data
+ENV DATA_DIR=/data
 USER appuser
 
 EXPOSE 8000

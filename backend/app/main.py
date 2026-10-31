@@ -1,10 +1,13 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.routes import auth, health
+from app.api.v1.routes import admin, auth, bathymetry, health, offline, providers
 from app.api.v1.routes import map as map_routes
+from app.core import storage
 from app.core.config import get_settings
 from app.core.redis import close_redis
 from app.db.session import dispose_engine
@@ -12,6 +15,10 @@ from app.db.session import dispose_engine
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    try:
+        await asyncio.to_thread(storage.ensure_bucket)
+    except Exception:  # noqa: BLE001 - readiness reports storage problems
+        logging.getLogger(__name__).warning("object storage unavailable at startup", exc_info=True)
     yield
     await dispose_engine()
     await close_redis()
@@ -37,6 +44,10 @@ def create_app() -> FastAPI:
     v1.include_router(health.router)
     v1.include_router(auth.router)
     v1.include_router(map_routes.router)
+    v1.include_router(bathymetry.router)
+    v1.include_router(offline.router)
+    v1.include_router(providers.router)
+    v1.include_router(admin.router)
     app.include_router(v1)
     return app
 

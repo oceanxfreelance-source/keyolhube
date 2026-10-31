@@ -23,3 +23,13 @@ celery_app.conf.update(
 def ping() -> str:
     """Round-trip check used by the readiness probe and tests."""
     return "pong"
+
+
+@celery_app.task(name="bathymetry.ingest_gebco", acks_late=True, time_limit=3 * 3600)
+def ingest_gebco(job_id: str) -> str:
+    import uuid
+
+    from app.ingestion import gebco
+
+    gebco.run(uuid.UUID(job_id))
+    return job_id

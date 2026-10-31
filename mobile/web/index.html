@@ -32,8 +32,9 @@
   <title>JigMap Maldives</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    /* Keep MapLibre's attribution below the app's top bar (margins are not supported on web). */
-    .maplibregl-map .maplibregl-ctrl-top-left { top: 76px !important; }
+    /* MapLibre's attribution box covers imagery (reefs). The app shows the same credits as
+       plain text under the GPS panel instead, so the on-map control is hidden. */
+    .maplibregl-map .maplibregl-ctrl-attrib { display: none !important; }
   </style>
 </head>
 <body>

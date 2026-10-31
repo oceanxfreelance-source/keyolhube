@@ -47,11 +47,58 @@ iOS Core Location, browser Geolocation API) via `geolocator`. The app never synt
 - If the stream is quiet for 5 s, a fresh fix is requested explicitly (`maximumAge: 0` on web).
 - Heading from a magnetometer/compass sensor is **not yet integrated** (Phase 6). The COG shown is GNSS course.
 
+## Bathymetry: GEBCO 2026 (Phase 2) — **verified live**
+
+| | |
+|---|---|
+| Source | GEBCO 2026 Grid, official distribution on CEDA: `gebco_2026_geotiff.zip` (4.24 GB) and `gebco_2026_tid_geotiff.zip` (96 MB), published 2026-04-22 |
+| Citation (shown in the app) | GEBCO Compilation Group (2026) GEBCO 2026 Grid (doi:10.5285/4f68d5c7-45eb-f999-e063-7086abc036fa) |
+| Licence | Public domain; commercial use and redistribution permitted with attribution; must not imply GEBCO endorsement. **Must not be used for navigation** (GEBCO terms of use, read from the archive) |
+| Retrieval | Byte-range reads of the ZIP central directory; only the 2 tiles covering 70–77.5°E, 3.5°S–8.5°N are streamed (~1 GB) and CRC-32 verified against the archive (`1158e298`, `23a19bec`, TID `4f0fc4f2`, `4f7eb028`) |
+| Grid | 15 arc-second (~461 m), pixel-centre registered, 1800 × 2880 cells, no missing cells. Elevation −5,246 m to +1,726 m (the bounding box clips the southern tip of India) |
+| Validation | CRS/resolution check, complete coverage, physical value range, TID codes against the official table, land-flag consistency |
+| Data kind | `historical_compilation` (a static compilation, not an observation); contours/slope/candidates are `derived_analysis` |
+
+**How much of the Maldives grid is actually measured** (TID statistics of the ingested window):
+
+| TID | Meaning | Share of cells |
+|---|---|---|
+| 40 | Predicted from satellite-derived gravity | 95.67 % |
+| 11 | Multibeam echo-sounder | 2.14 % |
+| 44 | Bathymetric depths from multiple sources | 1.28 % |
+| 16 | Optical light sensor (satellite-derived shallow depth) | 0.59 % |
+| 0 | Land | 0.30 % |
+| 17, 14 | Combination of direct methods; ENC soundings | 0.03 % |
+
+So only ~2.8 % of cells are direct measurements. The app shows the source type on every
+depth query and flags non-measured cells as lower confidence.
+
+**Derived products** (parameters stored with each dataset, `analysis_params`):
+
+- Isobaths at 10–5000 m (19 levels), simplified to a quarter cell, served as MVT from PostGIS.
+- Slope in degrees from the metric cell spacing (real reef walls are steeper than a 461 m grid shows).
+- Drop-off candidates: slope ≥ 15° at 15–1500 m depth, one point per ~3 km of edge.
+- Rise candidates: local highs whose surroundings (1.4–2.8 km and 4.6–9.2 km rings) are ≥ 97 % deeper,
+  with no land within the search radius. They are classified by relief using IHO/IOC terminology:
+  seamount ≥ 1000 m, knoll 200–1000 m, pinnacle < 200 m. Pinnacles are kept only to 500 m summit depth
+  and knolls only to 1500 m: deeper, low-relief bumps are mostly gravity-prediction noise.
+- Real-data result: 543 drop-off, 4 pinnacle, 15 knoll and 9 seamount candidates.
+  Every candidate carries a plain-language explanation and its source type.
+
+**Offline packages**: three regional packages (north 2.1 MB, central 2.2 MB, south 3.0 MB), each containing
+the int16 depth grid, TID grid, contours, candidates, and a manifest with SHA-256 per file. The app re-verifies
+packages on download and on every load.
+
+## Object storage
+
+MinIO no longer distributes free server builds (`dl.min.io` returns 410 and Docker Hub has no `minio/minio`), so
+local development uses **SeaweedFS** (Apache-2.0) as the S3-compatible store. Production should use a managed S3
+service (AWS S3, Cloudflare R2, DigitalOcean Spaces…); only `S3_*` settings change.
+
 ## Planned sources (not connected)
 
 | Data | Planned source | Phase | Status |
 |---|---|---|---|
-| Bathymetry | GEBCO 2026 grid (15 arc-second), Maldives subset | 2 | Not connected |
 | SST, currents (u/v), chlorophyll, waves | Copernicus Marine Service (CMEMS) via `copernicusmarine` toolbox | 3 | Not connected |
 | Marine weather (wind, rain, forecasts) | Provider to be selected after Maldives coverage evaluation (candidates: ECMWF open data, Open-Meteo marine/commercial, Stormglass) | 4 | Not connected |
 | Authoritative nautical charts | Licensed ENC/S-57 from the hydrographic authority (via a licensed distributor) | 6 | Not connected; licensing to investigate |

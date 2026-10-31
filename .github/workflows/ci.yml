@@ -23,6 +23,13 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+      - name: Start S3-compatible storage (SeaweedFS)
+        run: |
+          docker run -d --name s3 -p 9000:8333 \
+            -v "$GITHUB_WORKSPACE/deploy/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro" \
+            chrislusf/seaweedfs:3.97 server -dir=/data -s3 -s3.port=8333 \
+            -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=128 -master.volumePreallocate=false
+          for i in $(seq 1 60); do curl -sf http://localhost:9000/healthz && break || sleep 2; done
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements-dev.txt

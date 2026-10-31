@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "jigmap-dev",
+      "credentials": [{ "accessKey": "jigmap", "secretKey": "jigmap-dev-secret" }],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}

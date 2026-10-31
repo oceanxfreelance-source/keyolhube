@@ -158,12 +158,13 @@ def verify_tile_token(settings: Settings, token: str) -> bool:
 # --- Style -------------------------------------------------------------------------------
 
 
-def build_style(provider: RasterProvider, tiles_url: str) -> dict:
-    """A MapLibre GL style (spec v8) with the satellite raster layer.
+def build_style(provider: RasterProvider, tiles_url: str, overlays: dict | None = None) -> dict:
+    """A MapLibre GL style (spec v8) with the satellite raster layer and optional overlays.
 
     `tiles_url` is either the provider's public template or this API's proxy URL.
+    `overlays` = {"sources": {...}, "layers": [...], "metadata": [...]} appended above imagery.
     """
-    return {
+    style = {
         "version": 8,
         "name": f"JigMap satellite ({provider.name})",
         "metadata": {"jigmap:provider": provider.id, "jigmap:licence_status": provider.licence_status},
@@ -183,6 +184,11 @@ def build_style(provider: RasterProvider, tiles_url: str) -> dict:
             {"id": "satellite", "type": "raster", "source": "satellite"},
         ],
     }
+    if overlays:
+        style["sources"].update(overlays["sources"])
+        style["layers"].extend(overlays["layers"])
+        style["metadata"]["jigmap:layers"] = overlays["metadata"]
+    return style
 
 
 # --- Live verification -------------------------------------------------------------------

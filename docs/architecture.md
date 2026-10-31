@@ -1,4 +1,4 @@
-# Architecture (Phase 1)
+# Architecture (Phases 1–2)
 
 ```
  Flutter app (Android / iOS / Web)                 FastAPI (uvicorn)            PostgreSQL 16 + PostGIS 3.4
@@ -36,6 +36,33 @@
   - `/map/provider-status`: fetches one real tile over Malé and reports reachability, status, bytes and latency.
 - **Worker**: Celery on the Redis broker. Currently only `system.ping`; ingestion jobs arrive in Phase 3.
 
+## Bathymetry pipeline (Phase 2)
+
+```
+CEDA (official GEBCO zip) --range requests--> worker: stream members, CRC-32 verify
+  -> exact 15" window -> validate -> GeoTIFFs (S3)
+  -> slope, hillshade -> contours + candidates (PostGIS, GiST-indexed)
+  -> depth/slope PNG tiles z4–10 (S3) -> regional offline packages (S3)
+  -> atomic activation (one active dataset; map_layers registry updated; provider status set)
+```
+
+- Every run is a `data_ingestion_jobs` row with a timestamped log and stats; the provider row records
+  `last_success_at` / `last_error`. A failed run leaves the previous dataset active, and the provider is marked `degraded`.
+- **Serving:**
+  - Depth queries use an in-memory copy of the active grid (10 MB, cached from S3).
+  - Contours are vector tiles built on the fly with `ST_AsMVT`; the set of levels depends on zoom.
+  - Raster tiles come from S3 through a small LRU cache.
+  - `/map/style.json` includes the overlays plus layer metadata: data kind, attribution and source date.
+- **Client:**
+  - Contour depth labels are rendered by the app as icon images, so no font server is needed.
+  - The MapLibre attribution box is hidden on web; the same credits appear as text under the GPS panel.
+  - Tap-for-depth uses the API, falling back to downloaded packages when the server is unreachable.
+  - Feature taps show the stored explanation.
+- **Offline:**
+  - Packages are verified (archive SHA-256 plus per-file SHA-256) and stored with Hive (IndexedDB on web, files on mobile).
+  - When the API is unreachable, the map is rebuilt from the packages: contours and candidates as GeoJSON, plus local depth lookup.
+  - Satellite imagery is not stored offline (licence).
+
 ## Mobile app
 
 - Plain `ChangeNotifier`s, no state-management framework yet:
@@ -47,6 +74,11 @@
   missing values shown as "—".
 
 ## Known limitations
+
+- **Map labels:** the app has no glyph server yet, so text labels (island names etc.) are not available. Depth
+  labels use generated icons.
+- **Offline map display:** offline mode replaces the whole style with packaged data. Mixing cached online tiles
+  with offline layers is future work.
 
 - **Tile tokens:** they are bearer tokens in the URL, valid 12 h, and the style must be re-fetched after expiry.
   Automatic re-fetch is planned with offline support in Phase 2.

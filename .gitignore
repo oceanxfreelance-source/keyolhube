@@ -18,3 +18,4 @@ mobile/ios/Flutter/Generated.xcconfig
 # local tooling
 e2e/node_modules/
 e2e/artifacts/
+backend/.data/

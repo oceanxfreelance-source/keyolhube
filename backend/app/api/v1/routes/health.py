@@ -1,9 +1,11 @@
+import asyncio
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Response, status
 from sqlalchemy import text
 
 from app.api.deps import DbSession
+from app.core import storage
 from app.core.redis import get_redis
 
 router = APIRouter(tags=["health"])
@@ -14,7 +16,7 @@ async def live() -> dict:
     return {"status": "ok"}
 
 
-@router.get("/health/ready", summary="Database (with PostGIS) and Redis are reachable")
+@router.get("/health/ready", summary="Database (with PostGIS), Redis and object storage are reachable")
 async def ready(db: DbSession, response: Response) -> dict:
     checks: dict = {}
     try:
@@ -27,6 +29,12 @@ async def ready(db: DbSession, response: Response) -> dict:
         checks["redis"] = {"status": "ok"}
     except Exception as exc:  # noqa: BLE001
         checks["redis"] = {"status": "error", "error": type(exc).__name__}
+
+    try:
+        await asyncio.to_thread(storage.ping)
+        checks["object_storage"] = {"status": "ok"}
+    except Exception as exc:  # noqa: BLE001
+        checks["object_storage"] = {"status": "error", "error": type(exc).__name__}
 
     ok = all(c["status"] == "ok" for c in checks.values()) and "postgis" in checks
     if not ok:

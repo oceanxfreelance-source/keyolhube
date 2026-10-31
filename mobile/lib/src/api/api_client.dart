@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -42,6 +43,33 @@ class ApiClient {
   Future<String> getRaw(String path, {bool auth = false}) async {
     final resp = await _request('GET', path, auth: auth);
     return resp.body;
+  }
+
+  /// Download binary content (signed in), reporting progress as (received, total?).
+  Future<Uint8List> getBytes(String path, {bool auth = true, void Function(int, int?)? onProgress}) async {
+    final req = http.Request('GET', config.api(path));
+    final token = tokens?.accessToken;
+    if (auth && token != null) req.headers['Authorization'] = 'Bearer $token';
+    http.StreamedResponse resp;
+    try {
+      resp = await _http.send(req).timeout(timeout);
+    } catch (_) {
+      throw ApiException(null, 'Cannot reach the JigMap server (${config.apiBaseUrl})');
+    }
+    if (resp.statusCode == 401 && auth && tokens != null && await tokens!.refresh()) {
+      return getBytes(path, auth: auth, onProgress: onProgress);
+    }
+    if (resp.statusCode >= 400) {
+      throw ApiException(resp.statusCode, _detail(await http.Response.fromStream(resp)));
+    }
+    final builder = BytesBuilder(copy: false);
+    var received = 0;
+    await for (final chunk in resp.stream) {
+      builder.add(chunk);
+      received += chunk.length;
+      onProgress?.call(received, resp.contentLength);
+    }
+    return builder.takeBytes();
   }
 
   Future<dynamic> _send(String method, String path, {Object? body, bool auth = false}) async {

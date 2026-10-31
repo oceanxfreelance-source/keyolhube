@@ -8,38 +8,48 @@ fishing intelligence, captain-mode navigation and ocean conditions, online and o
 > Bathymetry (from Phase 2) is regional-scale GEBCO data and must never be used as
 > a safe-clearance depth.
 
-## Status: Phase 1 (foundation) ✅
+## Status: Phases 1–2 ✅
 
 | Area | State |
 |---|---|
 | FastAPI backend (async SQLAlchemy, Alembic, OpenAPI docs at `/docs`) | Working, tested |
-| PostgreSQL 16 + PostGIS 3.4 (extension enabled by migration `0001`) | Working, tested |
-| Redis 7 (rate limiting, Celery broker) + Celery worker | Working, tested |
-| Auth: register / login / refresh rotation with reuse detection / logout / `me`, Argon2id, roles | Working, tested |
-| Satellite basemap via configurable licensed provider, keys kept server-side (tile proxy) | Working, tested with Esri (dev endpoint) |
-| Flutter app (Android / iOS / Web) with MapLibre satellite map | Working, tested on web |
-| Device GPS: position, accuracy, SOG (kn), COG, fix age, signal-loss detection | Working, tested |
+| PostgreSQL 16 + PostGIS 3.4, Redis 7, Celery worker, S3-compatible storage (SeaweedFS locally) | Working, tested |
+| Auth: register / login / refresh rotation with reuse detection / logout / roles | Working, tested |
+| Satellite basemap via configurable licensed provider; keys server-side (tile proxy) | Working, tested (Esri dev endpoint) |
+| Flutter app (Android / iOS / Web) with MapLibre satellite map and live GPS | Working, tested on web |
+| **GEBCO 2026 bathymetry ingestion** (official CEDA archive, CRC-verified, validated) | **Working, run on real data** |
+| Depth shading, slope layer, contour vector tiles with depth labels | Working, tested |
+| Tap-for-depth with data source type (TID), dataset and release date, "not for navigation" | Working, tested |
+| Drop-off / pinnacle / knoll / seamount **candidates** with explanations | Working, tested |
+| Layer panel (toggle, opacity, data kind, source date), distance measurement (NM, bearing) | Working, tested |
+| Offline packages (3 Maldives regions): download, verify, store, offline map + offline depth | Working, tested |
+| Data provider registry and ingestion job log (admin API) | Working, tested |
 
-Phases 2–7 (bathymetry, Copernicus ocean data, weather, logbook and intelligence,
-Captain Mode, subscriptions and admin) are not started. See [docs/roadmap.md](docs/roadmap.md).
+Phases 3–7 (Copernicus ocean data, weather, logbook and intelligence, Captain Mode,
+subscriptions and admin UI) are not started. See [docs/roadmap.md](docs/roadmap.md).
 
 ## Repository layout
 
 ```
 backend/            FastAPI service, Alembic migrations, Celery worker, pytest suite
-  app/api/v1/routes   health, auth, map
-  app/core            settings, security (JWT/Argon2), Redis, rate limiting
-  app/models          SQLAlchemy models (users, refresh_tokens)
-  app/services        auth, basemap providers / style / tile proxy
+  app/api/v1/routes   health, auth, map, bathymetry, offline, data-providers, admin
+  app/core            settings, security (JWT/Argon2), Redis, rate limiting, S3 storage
+  app/ingestion       GEBCO job: remote ZIP streaming, terrain analysis, tiles, offline packages
+  app/models          users, providers, ingestion jobs, map layers, bathymetry, offline packages
+  app/services        auth, basemap/style/tile proxy, bathymetry serving, map overlays
+  tests/fixtures      real GEBCO 2026 excerpt (Malé atolls, public domain) for pipeline tests
 mobile/             Flutter app (package `jigmap`)
   lib/src/api         HTTP client with token refresh
   lib/src/auth        auth controller (secure storage), account sheet
+  lib/src/bathymetry  depth/feature models and API client
   lib/src/location    GNSS service and fix model
-  lib/src/map         basemap repository, map screen
+  lib/src/map         map screen, layers sheet, depth sheet, measurement, contour labels
+  lib/src/offline     package verification/decoding, local store (Hive), offline style, screen
   lib/src/ui          theme, GPS panel
-e2e/                Playwright end-to-end test of the web build
+e2e/                Playwright end-to-end tests of the web build (Phase 1 and Phase 2)
+deploy/seaweedfs/   development S3 credentials for the local object store
 docs/               architecture, data sources & licensing, roadmap
-docker-compose.yml  db (PostGIS), redis, api, worker
+docker-compose.yml  db (PostGIS), redis, s3 (SeaweedFS), api, worker
 ```
 
 ## Prerequisites
@@ -64,6 +74,20 @@ curl http://localhost:8000/api/v1/health/ready
 ```
 
 API docs: <http://localhost:8000/docs>. The API container runs `alembic upgrade head` on start.
+
+### Load the bathymetry (once, then after each GEBCO release)
+
+The job streams only the needed members of the official GEBCO 2026 archives from CEDA
+(about 1 GB download; the full archive is 4.2 GB), verifies CRC-32 checksums, validates the
+data and publishes contours, tiles, feature candidates and offline packages. It takes ~3 minutes.
+
+```bash
+docker compose exec worker python -m app.ingestion.gebco
+```
+
+Or queue it from the admin API (`POST /api/v1/admin/ingestion/gebco`, admin role) and follow
+`GET /api/v1/admin/ingestion/jobs`. Until it has run, bathymetry endpoints return 503 and the
+app shows no depth layers.
 
 **Behind a TLS-intercepting proxy**, pass its CA bundle as a build secret (it is not stored in the image):
 
@@ -101,10 +125,11 @@ flutter build web --release --dart-define=API_BASE_URL=https://api.your-domain
 
 ## Tests
 
-Backend (needs `db` and `redis` running; creates and migrates a `jigmap_test` database):
+Backend (needs `db`, `redis` and `s3` running; creates and migrates a `jigmap_test` database
+and runs the real ingestion pipeline on a committed GEBCO excerpt):
 
 ```bash
-docker compose up -d db redis
+docker compose up -d db redis s3
 ```
 
 ```bash
@@ -131,8 +156,13 @@ cd mobile/build/web && python3 -m http.server 8080
 node e2e/map_e2e.cjs
 ```
 
-The live-provider tests (`test_provider_status_live`, the tile-proxy test and the E2E)
+```bash
+node e2e/phase2_e2e.cjs
+```
+
+The live-provider tests (`test_provider_status_live`, the tile-proxy test and the E2E tests)
 need outbound internet access; they fail rather than pass silently when imagery is unreachable.
+The Phase 2 E2E test needs bathymetry ingested in the database the API uses.
 
 ## Configuration
 

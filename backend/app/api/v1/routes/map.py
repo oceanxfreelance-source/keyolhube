@@ -18,6 +18,7 @@ from app.services.basemap import (
     resolve_provider,
     verify_tile_token,
 )
+from app.services.map_overlays import bathymetry_overlays
 
 router = APIRouter(prefix="/map", tags=["map"])
 
@@ -37,9 +38,12 @@ def get_provider() -> RasterProvider:
 Provider = Annotated[RasterProvider, Depends(get_provider)]
 
 
-@router.get("/config", summary="Region and basemap metadata")
-async def map_config(provider: Provider) -> dict:
+@router.get("/config", summary="Region, basemap and overlay layer metadata")
+async def map_config(request: Request, provider: Provider, db: DbSession) -> dict:
+    settings = get_settings()
+    overlays = await bathymetry_overlays(db, (settings.public_base_url or str(request.base_url)).rstrip("/"))
     return {
+        "layers": overlays["metadata"] if overlays else [],
         "region": {
             "name": "Maldives EEZ (approximate envelope)",
             "bounds": MALDIVES_BOUNDS,
@@ -72,14 +76,15 @@ async def map_style(
     db: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_optional_bearer)],
 ) -> dict:
-    if not provider.requires_proxy:
-        return build_style(provider, provider.upstream_url)
-    user = await get_current_user(db, credentials)  # raises 401 when not signed in
     settings = get_settings()
+    base = (settings.public_base_url or str(request.base_url)).rstrip("/")
+    overlays = await bathymetry_overlays(db, base)
+    if not provider.requires_proxy:
+        return build_style(provider, provider.upstream_url, overlays)
+    user = await get_current_user(db, credentials)  # raises 401 when not signed in
     token, _ = issue_tile_token(settings, str(user.id))
-    base = str(request.base_url).rstrip("/")
     tiles_url = f"{base}{settings.api_v1_prefix}/map/tiles/{{z}}/{{x}}/{{y}}?t={token}"
-    return build_style(provider, tiles_url)
+    return build_style(provider, tiles_url, overlays)
 
 
 @router.get("/tiles/{z}/{x}/{y}", summary="Tile proxy for keyed providers", include_in_schema=True)

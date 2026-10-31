@@ -38,6 +38,10 @@ dependencies:
   geolocator: ^14.1.2
   flutter_secure_storage: ^11.2.0
   http: ^1.6.0
+  archive: ^4.5.2
+  crypto: ^3.0.8
+  hive_ce: ^2.22.0
+  hive_ce_flutter: ^2.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

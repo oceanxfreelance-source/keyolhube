@@ -46,8 +46,27 @@ class RasterProvider:
         return self.upstream_url.replace("{z}", str(z)).replace("{x}", str(x)).replace("{y}", str(y))
 
 
+SENTINEL2_TILE_PATH = "/imagery/tiles/{z}/{x}/{y}.webp"
+
+
 def resolve_provider(settings: Settings) -> RasterProvider:
     match settings.satellite_provider:
+        case "sentinel2_jigmap":
+            return RasterProvider(
+                id="sentinel2_jigmap",
+                name="Sentinel-2 cloud-free mosaic (JigMap)",
+                upstream_url="self-hosted",  # served by this API from object storage
+                attribution="Contains modified Copernicus Sentinel data, processed by JigMap",
+                max_zoom=14,
+                tile_size=256,
+                licence_status="open_commercial",
+                licence_note=(
+                    "Built by JigMap from free Copernicus Sentinel-2 data (10 m). Commercial use and "
+                    "offline storage permitted with attribution. No account or fees."
+                ),
+                requires_proxy=False,
+                offline_caching="permitted",
+            )
         case "esri_public_dev":
             return RasterProvider(
                 id="esri_public_dev",
@@ -158,7 +177,13 @@ def verify_tile_token(settings: Settings, token: str) -> bool:
 # --- Style -------------------------------------------------------------------------------
 
 
-def build_style(provider: RasterProvider, tiles_url: str, overlays: dict | None = None) -> dict:
+def build_style(
+    provider: RasterProvider,
+    tiles_url: str,
+    overlays: dict | None = None,
+    attribution: str | None = None,
+    source_extra: dict | None = None,
+) -> dict:
     """A MapLibre GL style (spec v8) with the satellite raster layer and optional overlays.
 
     `tiles_url` is either the provider's public template or this API's proxy URL.
@@ -176,7 +201,8 @@ def build_style(provider: RasterProvider, tiles_url: str, overlays: dict | None 
                 "tiles": [tiles_url],
                 "tileSize": provider.tile_size,
                 "maxzoom": provider.max_zoom,
-                "attribution": provider.attribution,
+                "attribution": attribution or provider.attribution,
+                **(source_extra or {}),
             }
         },
         "layers": [

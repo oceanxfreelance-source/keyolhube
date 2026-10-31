@@ -461,6 +461,8 @@ class _MapScreenState extends State<MapScreen> {
       layers: _source?.layers ?? const [],
       offline: _source?.offline ?? false,
       onChanged: _applyLayer,
+      basemapName: _source?.info?.name,
+      basemapCaptured: _source?.info?.imageryCaptured,
     ),
   );
 

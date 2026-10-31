@@ -78,7 +78,7 @@ async function enableSemantics(page) {
       return !!el && getComputedStyle(el).display !== 'none';
     });
     if (boxVisible) throw new Error('MapLibre attribution box is visible over the map');
-    await waitText(page, /Imagery © Esri.*Bathymetry: GEBCO 2026 Grid/);
+    await waitText(page, /(Imagery © Esri|Copernicus Sentinel data).*Bathymetry: GEBCO 2026 Grid/);
     await page.waitForTimeout(3000);
     await page.screenshot({ path: `${OUT}/p2-map.png` });
     return { depthTiles: seen.depthTiles, contourTiles: seen.contourTiles };

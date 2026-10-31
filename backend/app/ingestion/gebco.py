@@ -204,7 +204,7 @@ class JobLog:
         if stats:
             self.job.stats = {**self.job.stats, **stats}
         self.session.commit()
-        print(f"[gebco] {msg}", flush=True)
+        print(f"[{self.job.job_type}] {msg}", flush=True)
 
 
 # --- the job -----------------------------------------------------------------------------

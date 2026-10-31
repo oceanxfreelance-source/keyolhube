@@ -13,7 +13,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DEV_JWT_SECRET = "dev-only-insecure-secret-change-me-0123456789abcdef"
 
 SatelliteProvider = Literal[
-    "esri_public_dev", "esri_location_platform", "mapbox_satellite", "maptiler_satellite", "custom_xyz"
+    "sentinel2_jigmap",
+    "esri_public_dev",
+    "esri_location_platform",
+    "mapbox_satellite",
+    "maptiler_satellite",
+    "custom_xyz",
 ]
 
 # Providers whose terms do not cover commercial production use without an account/key.
@@ -41,12 +46,17 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:8080,http://127.0.0.1:8080"
 
     # Satellite basemap provider (see docs/data-sources.md for licensing notes).
-    satellite_provider: SatelliteProvider = "esri_public_dev"
+    # Default: our own cloud-free Sentinel-2 mosaic (free, commercial use and offline allowed).
+    satellite_provider: SatelliteProvider = "sentinel2_jigmap"
     # Credentials stay on the server: keyed providers are served via the API tile proxy.
     esri_api_key: str | None = None
     mapbox_access_token: str | None = None
     maptiler_api_key: str | None = None
     tile_token_hours: int = 12
+    # Keyed providers: stop proxying after this many tiles per calendar month (UTC) and serve
+    # the Sentinel-2 mosaic instead, so a free tier is never exceeded. 0 disables the cap.
+    # Esri Location Platform's free tier is 2,000,000 basemap tiles/month (check current terms).
+    imagery_monthly_tile_cap: int = 1_900_000
     custom_xyz_url: str | None = Field(
         default=None, description="XYZ raster template with {z}/{x}/{y}, used when provider=custom_xyz"
     )

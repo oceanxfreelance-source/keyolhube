@@ -15,7 +15,8 @@ fishing intelligence, captain-mode navigation and ocean conditions, online and o
 | FastAPI backend (async SQLAlchemy, Alembic, OpenAPI docs at `/docs`) | Working, tested |
 | PostgreSQL 16 + PostGIS 3.4, Redis 7, Celery worker, S3-compatible storage (SeaweedFS locally) | Working, tested |
 | Auth: register / login / refresh rotation with reuse detection / logout / roles | Working, tested |
-| Satellite basemap via configurable licensed provider; keys server-side (tile proxy) | Working, tested (Esri dev endpoint) |
+| **Free satellite imagery: own cloud-free Sentinel-2 mosaic** (default; no account, commercial + offline allowed) | **Working, built from real data** |
+| Optional sharper imagery (Esri free tier) with a monthly cap that falls back to Sentinel-2 | Working, tested |
 | Flutter app (Android / iOS / Web) with MapLibre satellite map and live GPS | Working, tested on web |
 | **GEBCO 2026 bathymetry ingestion** (official CEDA archive, CRC-verified, validated) | **Working, run on real data** |
 | Depth shading, slope layer, contour vector tiles with depth labels | Working, tested |
@@ -75,6 +76,8 @@ curl http://localhost:8000/api/v1/health/ready
 
 API docs: <http://localhost:8000/docs>. The API container runs `alembic upgrade head` on start.
 
+Everything can run for free: see [docs/free-stack.md](docs/free-stack.md).
+
 ### Load the bathymetry (once, then after each GEBCO release)
 
 The job streams only the needed members of the official GEBCO 2026 archives from CEDA
@@ -85,7 +88,14 @@ data and publishes contours, tiles, feature candidates and offline packages. It 
 docker compose exec worker python -m app.ingestion.gebco
 ```
 
-Or queue it from the admin API (`POST /api/v1/admin/ingestion/gebco`, admin role) and follow
+Then build the free satellite imagery (needs the bathymetry; ~35 minutes for all islands and reefs,
+rerun every few months to refresh):
+
+```bash
+docker compose exec worker python -m app.ingestion.sentinel2
+```
+
+The bathymetry job can also be queued from the admin API (`POST /api/v1/admin/ingestion/gebco`, admin role) and follow
 `GET /api/v1/admin/ingestion/jobs`. Until it has run, bathymetry endpoints return 503 and the
 app shows no depth layers.
 
@@ -173,5 +183,6 @@ or if the satellite provider is development-only.
 ## Documentation
 
 - [docs/architecture.md](docs/architecture.md): components, auth model, tile proxy, GPS handling
+- [docs/free-stack.md](docs/free-stack.md): running everything at zero cost
 - [docs/data-sources.md](docs/data-sources.md): provider evaluation, licensing and verification status
 - [docs/roadmap.md](docs/roadmap.md): phase plan and what is outstanding

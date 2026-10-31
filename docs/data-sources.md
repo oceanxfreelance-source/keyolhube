@@ -15,11 +15,26 @@ The proxy validates the token and tile range, then fetches from the provider wit
 
 | Provider id | Imagery | Commercial use | Offline caching | Status |
 |---|---|---|---|---|
+| `sentinel2_jigmap` (**default**) | Own cloud-free mosaic from Copernicus Sentinel-2 L2A (AWS Open Data, Element 84 Earth Search), 10 m | **Yes**, free, attribution "Contains modified Copernicus Sentinel data" | **Permitted** | **Verified live** (full Maldives build) |
 | `esri_public_dev` | Esri World Imagery, public `server.arcgisonline.com` endpoint | **No**: development/evaluation only. Refused when `ENVIRONMENT=production`. | Not permitted | **Verified live** (tiles over Malé, z7–z14) |
 | `esri_location_platform` | Esri World Imagery via ArcGIS Location Platform basemap tiles (`ibasemaps-api.arcgis.com`) with API key | Yes, billed per tile request to the ArcGIS account | Governed by Esri terms; **verify before enabling offline packs** | Implemented, unverified |
 | `mapbox_satellite` | Mapbox Raster Tiles API, `mapbox.satellite` | Yes, billed to the Mapbox account | Mapbox terms restrict bulk/offline caching outside Mapbox SDK offline APIs. **Assume not permitted** for our offline packs. | Implemented, unverified |
 | `maptiler_satellite` | MapTiler Satellite (`satellite-v2`) | Yes, per plan | Plan-dependent; MapTiler sells offline/self-hosted data packages | Implemented, unverified |
 | `custom_xyz` | Any XYZ raster the operator is licensed for | Operator's responsibility | Operator's responsibility | Implemented (tested with a real XYZ endpoint) |
+
+### Sentinel-2 mosaic details
+
+- **Coverage.** Only z12 chunks (~9.8 km) containing land, reef or lagoon (GEBCO depth shallower than 100 m) are
+  built. Open ocean stays transparent and shows the depth shading.
+- **Compositing.**
+  - Scenes come from the last 12 months with scene cloud cover under 60 %, least cloudy first, up to 8 per chunk.
+  - Pixels are dropped using the Scene Classification band: cloud, cirrus and cloud shadow, with the cloud mask
+    widened by about 40 m.
+  - Each pixel takes the median of its clear observations. Pixels never seen clear fall back to the median of all
+    observations, and the count is recorded.
+- **Tiles.** WebP at z7–z14 (~9.5 m/px at z14). MapLibre over-zooms beyond that.
+- **Provenance.** Stored per build: acquisition date range, scene IDs, chunk count and parameters. Shown in the
+  app as "captured …".
 
 ### Recommendation (to confirm commercially)
 

@@ -8,11 +8,20 @@ String _date(DateTime? d) => d == null
     : '${d.toUtc().year}-${d.toUtc().month.toString().padLeft(2, '0')}-${d.toUtc().day.toString().padLeft(2, '0')}';
 
 class LayersSheet extends StatefulWidget {
-  const LayersSheet({super.key, required this.layers, required this.onChanged, required this.offline});
+  const LayersSheet({
+    super.key,
+    required this.layers,
+    required this.onChanged,
+    required this.offline,
+    this.basemapName,
+    this.basemapCaptured,
+  });
 
   final List<OverlayLayer> layers;
   final void Function(OverlayLayer) onChanged;
   final bool offline;
+  final String? basemapName;
+  final String? basemapCaptured;
 
   @override
   State<LayersSheet> createState() => _LayersSheetState();
@@ -34,6 +43,15 @@ class _LayersSheetState extends State<LayersSheet> {
                 : 'Bathymetry is GEBCO regional data (~460 m cells). Not for navigation.',
             style: const TextStyle(color: JigColors.muted, fontSize: 12),
           ),
+          if (widget.basemapName != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Satellite: ${widget.basemapName}'
+              '${widget.basemapCaptured == null ? '' : ' · imagery captured ${widget.basemapCaptured}'}',
+              key: const Key('basemap-provenance'),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
           const SizedBox(height: 8),
           if (widget.layers.isEmpty)
             const Padding(

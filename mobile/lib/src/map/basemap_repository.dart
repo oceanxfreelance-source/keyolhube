@@ -13,6 +13,7 @@ class BasemapInfo {
     required this.defaultLon,
     required this.defaultZoom,
     required this.layers,
+    this.imageryCaptured,
   });
 
   factory BasemapInfo.fromConfig(Map<String, dynamic> cfg) {
@@ -29,6 +30,9 @@ class BasemapInfo {
       defaultLat: (c['lat'] as num).toDouble(),
       defaultLon: (c['lon'] as num).toDouble(),
       defaultZoom: (r['default_zoom'] as num).toDouble(),
+      imageryCaptured: cfg['imagery'] == null
+          ? null
+          : '${(cfg['imagery'] as Map)['acquired_from']} – ${(cfg['imagery'] as Map)['acquired_to']}',
       layers: [
         for (final l in (cfg['layers'] as List? ?? const []))
           OverlayLayer.fromJson(l as Map<String, dynamic>),
@@ -48,6 +52,9 @@ class BasemapInfo {
 
   /// Data overlays published by the server (bathymetry etc.), with provenance.
   final List<OverlayLayer> layers;
+
+  /// Capture date range of a self-built imagery mosaic (e.g. Sentinel-2), when known.
+  final String? imageryCaptured;
 
   bool get isDevelopmentOnly => licenceStatus == 'development_only';
 }

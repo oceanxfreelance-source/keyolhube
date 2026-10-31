@@ -41,7 +41,7 @@ async function scenario(browser, name, contextOpts, check) {
   const consoleErrors = [];
   page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
   page.on('response', async (r) => {
-    if (/\/tile\/\d+\/\d+\/\d+/.test(r.url())) {
+    if (/\/tiles?\/\d+\/\d+\/\d+/.test(r.url()) && !/bathymetry/.test(r.url())) {
       tiles.push({ url: r.url(), status: r.status(), type: r.headers()['content-type'] });
     }
   });
@@ -90,7 +90,7 @@ async function scenario(browser, name, contextOpts, check) {
         const text = await page.evaluate(() => document.querySelector('flt-semantics-host, flutter-view').innerText);
         if (/0\.0 kn/.test(text)) throw new Error('fabricated 0.0 kn speed displayed');
         // Zoom 12 at devicePixelRatio 2 fetches z13 raster tiles, so accept z >= 12.
-        const zoomOf = (u) => Number(u.match(/\/tile\/(\d+)\//)[1]);
+        const zoomOf = (u) => Number(u.match(/\/tiles?\/(\d+)\//)[1]);
         const near = () => tiles.filter((t) => t.status === 200 && zoomOf(t.url) >= 12).length;
         const deadline = Date.now() + 30000;
         while (near() < 4 && Date.now() < deadline) await page.waitForTimeout(500);
@@ -105,9 +105,9 @@ async function scenario(browser, name, contextOpts, check) {
       await textVisible(page, /GPS SIGNAL LOST/, 30000);
     });
     const ok = r.tiles.filter((t) => t.status === 200 && /^image\//.test(t.type || ''));
-    const near = ok.filter((t) => Number(t.url.match(/\/tile\/(\d+)\//)[1]) >= 12);
+    const near = ok.filter((t) => Number(t.url.match(/\/tiles?\/(\d+)\//)[1]) >= 12);
     if (near.length < 4) throw new Error('map did not centre on the GPS fix');
-    const failedTiles = r.tiles.filter((t) => t.status !== 200).map((t) => `${t.status} ${t.url.split('/tile/')[1]}`);
+    const failedTiles = r.tiles.filter((t) => t.status !== 200).map((t) => `${t.status} ${t.url.split(/\/tiles?\//)[1]}`);
     return { imageryTiles: ok.length, tilesAtZoom12plus: near.length, failedTiles, sample: near[0].url, consoleErrors: r.consoleErrors.length };
   });
 

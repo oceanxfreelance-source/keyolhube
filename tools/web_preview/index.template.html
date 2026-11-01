@@ -89,6 +89,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .hide { position: absolute; top: 6px; right: 8px; z-index: 1; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line);
         background: var(--panel); color: var(--ink); cursor: pointer; font-size: 14px; }
 .panel.min { max-height: 34px; overflow: hidden; }
+.spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.spot { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,171,64,.45);
+        background: rgba(255,111,0,.12); color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; min-height: 44px; }
+.spot b { background: #ff6f00; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 13px; flex: none; }
+.spot span:nth-of-type(1) { font-weight: 700; font-size: 16px; } .spot small { font-weight: 400; color: var(--muted); }
+.spot span:nth-of-type(2) { color: var(--muted); font-size: 13px; margin-left: auto; }
 .gpsbar { padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
 .gpsbar .st { font-family: var(--display); font-weight: 700; letter-spacing: .05em; font-size: 12.5px; width: 100%; }
 .gpsbar .pos { font-variant-numeric: tabular-nums; font-size: 14.5px; font-weight: 600; }
@@ -112,7 +118,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
   </div>
   <div class="tabs" role="tablist" aria-label="Mode">
-    <button class="tab" role="tab" id="tab-fishing" aria-selected="true">Fishing</button>
+    <button class="tab" role="tab" id="tab-tuna" aria-selected="true">Tuna &amp; sport</button>
+    <button class="tab" role="tab" id="tab-jigging" aria-selected="false">Jigging</button>
     <button class="tab" role="tab" id="tab-captain" aria-selected="false">Captain</button>
     <button class="tab" role="tab" id="tab-weather" aria-selected="false">Weather</button>
   </div>
@@ -134,7 +141,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 const $ = (id) => document.getElementById(id);
 const NM = 1852;
 let manifest, map, grid = null, gridP = null, ogrid = null, ogridP = null;
-let mode = "fishing", lastTap = null, fadData = null;
+let mode = "tuna", lastTap = null, fadData = null, spotData = null;
 const packCache = {};
 
 // ---------- helpers ----------
@@ -223,14 +230,13 @@ function oceanAt(o, lat, lon) {
 const DISCLAIMER = "Not for navigation. GEBCO depths are a regional ~460 m grid; reefs and channels can differ by tens of metres.";
 function intro() {
   const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
-  if (mode === "fishing") {
+  if (mode === "tuna") {
+    renderSpots();
+  } else if (mode === "jigging") {
     $("info").innerHTML =
-      '<div class="label">Fishing · tap the sea</div>' +
-      '<div style="font-size:15px;margin:4px 0">Warm colours = better tuna conditions · green = jigging depths · dots = drop-offs & seamounts. Tap anywhere for details.</div>' +
-      '<div class="bar" style="background:linear-gradient(90deg,rgba(106,27,154,.4),#c2185b,#ff6f00,#ffd600,#ffff8d)"></div>' +
-      '<div class="ticks"><span>67</span><span>73</span><span>80</span><span>87</span><span>100</span></div>' +
-      '<div class="muted" style="margin-top:6px">Prediction for ' + day(pr.tuna_habitat.valid_for) + " from sea temperature (" + day(oc.sst.observed_at) +
-      "), chlorophyll (" + day(oc.chl.observed_at) + ") and GEBCO structure. Satellites cannot see tuna; not validated against catches yet.</div>";
+      '<div class="label">Jigging · tap the sea</div>' +
+      '<div style="font-size:15px;margin:4px 0">Green = 30–300 m on sloping seabed (reef edges, drop-offs) · orange dots = drop-off candidates · purple = seamounts / knolls · yellow = FADs. Tap for depth and slope.</div>' +
+      '<div class="muted" style="margin-top:6px">Derived from the GEBCO 2026 grid (~460 m cells; only ' + m.gebco_measured_pct + "% measured). Check with your echo sounder.</div>";
   } else if (mode === "captain") {
     renderRoute();
   } else {
@@ -260,6 +266,58 @@ function factorRow(name, valTxt, score, weight) {
   return "<span>" + name + "</span><div class=\"meter\" title=\"factor score\"><i style=\"width:" + (s == null ? 0 : s * 100) + "%\"></i></div><span>" +
     valTxt + " · " + (s == null ? "not used" : s.toFixed(2)) + " × " + weight + "</span>";
 }
+// ---------- best tuna spots ----------
+function spotList() { return spotData ? spotData.features.filter((f) => f.properties.kind === "spot") : []; }
+function fromHere() {
+  if (gps.fix) return { pos: [gps.fix.lon, gps.fix.lat], label: "from you" };
+  const c = map.getCenter(); return { pos: [c.lng, c.lat], label: "from map centre" };
+}
+function renderSpots() {
+  const pr = manifest.predictions, oc = manifest.ocean, sp = spotList(), ref = fromHere();
+  let html = '<div class="label">Best tuna conditions · ' + day(pr.tuna_habitat.valid_for) + "</div>";
+  if (!sp.length) {
+    html += '<div style="font-size:15px;margin:4px 0">No spot reaches the minimum score today, so none are shown.</div>';
+  } else {
+    html += '<div class="muted" style="margin:2px 0 6px">Top ' + sp.length + " spots in Maldivian waters, best first. Distance " + ref.label + ". Tap one.</div>" +
+      '<div class="spots">' + sp.map((f) => {
+        const p = f.properties, c = f.geometry.coordinates;
+        return '<button class="spot" data-rank="' + p.rank + '"><b>' + p.rank + "</b><span>" + Math.round(p.score) + "<small>/100</small></span><span>" +
+          (haversine(ref.pos, c) / NM).toFixed(0) + " NM · " + String(Math.round(bearing(ref.pos, c))).padStart(3, "0") + "°</span></button>";
+      }).join("") + "</div>";
+  }
+  html += '<div class="muted" style="margin-top:6px">Ranked from the habitat model: sea temperature (' + day(oc.sst.observed_at) + "), temperature fronts, chlorophyll (" +
+    day(oc.chl.observed_at) + ") and seabed structure. Shows conditions, not fish: satellites cannot see tuna. Not yet checked against real catches.</div>";
+  $("info").innerHTML = html;
+  document.querySelectorAll(".spot").forEach((b) => { b.onclick = () => showSpot(Number(b.dataset.rank), true); });
+}
+async function showSpot(rank, fly) {
+  const f = spotList().find((x) => x.properties.rank === rank); if (!f) return;
+  const p = typeof f.properties.factors === "string" ? { ...f.properties, factors: JSON.parse(f.properties.factors) } : f.properties;
+  const pos = f.geometry.coordinates, ref = fromHere(), w = manifest.predictions.tuna_habitat.params.weights, r = spotData.rules;
+  if (fly) map.easeTo({ center: pos, zoom: Math.max(map.getZoom(), 10), duration: 700 });
+  const names = { sst: "Sea temp", front: "Fronts ≤4 km", chl: "Chlorophyll", structure: "Structure" };
+  const t = oceanAt(await loadOcean(), pos[1], pos[0]) || {};
+  const vals = { sst: t.sst == null ? "–" : t.sst.toFixed(1) + " °C", front: t.front == null ? "–" : t.front.toFixed(3) + " °C/km here",
+                 chl: t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³", structure: t.dist == null ? "–" : t.dist.toFixed(1) + " km away" };
+  $("info").innerHTML =
+    '<div class="label">Tuna spot #' + p.rank + " of " + spotList().length + " · " + day(manifest.predictions.tuna_habitat.valid_for) + "</div>" +
+    '<div class="row"><span class="score">' + Math.round(p.score) + '</span><span class="muted">/ 100 habitat score (average over ~3 km)</span></div>' +
+    '<div class="coords">' + dm(pos[1], true) + "  " + dm(pos[0], false) + "</div>" +
+    '<div class="nc"><div><span>' + (ref.label === "from you" ? "From you" : "From map centre") + "</span><span>" + (haversine(ref.pos, pos) / NM).toFixed(1) + " NM · " +
+      String(Math.round(bearing(ref.pos, pos))).padStart(3, "0") + "°T</span></div>" +
+    (p.reef_km != null ? "<div><span>Nearest reef / island</span><span>" + p.reef_km.toFixed(1) + " km</span></div>" : "") + "</div>" +
+    '<div class="factors">' + ["sst", "front", "chl", "structure"].map((k) => factorRow(names[k], vals[k], p.factors[k] == null ? null : p.factors[k], w[k])).join("") + "</div>" +
+    '<div class="muted" style="margin-top:6px">' + (Object.keys(p.factors).length < 4 ? "Chlorophyll is not used within ~4 km of reefs (seabed glare). " : "") +
+      "Shown because it is a top-" + r.top_pct + "% peak today (score ≥ " + spotData.threshold + "), at least " + r.separation_km + " km from a better spot.</div>" +
+    '<div class="row" style="margin-top:8px"><button id="spot-go">Go here</button><button id="spot-back">All spots</button></div>' +
+    '<div class="warn">Conditions, not fish: satellites cannot see tuna. Not validated against catches yet. ' + DISCLAIMER + "</div>";
+  $("spot-go").onclick = () => {
+    setMode("captain"); route.length = 0; nextWp = 0;
+    if (gps.fix) { route.push([gps.fix.lon, gps.fix.lat]); nextWp = 1; }
+    route.push(pos); loadGrid().then(renderRoute);
+  };
+  $("spot-back").onclick = renderSpots;
+}
 async function showFishing(lat, lon) {
   const [g, o] = await Promise.all([loadGrid(), loadOcean()]);
   const d = depthAt(g, lat, lon), t = oceanAt(o, lat, lon);
@@ -269,6 +327,9 @@ async function showFishing(lat, lon) {
   const jig = d && depth >= 30 && depth <= 300 && d.slope >= 6;
   html += '<div style="margin-top:8px"><span class="pill">' + (jig ? "Jigging zone: yes" : "Jigging zone: no") + "</span> " +
     '<span class="muted">30–300 m on sloping seabed (derived from GEBCO, not verified)</span></div>';
+  if (mode === "jigging") {
+    $("info").innerHTML = html + '<div class="warn">' + DISCLAIMER + "</div>"; return;
+  }
   if (t && t.score != null) {
     // Factor scores below are the exact values the model combined (exported from the server grids).
     const rows = [["Sea temp", t.sst == null ? "–" : t.sst.toFixed(1) + " °C", t.fSst, w.sst],
@@ -485,14 +546,16 @@ const LAYERS = [
   { id: "fads", name: "FADs (Ministry of Fisheries)", ids: ["fads", "fad-labels"] },
   { id: "features", name: "Drop-offs & seamounts", ids: ["features"] },
   { id: "jig", name: "Jigging zones 30–300 m", ids: ["jigging_zones"], opacity: "raster-opacity" },
-  { id: "tuna", name: "Tuna habitat (prediction)", ids: ["tuna_habitat"], opacity: "raster-opacity" },
+  { id: "spots", name: "Best tuna spots today (top 10)", ids: ["spot-areas", "spot-line", "spot-dots", "spot-labels"] },
+  { id: "tuna", name: "Tuna habitat, whole map (prediction)", ids: ["tuna_habitat"], opacity: "raster-opacity" },
   { id: "sst", name: "Sea temperature", ids: ["sst"], opacity: "raster-opacity" },
   { id: "front", name: "Temperature fronts", ids: ["sst_front"] },
   { id: "chl", name: "Chlorophyll", ids: ["chl"], opacity: "raster-opacity" },
   { id: "slope", name: "Seafloor slope", ids: ["slope"], opacity: "raster-opacity" },
 ];
 const PRESETS = {
-  fishing: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1, features: 1, jig: 1, tuna: 1 },
+  tuna: { s2: 1, hires: 1, contours: 1, fads: 1, spots: 1 },
+  jigging: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1, features: 1, jig: 1 },
   captain: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1 },
   weather: { s2: 1, hires: 1, sst: 1, front: 1 },
 };
@@ -519,6 +582,7 @@ function buildLayersPanel() {
     contours: "10 – 5000 m from GEBCO · mostly estimated depths, not survey lines",
     fads: "Official lists: " + Object.values(fadData.lists).map((l) => l.title.replace(/\s+/g, " ")).join(" · ") + ". Yellow = in place, grey ring = reported broken away",
     features: "Computed candidates, not verified", jig: "Derived from GEBCO depth and slope",
+    spots: "Ranked peaks of the habitat model, " + day(pr.tuna_habitat.valid_for) + " · conditions, not fish",
     tuna: "Prediction for " + day(pr.tuna_habitat.valid_for) + " · not validated yet",
     sst: "Observed " + day(oc.sst.observed_at) + " · MUR L4 ~1 km", front: "Derived from SST " + day(oc.sst_front.observed_at),
     chl: "Observed (gap-filled) " + day(oc.chl.observed_at) + " · ~9 km", slope: "Derived from GEBCO",
@@ -533,7 +597,7 @@ function buildLayersPanel() {
 }
 function setMode(m) {
   mode = m;
-  ["fishing", "captain", "weather"].forEach((k) => $("tab-" + k).setAttribute("aria-selected", String(k === m)));
+  ["tuna", "jigging", "captain", "weather"].forEach((k) => $("tab-" + k).setAttribute("aria-selected", String(k === m)));
   LAYERS.forEach((l) => setLayer(l.id, !!PRESETS[m][l.id]));
   if (map.getLayer("route-line")) ["route-line", "route-pts"].forEach((lid) => map.setLayoutProperty(lid, "visibility", m === "captain" ? "visible" : "none"));
   if (m !== "captain") document.body.classList.remove("night");
@@ -541,6 +605,13 @@ function setMode(m) {
   intro();
 }
 
+function rankImage(text) {
+  const ratio = 2, c = document.createElement("canvas"), ctx = c.getContext("2d"), sz = 20 * ratio;
+  c.width = sz; c.height = sz;
+  ctx.font = "700 " + 13 * ratio + "px 'Source Sans 3', sans-serif"; ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, sz / 2, sz / 2 + ratio);
+  return { image: ctx.getImageData(0, 0, sz, sz), ratio };
+}
 function labelImage(text) {
   const ratio = 2, c = document.createElement("canvas"), ctx = c.getContext("2d");
   ctx.font = "600 " + 10 * ratio + "px 'Source Sans 3', sans-serif";
@@ -554,9 +625,10 @@ function labelImage(text) {
 
 (async () => {
   manifest = await (await fetch("data/manifest.json")).json();
-  const [contours, features, fads] = await Promise.all([fetch("data/contours.json").then((r) => r.json()),
-    fetch("data/features.json").then((r) => r.json()), fetch("data/fads.json").then((r) => r.json())]);
-  fadData = fads;
+  const [contours, features, fads, spots] = await Promise.all([fetch("data/contours.json").then((r) => r.json()),
+    fetch("data/features.json").then((r) => r.json()), fetch("data/fads.json").then((r) => r.json()),
+    fetch("data/tuna_spots.json").then((r) => r.json())]);
+  fadData = fads; spotData = spots;
   const m = manifest.meta, B = [70, -3.5, 77.5, 8.5];
   $("attrib").textContent = m.imagery_attribution + " · Close-ups: Esri, Maxar, Earthstar Geographics · GEBCO 2026 · SST: NASA JPL MUR · Chlorophyll: NOAA STAR/CoastWatch · MapLibre";
   const raster = (id, maxzoom, extra = {}) => ({ type: "raster", tiles: ["pack://" + id + "/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom, bounds: B, ...extra });
@@ -578,6 +650,7 @@ function labelImage(text) {
         tap: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
         me: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
         fads: { type: "geojson", data: fads },
+        spots: { type: "geojson", data: spots },
       },
       layers: [
         { id: "bg", type: "background", paint: { "background-color": "#06121f" } },
@@ -596,6 +669,15 @@ function labelImage(text) {
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],
                    "circle-color": ["match", ["get", "kind"], "drop_off", "#ff9800", "seamount", "#e040fb", "knoll", "#7c4dff", "#00e5ff"],
                    "circle-stroke-color": "#06121f", "circle-stroke-width": 1.5 } },
+        { id: "spot-areas", type: "fill", source: "spots", filter: ["==", ["get", "kind"], "area"], layout: { visibility: "none" },
+          paint: { "fill-color": "#ff6f00", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0.3, 10, 0.12, 13, 0.04] } },
+        { id: "spot-line", type: "line", source: "spots", filter: ["==", ["get", "kind"], "area"], layout: { visibility: "none" },
+          paint: { "line-color": "#ffab40", "line-width": 1.5 } },
+        { id: "spot-dots", type: "circle", source: "spots", filter: ["==", ["get", "kind"], "spot"], layout: { visibility: "none" },
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 9, 12, 13], "circle-color": "#ff6f00",
+                   "circle-stroke-color": "#fff", "circle-stroke-width": 2 } },
+        { id: "spot-labels", type: "symbol", source: "spots", filter: ["==", ["get", "kind"], "spot"],
+          layout: { visibility: "none", "icon-image": ["concat", "spot-", ["to-string", ["get", "rank"]]], "icon-allow-overlap": true, "icon-ignore-placement": true } },
         { id: "fads", type: "circle", source: "fads",
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4, 12, 8],
                    "circle-color": ["match", ["get", "status"], "in_place", "#ffd54f", "rgba(0,0,0,0)"],
@@ -621,8 +703,11 @@ function labelImage(text) {
     const id = "fad-" + f.properties.list + "-" + f.properties.row;  // codes are not unique in the official list
     const { image, ratio } = labelImage(f.properties.code); if (!map.hasImage(id)) map.addImage(id, image, { pixelRatio: ratio });
   }
-  map.on("load", () => { $("loading").remove(); buildLayersPanel(); setMode("fishing"); });
-  ["fishing", "captain", "weather"].forEach((k) => { $("tab-" + k).onclick = () => setMode(k); });
+  for (const f of spots.features.filter((x) => x.properties.kind === "spot")) {
+    const { image, ratio } = rankImage(String(f.properties.rank)); map.addImage("spot-" + f.properties.rank, image, { pixelRatio: ratio });
+  }
+  map.on("load", () => { $("loading").remove(); buildLayersPanel(); setMode("tuna"); });
+  ["tuna", "jigging", "captain", "weather"].forEach((k) => { $("tab-" + k).onclick = () => setMode(k); });
   $("info-toggle").onclick = () => { const min = $("info").classList.toggle("min"); $("info-toggle").textContent = min ? "▴" : "▾"; };
   new MutationObserver(() => { $("info").classList.remove("min"); $("info-toggle").textContent = "▾"; })
     .observe($("info"), { childList: true });
@@ -644,6 +729,10 @@ function labelImage(text) {
         if (mode === "captain" && route.length) { route.push(fpos); await loadGrid(); renderRoute(); return; }  // snap waypoint to the FAD
         lastFadPos = fpos; showFad(fh[0].properties); return;
       }
+    }
+    if (state.spots && mode !== "captain") {
+      const sh = map.queryRenderedFeatures([[e.point.x - 12, e.point.y - 12], [e.point.x + 12, e.point.y + 12]], { layers: ["spot-dots"] });
+      if (sh.length) { showSpot(Number(sh[0].properties.rank), false); return; }
     }
     if (mode === "captain") { route.push(ll); await loadGrid(); renderRoute(); return; }
     map.getSource("tap").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: ll } }] });

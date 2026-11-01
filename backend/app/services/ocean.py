@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
-from app.ingestion.fishing import FACTORS, WEIGHTS
+from app.ingestion.fishing import FACTORS, WEIGHTS, hotspots_geojson
 from app.models import FishingPrediction, OceanObservation
 from app.services.bathymetry import _LRU
 
@@ -159,3 +159,18 @@ async def point(db: AsyncSession, lat: float, lon: float) -> dict:
             "data_kind": "derived_analysis",
         }
     return out
+
+
+_hot: dict[uuid.UUID, dict] = {}
+
+
+async def hotspots(db: AsyncSession) -> dict | None:
+    _, pred = await latest(db)
+    p = pred.get("tuna_habitat")
+    if p is None:
+        return None
+    if p.id not in _hot:
+        g = await asyncio.to_thread(_load, p.id, p.grid_key)
+        _hot.clear()
+        _hot[p.id] = await asyncio.to_thread(hotspots_geojson, g)
+    return {**_hot[p.id], "valid_for": p.valid_for.isoformat(), "model_version": p.model_version}

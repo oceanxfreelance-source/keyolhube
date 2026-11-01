@@ -41,3 +41,11 @@ async def point(
     lon: Annotated[float, Query(ge=-180, le=180)],
 ) -> dict:
     return await svc.point(db, lat, lon)
+
+
+@router.get("/hotspots", summary="Ranked best tuna-habitat spots today (GeoJSON, prediction)")
+async def hotspots(db: DbSession) -> dict:
+    out = await svc.hotspots(db)
+    if out is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "tuna habitat prediction not available yet")
+    return out

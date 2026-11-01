@@ -184,6 +184,13 @@ def main(out_dir: str) -> None:
     gz = gzip.compress(blob, compresslevel=9)
     with open(os.path.join(data_dir, "ocean-gz.bin" if RAW else "ocean-gz.txt"), "wb") as fh:
         fh.write(gz if RAW else base64.b64encode(gz))
+    # Ranked best tuna spots today (same function the API serves).
+    from app.ingestion.fishing import hotspots_geojson
+
+    hot = hotspots_geojson({k: z[k] for k in z.files})
+    with open(os.path.join(data_dir, "tuna_spots.json"), "w") as fh:
+        json.dump(hot, fh, separators=(",", ":"))
+    print("tuna spots:", sum(f["properties"]["kind"] == "spot" for f in hot["features"]))
     th, tw = z["score"].shape
     manifest["ocean_grid"] = {
         "width": int(tw), "height": int(th), "west": float(z["west"]), "north": float(z["north"]),

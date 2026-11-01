@@ -117,3 +117,52 @@ async def test_ocean_tiles_and_style(client, ocean_ingested):
     assert ids.index("tuna_habitat") < ids.index("bathymetry-contours")  # contours stay on top
     meta = {m["slug"]: m for m in style["metadata"]["jigmap:layers"]}
     assert meta["tuna_habitat"]["mode"] == "fishing" and meta["sst"]["mode"] == "weather"
+
+
+def _grid(score, used=None, shore=None):
+    g = {"score": np.asarray(score, np.float32), "west": 73.0, "north": 5.0, "res": 0.01}
+    g["weight_used"] = np.ones_like(g["score"]) if used is None else np.asarray(used, np.float32)
+    if shore is not None:
+        g["shore_km"] = np.asarray(shore, np.float32)
+    return g
+
+
+def test_hotspots_pick_separated_peaks_in_rank_order():
+    from app.ingestion.fishing import hotspots
+
+    s = np.full((100, 100), 50, np.float32)
+    s[20:23, 20:23] = 90  # strong peak
+    s[25:28, 25:28] = 89  # too close to the first (~7 km) -> not a separate spot
+    s[70:73, 70:73] = 85  # far away -> second spot
+    h = hotspots(_grid(s))
+    assert [sp["rank"] for sp in h["spots"]] == [1, 2]
+    a, b = h["spots"]
+    assert a["score"] == 90 and (a["lat"], a["lon"]) == (4.785, 73.215)
+    assert b["score"] == 85 and (b["lat"], b["lon"]) == (4.285, 73.715)
+    assert h["mask"].sum() > 0 and not h["mask"][50, 50]
+
+
+def test_hotspots_single_pixel_spike_does_not_win():
+    from app.ingestion.fishing import hotspots
+
+    s = np.full((60, 60), 50, np.float32)
+    s[10, 10] = 100  # lone pixel: 3x3 mean is only ~55.6
+    s[40:43, 40:43] = 80
+    h = hotspots(_grid(s))
+    assert h["spots"][0]["lat"] == 4.585 and h["spots"][0]["score"] == 80
+
+
+def test_hotspots_rules_floor_weight_and_reach():
+    from app.ingestion.fishing import hotspots
+
+    flat = np.full((40, 40), 55, np.float32)  # a poor day: nothing reaches 60
+    assert hotspots(_grid(flat))["spots"] == []
+    s = np.full((40, 40), 50, np.float32)
+    s[5:8, 5:8] = 90
+    used = np.ones_like(s)
+    used[5:8, 5:8] = 0.5  # score rests on too little evidence
+    assert hotspots(_grid(s, used))["spots"] == []
+    shore = np.full_like(s, 150)  # too far from Maldivian reefs
+    assert hotspots(_grid(s, shore=shore))["spots"] == []
+    shore[:] = 20
+    assert len(hotspots(_grid(s, shore=shore))["spots"]) == 1

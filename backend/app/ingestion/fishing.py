@@ -134,6 +134,126 @@ def smooth_resample_log(src, sw, sn, sres, lats, lons) -> np.ndarray:
     return np.where(mask & (vals > -8), 10.0**vals, np.nan).astype(np.float32)
 
 
+HOTSPOT_TOP_PCT = 2.0  # only peaks in the best 2% of today's eligible ocean
+HOTSPOT_MIN_SCORE = 60.0  # and never below this, so a poor day shows no "best" spots
+HOTSPOT_MIN_WEIGHT = 0.7  # the score must rest on at least 70% of the model weight
+HOTSPOT_REACH_KM = 100.0  # within 100 km of Maldivian reefs (water shallower than 30 m)
+HOTSPOT_SEPARATION_KM = 20.0  # one spot per ~20 km
+HOTSPOT_RADIUS_KM = 8.0  # the area drawn around each peak
+HOTSPOT_MAX = 10
+
+
+def _nan_mean3(a: np.ndarray) -> np.ndarray:
+    ok = np.isfinite(a)
+    num = ndimage.uniform_filter(np.where(ok, a, 0).astype(np.float64), 3)
+    den = ndimage.uniform_filter(ok.astype(np.float64), 3)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(ok, num / den, np.nan)
+
+
+def hotspots(g: dict, max_spots: int = HOTSPOT_MAX) -> dict:
+    """The highest-scoring tuna-habitat spots of one prediction grid, ranked.
+
+    Reads only the stored model output. Each spot is a local peak of the score averaged over 3x3
+    cells (~3 km, so single-pixel spikes do not win), at least HOTSPOT_SEPARATION_KM from a
+    better spot, inside the top HOTSPOT_TOP_PCT of eligible water. Relative ranking ("best
+    conditions today"), not a probability of catching fish.
+    """
+    score = np.asarray(g["score"], np.float32)
+    res, w, n = float(g["res"]), float(g["west"]), float(g["north"])
+    used = np.asarray(g["weight_used"]) if "weight_used" in g else np.ones_like(score)
+    eligible = np.isfinite(score) & (used >= HOTSPOT_MIN_WEIGHT)
+    if "shore_km" in g:
+        eligible &= np.asarray(g["shore_km"]) <= HOTSPOT_REACH_KM
+    out = {
+        "threshold": None,
+        "rules": {
+            "top_pct": HOTSPOT_TOP_PCT,
+            "min_score": HOTSPOT_MIN_SCORE,
+            "min_weight_used": HOTSPOT_MIN_WEIGHT,
+            "reach_km_from_reefs": HOTSPOT_REACH_KM if "shore_km" in g else None,
+            "separation_km": HOTSPOT_SEPARATION_KM,
+            "radius_km": HOTSPOT_RADIUS_KM,
+        },
+        "spots": [],
+        "mask": np.zeros(score.shape, bool),
+    }
+    if not eligible.any():
+        return out
+    sm = np.where(eligible, _nan_mean3(np.where(eligible, score, np.nan)), np.nan)
+    thr = max(float(np.percentile(sm[eligible], 100 - HOTSPOT_TOP_PCT)), HOTSPOT_MIN_SCORE)
+    out["threshold"] = round(thr, 1)
+    lat_c = n - (score.shape[0] / 2) * res
+    ky = res * analysis.M_PER_DEG_LAT / 1000
+    kx = res * analysis.M_PER_DEG_LON_EQ * np.cos(np.radians(lat_c)) / 1000
+    cand = np.argwhere(np.nan_to_num(sm, nan=-1) >= thr)
+    order = np.lexsort((-used[cand[:, 0], cand[:, 1]], -sm[cand[:, 0], cand[:, 1]]))
+    chosen: list[tuple[int, int]] = []
+    for r, c in cand[order]:
+        if all(np.hypot((r - r2) * ky, (c - c2) * kx) >= HOTSPOT_SEPARATION_KM for r2, c2 in chosen):
+            chosen.append((int(r), int(c)))
+            if len(chosen) == max_spots:
+                break
+    ry, rx = int(np.ceil(HOTSPOT_RADIUS_KM / ky)), int(np.ceil(HOTSPOT_RADIUS_KM / kx))
+    mask = out["mask"]
+    for rank, (r, c) in enumerate(chosen, start=1):
+        r0, r1 = max(r - ry, 0), min(r + ry + 1, score.shape[0])
+        c0, c1 = max(c - rx, 0), min(c + rx + 1, score.shape[1])
+        yy, xx = np.mgrid[r0:r1, c0:c1]
+        disk = np.hypot((yy - r) * ky, (xx - c) * kx) <= HOTSPOT_RADIUS_KM
+        mask[r0:r1, c0:c1] |= disk & (np.nan_to_num(sm[r0:r1, c0:c1], nan=-1) >= thr)
+        spot = {
+            "rank": rank,
+            "lat": round(float(n - (r + 0.5) * res), 5),
+            "lon": round(float(w + (c + 0.5) * res), 5),
+            "score": round(float(sm[r, c]), 1),
+            "weight_used": round(float(used[r, c]), 2),
+            "factors": {},
+        }
+        for k in ("sst", "front", "chl", "structure"):
+            f = g.get(f"f_{k}")
+            if f is not None and np.isfinite(f[r, c]):
+                spot["factors"][k] = round(float(f[r, c]), 3)
+        if "shore_km" in g:
+            spot["reef_km"] = round(float(g["shore_km"][r, c]), 1)
+        out["spots"].append(spot)
+    return out
+
+
+def hotspots_geojson(g: dict, max_spots: int = HOTSPOT_MAX) -> dict:
+    """hotspots() as GeoJSON: ranked peak points plus the drawn areas (polygons around each peak)."""
+    from rasterio import features
+    from rasterio.transform import from_origin
+
+    h = hotspots(g, max_spots)
+    res = float(g["res"])
+    tf = from_origin(float(g["west"]), float(g["north"]), res, res)
+    feats = [
+        {
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [s["lon"], s["lat"]]},
+            "properties": {
+                "kind": "spot",
+                **{k: v for k, v in s.items() if k != "factors"},
+                "factors": s["factors"],
+            },
+        }
+        for s in h["spots"]
+    ]
+    if h["mask"].any():
+        for geom, _ in features.shapes(h["mask"].astype(np.uint8), mask=h["mask"], transform=tf):
+            feats.append({"type": "Feature", "geometry": geom, "properties": {"kind": "area"}})
+    return {
+        "type": "FeatureCollection",
+        "features": feats,
+        "threshold": h["threshold"],
+        "rules": h["rules"],
+        "data_kind": "prediction",
+        "statement": "Ranked spots with the best tuna-habitat conditions in today's model. Satellites cannot "
+        "see tuna: these are conditions, not fish locations. Not validated against catches yet.",
+    }
+
+
 def load_npz(key: str) -> tuple[np.ndarray, float, float, float]:
     z = np.load(io.BytesIO(storage.get_bytes(key)))
     return z["data"], float(z["west"]), float(z["north"]), float(z["res"])
@@ -183,6 +303,14 @@ def build(session) -> list[uuid.UUID]:
         else np.full(sst.shape, np.inf, np.float32)
     )
 
+    # Distance (km) to Maldivian reefs/islands (grid water shallower than 30 m), for "within reach".
+    reef = np.isfinite(depth_elev) & (depth_elev > -30)
+    shore_km = (
+        ndimage.distance_transform_edt(~reef, sampling=(km_y, km_x)).astype(np.float32)
+        if reef.any()
+        else np.full(sst.shape, np.inf, np.float32)
+    )
+
     factors = {
         "sst": np.where(np.isfinite(sst), sst_score(sst), np.nan),
         "front": np.where(np.isfinite(sst), front_score(front), np.nan),
@@ -212,6 +340,7 @@ def build(session) -> list[uuid.UUID]:
         f_chl=factors["chl"].astype(np.float32),
         f_structure=factors["structure"].astype(np.float32),
         chl_obs=chl_obs,
+        shore_km=shore_km,
         west=w,
         north=n,
         res=res,

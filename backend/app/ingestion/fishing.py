@@ -155,13 +155,15 @@ def build(session) -> list[uuid.UUID]:
     depth_elev = resample_to(g.elevation, g.west, g.north, g.res_deg, lats, lons)
     if "chl" in obs:
         chl_src, cw, cn, cres = load_npz(obs["chl"].grid_key)
-        chl = smooth_resample_log(chl_src, cw, cn, cres, lats, lons)
+        chl_obs = smooth_resample_log(chl_src, cw, cn, cres, lats, lons)  # as observed (for display)
+        chl = chl_obs
         # Optically shallow water: seabed reflection inflates satellite chlorophyll near reefs.
         shallow = np.isfinite(depth_elev) & (depth_elev > -30)
         near_shallow = ndimage.binary_dilation(shallow, iterations=4)  # ~4 km at 0.01 deg
         chl = np.where(near_shallow, np.nan, chl)
     else:
         chl = np.full_like(sst, np.nan)
+        chl_obs = chl
 
     # Distance (km) to the nearest structure candidate, on the SST grid.
     mask = np.zeros(sst.shape, bool)
@@ -204,6 +206,12 @@ def build(session) -> list[uuid.UUID]:
         chl=chl,
         dist_km=dist,
         weight_used=used,
+        # The exact factor scores combined into `score`, so explanations show what was really used.
+        f_sst=factors["sst"].astype(np.float32),
+        f_front=factors["front"].astype(np.float32),
+        f_chl=factors["chl"].astype(np.float32),
+        f_structure=factors["structure"].astype(np.float32),
+        chl_obs=chl_obs,
         west=w,
         north=n,
         res=res,

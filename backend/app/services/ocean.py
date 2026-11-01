@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
-from app.ingestion.fishing import FACTORS, WEIGHTS, chl_score, sst_score, structure_score
+from app.ingestion.fishing import FACTORS, WEIGHTS
 from app.models import FishingPrediction, OceanObservation
 from app.services.bathymetry import _LRU
 
@@ -111,33 +111,27 @@ async def point(db: AsyncSession, lat: float, lon: float) -> dict:
         score = _sample(g, "score", lat, lon)
         sst, chl = _sample(g, "sst", lat, lon), _sample(g, "chl", lat, lon)
         dist = _sample(g, "dist_km", lat, lon)
-        from app.ingestion.fishing import front_score
-
-        fscore_grid = g.get("_front_score")
-        if fscore_grid is None:
-            g["_front_score"] = fscore_grid = front_score(g["front"])
-        g2 = {**g, "fs": fscore_grid}
+        # Factor scores are read from the grids the model actually combined (never recomputed here).
         factors = {
-            "sst": {
-                "value": sst,
-                "units": "degC",
-                "score": float(sst_score(sst)) if sst is not None else None,
-            },
+            "sst": {"value": sst, "units": "degC", "score": _sample(g, "f_sst", lat, lon)},
             "front": {
                 "value": _sample(g, "front", lat, lon),
-                "units": "degC/km",
-                "score": _sample(g2, "fs", lat, lon),
+                "units": "degC/km at this point",
+                "score": _sample(g, "f_front", lat, lon),
+                "note": "The score uses the strongest front within ~4 km, not only this point.",
             },
             "chl": {
                 "value": chl,
                 "units": "mg m-3",
-                "score": float(chl_score(chl)) if chl is not None else None,
-                "note": None if chl is not None else "Not used here (near shallow water or no data).",
+                "score": _sample(g, "f_chl", lat, lon),
+                "note": None
+                if chl is not None
+                else "Not used here: within ~4 km of water shallower than 30 m.",
             },
             "structure": {
                 "value": dist,
                 "units": "km to nearest candidate",
-                "score": float(structure_score(dist)) if dist is not None else None,
+                "score": _sample(g, "f_structure", lat, lon),
             },
         }
         for k, f in factors.items():

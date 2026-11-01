@@ -28,7 +28,8 @@ from app.core import storage  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
 from app.ingestion.analysis import TID_LABELS  # noqa: E402
 
-PACK_TARGET = 6_000_000  # bytes per pack file (lazy-loaded by the page)
+PACK_TARGET = 6_000_000
+RAW = "--raw" in sys.argv  # website build: plain binary files; artifact build: base64 text  # bytes per pack file (lazy-loaded by the page)
 HERE = os.path.dirname(__file__)
 
 
@@ -51,9 +52,9 @@ def build_packs(out_dir: str, layer: str, prefix: str, ext: str) -> tuple[dict, 
     def flush():
         nonlocal buf, n
         if buf:
-            name = f"{layer}_{n}.txt"
+            name = f"{layer}_{n}.{'bin' if RAW else 'txt'}"
             with open(os.path.join(out_dir, name), "wb") as fh:
-                fh.write(base64.b64encode(bytes(buf)))  # the artifact host serves text, not raw binary
+                fh.write(bytes(buf) if RAW else base64.b64encode(bytes(buf)))  # artifact host serves text only
             packs.append(name)
             buf, n = bytearray(), n + 1
 
@@ -90,13 +91,21 @@ def main(out_dir: str) -> None:
             "select model, tiles_prefix, valid_for, grid_key, params, validation, model_version from "
             "fishing_predictions where is_latest"
         ).fetchall()
+        fad_lists = c.execute(
+            "select id, list_type, title, source_url, sha256 from fad_lists where is_latest"
+        ).fetchall()
+        fad_rows = c.execute(
+            "select l.list_type, p.row_no, p.code, p.status, p.lat, p.lon, p.raw_lat, p.raw_lon, p.deployed_on, "
+            "p.grid_depth_m, p.notes from fad_positions p join fad_lists l on l.id = p.list_id where l.is_latest "
+            "order by l.list_type, p.row_no"
+        ).fetchall()
         feats = c.execute(
             "select kind, depth_m, relief_m, max_slope_deg, depth_range_m, source_tid, explanation, "
             "ST_X(geom), ST_Y(geom) from bathymetry_features where dataset_id=%s",
             (ds[0],),
         ).fetchall()
 
-    manifest = {"packs": {}, "index": {}}
+    manifest = {"packs": {}, "index": {}, "encoding": "raw" if RAW else "base64"}
     for layer, prefix, ext in (
         ("s2", s2[0], ".webp"),
         ("depth", ds[1] + "/depth", ".png"),
@@ -122,6 +131,21 @@ def main(out_dir: str) -> None:
             for k, d, r, s, dr, t, e, x, y in feats
         ]}, fh, separators=(",", ":"))
 
+    with open(os.path.join(data_dir, "fads.json"), "w") as fh:
+        json.dump({
+            "type": "FeatureCollection",
+            "lists": {lt: {"title": t, "url": u, "sha256": h} for _i, lt, t, u, h in fad_lists},
+            "features": [
+                {"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                 # exact coordinates also in properties: rendered geometry is quantised by the map engine
+                 "properties": {"list": lt, "row": rn, "code": code, "status": st, "lat": lat, "lon": lon,
+                                "raw_lat": rla, "raw_lon": rlo,
+                                "deployed": dep.isoformat() if dep else None, "depth": dm_, "notes": notes}}
+                for lt, rn, code, st, lat, lon, rla, rlo, dep, dm_, notes in fad_rows
+            ],
+        }, fh, separators=(",", ":"), ensure_ascii=False)
+    print("fads", len(fad_rows))
+
     # Depth grid for tap-for-depth: int16 elevation then uint8 TID, gzip.
     tmp = os.path.join(out_dir, ".grid")
     os.makedirs(tmp, exist_ok=True)
@@ -133,8 +157,9 @@ def main(out_dir: str) -> None:
             arrays[name] = src.read(1)
             transform = src.transform
     elev, tid = arrays["elevation"].astype("<i2"), arrays["tid"].astype(np.uint8)
-    with open(os.path.join(data_dir, "grid-gz.txt"), "wb") as fh:
-        fh.write(base64.b64encode(gzip.compress(elev.tobytes() + tid.tobytes(), compresslevel=9)))
+    gz = gzip.compress(elev.tobytes() + tid.tobytes(), compresslevel=9)
+    with open(os.path.join(data_dir, "grid-gz.bin" if RAW else "grid-gz.txt"), "wb") as fh:
+        fh.write(gz if RAW else base64.b64encode(gz))
     for f in os.listdir(tmp):
         os.remove(os.path.join(tmp, f))
     os.rmdir(tmp)
@@ -150,15 +175,21 @@ def main(out_dir: str) -> None:
     parts = {
         "score": q(z["score"], 1, 65535), "sst": q(z["sst"], 100, 65535), "front": q(z["front"], 10000, 65535),
         "chl": q(z["chl"], 1000, 65535), "dist_km": q(np.minimum(z["dist_km"], 6000), 10, 65535),
+        # exact factor scores the model combined (0-1 -> x10000) and chlorophyll as observed
+        "f_sst": q(z["f_sst"], 10000, 65535), "f_front": q(z["f_front"], 10000, 65535),
+        "f_chl": q(z["f_chl"], 10000, 65535), "f_structure": q(z["f_structure"], 10000, 65535),
+        "chl_obs": q(z["chl_obs"], 1000, 65535),
     }
     blob = b"".join(parts[k].tobytes() for k in parts)
-    with open(os.path.join(data_dir, "ocean-gz.txt"), "wb") as fh:
-        fh.write(base64.b64encode(gzip.compress(blob, compresslevel=9)))
+    gz = gzip.compress(blob, compresslevel=9)
+    with open(os.path.join(data_dir, "ocean-gz.bin" if RAW else "ocean-gz.txt"), "wb") as fh:
+        fh.write(gz if RAW else base64.b64encode(gz))
     th, tw = z["score"].shape
     manifest["ocean_grid"] = {
         "width": int(tw), "height": int(th), "west": float(z["west"]), "north": float(z["north"]),
-        "res": float(z["res"]), "order": list(parts), "scale": {"score": 1, "sst": 100, "front": 10000, "chl": 1000,
-                                                              "dist_km": 10}, "nan": 65535,
+        "res": float(z["res"]), "order": list(parts), "nan": 65535,
+        "scale": {"score": 1, "sst": 100, "front": 10000, "chl": 1000, "dist_km": 10, "f_sst": 10000,
+                  "f_front": 10000, "f_chl": 10000, "f_structure": 10000, "chl_obs": 1000},
     }
     manifest["ocean"] = {
         v: {"observed_at": t.isoformat(), "product": prod, "level": lvl, "kind": kind, "units": u}
@@ -180,6 +211,8 @@ def main(out_dir: str) -> None:
         "imagery_scenes": s2[4], "imagery_bounds": s2[5],
         "gebco_citation": ds[4], "gebco_released": ds[5].date().isoformat() if ds[5] else None,
         "gebco_res_m": ds[6], "contours": len(contours), "features": len(feats),
+        # share of ocean cells whose depth comes from direct measurement (TID 10-17), computed from the data
+        "gebco_measured_pct": round(100 * float(((tid >= 10) & (tid <= 17)).sum()) / float((tid != 0).sum()), 1),
     }
     with open(os.path.join(data_dir, "manifest.json"), "w") as fh:
         json.dump(manifest, fh, separators=(",", ":"))
@@ -197,4 +230,5 @@ def main(out_dir: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "preview_build")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    main(args[0] if args else "preview_build")

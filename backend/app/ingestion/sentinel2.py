@@ -66,7 +66,7 @@ GDAL_ENV = {
     "GDAL_HTTP_RETRY_DELAY": "2",
     "VSI_CACHE": "TRUE",
 }
-ATTRIBUTION = "Contains modified Copernicus Sentinel data {years}, processed by JigMap"
+ATTRIBUTION = "Contains modified Copernicus Sentinel data {years}, processed by Keyolhube"
 
 
 @dataclass(frozen=True)
@@ -91,12 +91,15 @@ def clear_mask(scl: np.ndarray, buffer_px: int) -> np.ndarray:
     return np.isin(scl, SCL_CLEAR) & ~cloudy
 
 
-# Reef-enhancing display curve, tuned on real Maldives scenes: lifts the very low reflectance of
-# water so submerged reefs, coral heads and lagoon floors (~0-25 m) become visible, while
-# compressing bright sand and land. One curve for land and water, so there are no blend halos.
+# Two-part display curve, tuned on real Maldives scenes.
+# Below the knee (water, reefs, lagoon floors) reflectance is lifted strongly so submerged reefs
+# and coral heads are visible; above it (sand, vegetation, buildings) the mapping is gentle so
+# islands keep natural, non-saturated colours. Continuous at the knee: no blend halos.
 CURVE_LO = (0.011, 0.010, 0.016)  # R, G, B reflectance mapped to 0 (just below deep-water level)
-CURVE_TOP = (0.30, 0.30, 0.30)  # reflectance mapped to 255
-CURVE_GAMMA = 0.45
+CURVE_KNEE = (0.05, 0.07, 0.08)  # end of the underwater range
+CURVE_KNEE_VALUE = 130  # display value at the knee
+CURVE_TOP = 0.50  # reflectance mapped to 255
+CURVE_GAMMA = 0.6  # underwater lift
 
 
 def nan_percentile(a: np.ndarray, q: float, axis: int = 0) -> np.ndarray:
@@ -137,15 +140,18 @@ def composite(
 
 def render(comp: np.ndarray, has_data: np.ndarray, sharpen: bool = True) -> tuple[np.ndarray, np.ndarray]:
     """Reflectance composite -> display RGB (HxWx3 uint8) and alpha."""
+    c = np.nan_to_num(comp, nan=0)
     lo = np.array(CURVE_LO, np.float32)[:, None, None]
-    top = np.array(CURVE_TOP, np.float32)[:, None, None]
-    out = 255 * np.clip((np.nan_to_num(comp, nan=0) - lo) / (top - lo), 0, 1) ** CURVE_GAMMA
+    knee = np.array(CURVE_KNEE, np.float32)[:, None, None]
+    water = CURVE_KNEE_VALUE * np.clip((c - lo) / (knee - lo), 0, 1) ** CURVE_GAMMA
+    land = CURVE_KNEE_VALUE + (255 - CURVE_KNEE_VALUE) * np.clip((c - knee) / (CURVE_TOP - knee), 0, 1) ** 0.9
+    out = np.where(c <= knee, water, land)
     rgb = np.moveaxis(out.clip(0, 255).astype(np.uint8), 0, -1)
     if sharpen:
         from PIL import ImageFilter
 
         rgb = np.asarray(
-            Image.fromarray(rgb).filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
+            Image.fromarray(rgb).filter(ImageFilter.UnsharpMask(radius=1.0, percent=40, threshold=2))
         )
     alpha = np.where(has_data, 255, 0).astype(np.uint8)
     return rgb, alpha

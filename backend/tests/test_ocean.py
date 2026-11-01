@@ -89,6 +89,15 @@ async def test_point_explains_the_tuna_score(client, ocean_ingested):
     assert 28 < r["observations"]["sst"]["value"] < 32
     if not t["excluded"]:
         assert 0 <= t["score"] <= 100
+        # The shown score must equal the weighted mean of the shown factor scores (renormalised
+        # over the factors actually used), so the explanation can never disagree with the number.
+        used = {k: f for k, f in t["factors"].items() if f["score"] is not None}
+        expect = (
+            100
+            * sum(f["weight"] * f["score"] for f in used.values())
+            / sum(f["weight"] for f in used.values())
+        )
+        assert abs(t["score"] - expect) <= 0.5
     lagoon = (await client.get("/api/v1/ocean/point", params={"lat": 4.30, "lon": 73.42})).json()
     assert lagoon["tuna_habitat"]["excluded"] in (True, False)
 

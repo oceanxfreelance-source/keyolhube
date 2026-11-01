@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JigMap Maldives preview</title>
+<title>Keyolhube</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
@@ -51,7 +51,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
        text-transform: uppercase; font-size: 14px; padding: 8px 14px; border-radius: 9px; cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--accent); color: var(--navy); }
 .bottom { position: absolute; left: 10px; right: 10px; bottom: 8px; display: grid; gap: 6px; }
-.panel { border-radius: 16px; padding: 12px 14px; max-width: 580px; max-height: 46vh; overflow: auto; }
+.panel { border-radius: 16px; padding: 12px 14px; max-width: 580px; max-height: 36vh; overflow: auto; }
 .label { font-family: var(--display); font-weight: 600; letter-spacing: .08em; font-size: 12px; color: var(--muted); text-transform: uppercase; }
 .big { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .coords { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
@@ -85,6 +85,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .row input[type=number] { width: 64px; background: var(--navy); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; font: inherit; }
 .nc { display: grid; gap: 4px; margin-top: 8px; }
 .nc div { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+.panelwrap { position: relative; max-width: 580px; }
+.hide { position: absolute; top: 6px; right: 8px; z-index: 1; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line);
+        background: var(--panel); color: var(--ink); cursor: pointer; font-size: 14px; }
+.panel.min { max-height: 34px; overflow: hidden; }
+.gpsbar { padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+.gpsbar .st { font-family: var(--display); font-weight: 700; letter-spacing: .05em; font-size: 12.5px; width: 100%; }
+.gpsbar .pos { font-variant-numeric: tabular-nums; font-size: 14.5px; font-weight: 600; }
+.gpsbar .nums { display: flex; gap: 10px; flex-wrap: wrap; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.gpsbar .nums b { color: var(--ink); font-weight: 600; }
+.st.good { color: var(--good); } .st.fair { color: var(--warn); } .st.lost { color: var(--alert); }
+.nav { margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); display: grid; gap: 2px; }
 .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
 @media (max-width: 420px) { .big { font-size: 26px; } .tab { padding: 8px 10px; font-size: 13px; } .brand span { display: none; } }
@@ -95,7 +106,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 <div class="top">
   <div class="toprow">
-    <div class="brand chip"><b>JigMap Maldives</b><span>Preview · not for navigation</span></div>
+    <div class="brand chip"><b>Keyolhube</b><span>Maldives · not for navigation</span></div>
     <div class="spacer"></div>
     <button class="btn" id="btn-layers" title="Map layers" aria-label="Map layers"><svg viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5Zm-7.6 8.2L2 12.4l10 5 10-5-2.4-1.2L12 15 4.4 11.2Zm0 4L2 16.4l10 5 10-5-2.4-1.2L12 19l-7.6-3.8Z"/></svg></button>
     <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
@@ -110,7 +121,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <div class="layers panel" id="layers" aria-label="Map layers"></div>
 
 <div class="bottom">
-  <div class="panel" id="info" aria-live="polite"></div>
+  <div class="panel gpsbar" id="gpsbar" hidden></div>
+  <div class="panelwrap"><button class="hide" id="info-toggle" aria-label="Minimise panel" title="Minimise panel">▾</button>
+  <div class="panel" id="info" aria-live="polite"></div></div>
   <div class="attrib" id="attrib"></div>
 </div>
 <div class="loading muted" id="loading">Loading map…</div>
@@ -121,7 +134,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 const $ = (id) => document.getElementById(id);
 const NM = 1852;
 let manifest, map, grid = null, gridP = null, ogrid = null, ogridP = null;
-let mode = "fishing", lastTap = null;
+let mode = "fishing", lastTap = null, fadData = null;
 const packCache = {};
 
 // ---------- helpers ----------
@@ -150,7 +163,9 @@ function b64ToBuf(b64) {
   return out.buffer;
 }
 async function gunzipText(url) {
-  const gz = b64ToBuf(await (await fetch(url)).text());
+  if (manifest.encoding === "raw") url = url.replace("-gz.txt", "-gz.bin");
+  const res = await fetch(url);
+  const gz = manifest.encoding === "raw" ? await res.arrayBuffer() : b64ToBuf(await res.text());
   return new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
 }
 
@@ -160,7 +175,8 @@ maplibregl.addProtocol("pack", async (params) => {
   const idx = manifest.index[layer], hit = idx && idx[z + "/" + x + "/" + y];
   if (!hit) throw new Error("no tile");
   const key = layer + hit[0];
-  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][hit[0]]).then((r) => r.text()).then(b64ToBuf);
+  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][hit[0]])
+    .then((r) => (manifest.encoding === "raw" ? r.arrayBuffer() : r.text().then(b64ToBuf)));
   const buf = await packCache[key];
   return { data: buf.slice(hit[1], hit[1] + hit[2]) };
 });
@@ -199,12 +215,9 @@ function oceanAt(o, lat, lon) {
   const c = Math.floor((lon - o.west) / o.res), r = Math.floor((o.north - lat) / o.res);
   if (r < 0 || c < 0 || r >= o.height || c >= o.width) return null;
   const i = r * o.width + c, v = (k) => (o[k][i] === o.nan ? null : o[k][i] / o.scale[k]);
-  return { score: v("score"), sst: v("sst"), front: v("front"), chl: v("chl"), dist: v("dist_km") };
+  return { score: v("score"), sst: v("sst"), front: v("front"), chl: v("chl"), dist: v("dist_km"),
+           fSst: v("f_sst"), fFront: v("f_front"), fChl: v("f_chl"), fStruct: v("f_structure"), chlObs: v("chl_obs") };
 }
-// Same factor functions as the server model (app/ingestion/fishing.py).
-const sstScore = (t) => t < 20 ? 0 : t < 24 ? (t - 20) / 4 : t <= 29.5 ? 1 : t <= 31.5 ? 1 - 0.4 * (t - 29.5) / 2 : 0.6;
-const chlScore = (c) => Math.exp(-0.5 * ((Math.log10(c) - Math.log10(0.2)) / 0.35) ** 2);
-const structScore = (d) => Math.exp(-d / 8);
 
 // ---------- panels ----------
 const DISCLAIMER = "Not for navigation. GEBCO depths are a regional ~460 m grid; reefs and channels can differ by tens of metres.";
@@ -213,7 +226,7 @@ function intro() {
   if (mode === "fishing") {
     $("info").innerHTML =
       '<div class="label">Fishing · tap the sea</div>' +
-      '<div style="font-size:15.5px;margin:4px 0">Tuna habitat (warm colours = better conditions) and jigging zones (green: 30–300 m on sloping seabed). Tap for the score and why.</div>' +
+      '<div style="font-size:15px;margin:4px 0">Warm colours = better tuna conditions · green = jigging depths · dots = drop-offs & seamounts. Tap anywhere for details.</div>' +
       '<div class="bar" style="background:linear-gradient(90deg,rgba(106,27,154,.4),#c2185b,#ff6f00,#ffd600,#ffff8d)"></div>' +
       '<div class="ticks"><span>67</span><span>73</span><span>80</span><span>87</span><span>100</span></div>' +
       '<div class="muted" style="margin-top:6px">Prediction for ' + day(pr.tuna_habitat.valid_for) + " from sea temperature (" + day(oc.sst.observed_at) +
@@ -257,16 +270,19 @@ async function showFishing(lat, lon) {
   html += '<div style="margin-top:8px"><span class="pill">' + (jig ? "Jigging zone: yes" : "Jigging zone: no") + "</span> " +
     '<span class="muted">30–300 m on sloping seabed (derived from GEBCO, not verified)</span></div>';
   if (t && t.score != null) {
-    const frontNear = t.front;
+    // Factor scores below are the exact values the model combined (exported from the server grids).
+    const rows = [["Sea temp", t.sst == null ? "–" : t.sst.toFixed(1) + " °C", t.fSst, w.sst],
+                  ["Fronts ≤4 km", t.front == null ? "–" : t.front.toFixed(3) + " °C/km here", t.fFront, w.front],
+                  ["Chlorophyll", t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³", t.fChl, w.chl],
+                  ["Structure", t.dist == null ? "–" : t.dist.toFixed(1) + " km away", t.fStruct, w.structure]];
+    const used = rows.filter((r) => r[2] != null);
+    const check = 100 * used.reduce((a, r) => a + r[2] * r[3], 0) / used.reduce((a, r) => a + r[3], 0);
     html += '<div class="label" style="margin-top:10px">Tuna habitat (prediction)</div>' +
       '<div class="row"><span class="score">' + Math.round(t.score) + '</span><span class="muted">/ 100 for ' + day(pr.tuna_habitat.valid_for) + "</span></div>" +
-      '<div class="factors">' +
-      factorRow("Sea temp", t.sst.toFixed(1) + " °C", sstScore(t.sst), w.sst) +
-      factorRow("Front here", (frontNear ?? 0).toFixed(3) + " °C/km", null === frontNear ? null : Math.min(1, frontNear / 0.06), w.front) +
-      factorRow("Chlorophyll", t.chl == null ? "–" : t.chl.toFixed(2) + " mg/m³", t.chl == null ? null : chlScore(t.chl), w.chl) +
-      factorRow("Structure", t.dist == null ? "–" : t.dist.toFixed(1) + " km", t.dist == null ? null : structScore(t.dist), w.structure) +
-      "</div>" +
-      '<div class="muted" style="margin-top:6px">Front factor in the score uses the strongest front within ~4 km (smoothed). Satellites cannot see tuna: this rates conditions, not fish locations. Not validated against catches yet.</div>';
+      '<div class="factors">' + rows.map((r) => factorRow(r[0], r[1], r[2], r[3])).join("") + "</div>" +
+      '<div class="muted" style="margin-top:6px">Score = weighted average of the factors used (' + check.toFixed(0) + ")" +
+      (used.length < 4 ? "; unused factors are left out, not guessed" : "") +
+      ". Rates conditions only: satellites cannot see tuna. Not yet checked against real catches.</div>";
   } else {
     html += '<div class="muted" style="margin-top:8px">No tuna-habitat score here (lagoon, reef or shallower than 50 m).</div>';
   }
@@ -278,10 +294,36 @@ async function showWeather(lat, lon) {
   $("info").innerHTML = '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
     '<div class="big">' + (t.sst == null ? "–" : t.sst.toFixed(2) + " °C") + '</div><div class="muted">Sea surface temperature · observed ' + day(oc.sst.observed_at) + " (satellite L4 analysis, ~1 km)</div>" +
     '<div class="nc"><div><span>Temperature front</span><span>' + (t.front == null ? "–" : t.front.toFixed(3) + " °C/km") + "</span></div>" +
-    "<div><span>Chlorophyll</span><span>" + (t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³ · " + day(oc.chl.observed_at)) + "</span></div>" +
+    "<div><span>Chlorophyll</span><span>" + (t.chlObs == null ? "no data" : t.chlObs.toFixed(2) + " mg/m³ · " + day(oc.chl.observed_at)) + "</span></div>" +
+    (t.chlObs != null && t.chl == null ? '<div class="muted">Near reefs, seabed reflection can make satellite chlorophyll read too high.</div>' : "") +
     "<div><span>Wind / waves / rain</span><span class=\"pill\">Not connected yet</span></div>" +
     "<div><span>Currents</span><span class=\"pill\">Not connected yet</span></div></div>";
 }
+function showFad(p) {
+  const lst = fadData.lists[p.list] || {}, notes = typeof p.notes === "string" ? JSON.parse(p.notes) : (p.notes || []);
+  const f = gps.fix, me = f ? [f.lon, f.lat] : null, pos = lastFadPos;
+  const away = p.status !== "in_place";
+  $("info").innerHTML =
+    '<div class="label">FAD ' + esc(p.code) + " · " + (p.list === "sport" ? "sport fishing" : "tuna, pole and line") + "</div>" +
+    '<div class="big" style="font-size:24px;color:' + (away ? "var(--alert)" : "var(--ink)") + '">' + (away ? "Reported broken away" : "In place") + "</div>" +
+    '<div class="muted">Status as shown in the Ministry list: ' + esc(lst.title || "") + "</div>" +
+    '<div class="nc"><div><span>Deployed</span><span>' + day(p.deployed) + "</span></div>" +
+    "<div><span>Position (as published)</span><span>" + esc(p.raw_lat) + " · " + esc(p.raw_lon) + "</span></div>" +
+    "<div><span>Position (read as)</span><span>" + dm(pos[1], true) + " " + dm(pos[0], false) + "</span></div>" +
+    (p.depth != null ? "<div><span>Depth here (GEBCO grid)</span><span>~" + Math.round(p.depth) + " m</span></div>" : "") +
+    (me ? "<div><span>From you</span><span>" + (haversine(me, pos) / NM).toFixed(1) + " NM · " + String(Math.round(bearing(me, pos))).padStart(3, "0") + "°T</span></div>" : "") +
+    "</div>" +
+    (notes.length ? '<div class="muted" style="margin-top:6px">' + notes.map(esc).join("<br>") + "</div>" : "") +
+    '<div class="row" style="margin-top:8px"><button id="fad-go">Go here</button><a class="muted" href="' + esc(lst.url || "https://fisheries.gov.mv/fad") + '" target="_blank" rel="noopener">Official list (PDF)</a></div>' +
+    '<div class="warn">Positions are where the FAD was deployed, per the Ministry list. FADs can drift, sink or break away after the list date.</div>';
+  $("fad-go").onclick = () => {
+    setMode("captain"); route.length = 0; nextWp = 0;
+    if (gps.fix) { route.push([gps.fix.lon, gps.fix.lat]); nextWp = 1; }
+    route.push(pos); loadGrid().then(renderRoute);
+  };
+}
+let lastFadPos = null;
+
 const KIND = { drop_off: "Drop-off candidate", pinnacle: "Pinnacle candidate", knoll: "Knoll candidate", seamount: "Seamount candidate" };
 function showFeature(p) {
   const facts = ["~" + Math.round(p.depth_m) + " m deep"];
@@ -290,6 +332,98 @@ function showFeature(p) {
   $("info").innerHTML = '<div class="label">' + (KIND[p.kind] || "Terrain candidate") + "</div>" +
     '<div style="font-size:17px;font-weight:600;margin:2px 0">' + facts.join(" · ") + "</div>" +
     '<div style="font-size:14px;max-width:65ch">' + esc(p.explanation) + '</div><div class="warn">' + DISCLAIMER + "</div>";
+}
+
+// ---------- GPS (device location; works on the live website, blocked inside embedded previews) ----------
+const gps = { fix: null, prev: null, watch: null, follow: false, error: null };
+function startGps() {
+  if (!("geolocation" in navigator)) { gps.error = "This browser has no location support."; renderGpsBar(); return; }
+  if (gps.watch !== null) return;
+  gps.watch = navigator.geolocation.watchPosition(onFix, onGpsError, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  renderGpsBar();
+}
+function onFix(p) {
+  const c = p.coords, t = p.timestamp || Date.now();
+  let sog = Number.isFinite(c.speed) && c.speed !== null ? c.speed * 3600 / NM : null;
+  let cog = Number.isFinite(c.heading) && c.heading !== null ? c.heading : null;
+  const fix = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t };
+  if (sog === null && gps.fix) {  // browser gave no speed: derive it from consecutive fixes
+    const dt = (t - gps.fix.t) / 1000, d = haversine([gps.fix.lon, gps.fix.lat], [fix.lon, fix.lat]);
+    if (dt >= 2 && dt <= 30 && d > Math.max(c.accuracy, gps.fix.acc) * 0.5) { sog = d / dt * 3600 / NM; cog = bearing([gps.fix.lon, gps.fix.lat], [fix.lon, fix.lat]); }
+  }
+  fix.sog = sog; fix.cog = sog !== null && sog >= 0.5 ? cog : null;
+  gps.prev = gps.fix; gps.fix = fix; gps.error = null;
+  drawMe();
+  if (gps.follow) map.easeTo({ center: [fix.lon, fix.lat], duration: 500 });
+  renderGpsBar();
+  if (mode === "captain") renderRoute();
+}
+function onGpsError(e) {
+  gps.error = e.code === 1 ? "Location permission denied. Allow location for this website in your browser settings, then tap the GPS button again."
+    : e.code === 3 ? "Waiting for a GPS fix… (go outside or near a window)" : "Location unavailable: " + e.message;
+  if (e.code === 1 && gps.watch !== null) { navigator.geolocation.clearWatch(gps.watch); gps.watch = null; }
+  renderGpsBar();
+}
+function circle(lat, lon, r) {
+  const pts = [], R = 6371008.8, d = r / R, la = lat * Math.PI / 180, lo = lon * Math.PI / 180;
+  for (let i = 0; i <= 48; i++) {
+    const b = 2 * Math.PI * i / 48;
+    const pla = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+    const plo = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(pla));
+    pts.push([plo * 180 / Math.PI, pla * 180 / Math.PI]);
+  }
+  return { type: "Polygon", coordinates: [pts] };
+}
+function drawMe() {
+  const f = gps.fix; if (!f || !map.getSource("me")) return;
+  map.getSource("me").setData({ type: "FeatureCollection", features: [
+    { type: "Feature", properties: {}, geometry: circle(f.lat, f.lon, Math.max(f.acc || 0, 1)) },
+    { type: "Feature", properties: { stale: Date.now() - f.t > 15000 }, geometry: { type: "Point", coordinates: [f.lon, f.lat] } }] });
+}
+function renderGpsBar() {
+  const bar = $("gpsbar");
+  if (gps.watch === null && !gps.error) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const f = gps.fix;
+  if (!f) { bar.innerHTML = '<span class="st fair">' + esc(gps.error || "Waiting for GPS fix…") + "</span>"; return; }
+  const age = Math.max(0, Math.round((Date.now() - f.t) / 1000));
+  const lost = age > 15, q = lost ? "lost" : f.acc <= 15 ? "good" : f.acc <= 50 ? "fair" : "lost";
+  bar.innerHTML = '<span class="st ' + q + '">' + (lost ? "GPS SIGNAL LOST · last fix " + age + " s ago" : "GPS " + (q === "good" ? "GOOD" : q === "fair" ? "FAIR" : "POOR") + " · " + age + " s ago") +
+    (gps.follow ? " · following" : "") + "</span>" +
+    '<span class="pos">' + dm(f.lat, true) + "  " + dm(f.lon, false) + "</span>" +
+    '<span class="nums"><span>SOG <b>' + (f.sog === null ? "—" : f.sog.toFixed(1) + " kn") + "</b></span><span>COG <b>" +
+    (f.cog === null ? "—" : String(Math.round(f.cog)).padStart(3, "0") + "°") + "</b></span><span>±<b>" + Math.round(f.acc) + " m</b></span></span>" +
+    (gps.error ? '<span class="muted">' + esc(gps.error) + "</span>" : "");
+  if (map && map.getSource("me")) drawMe();
+}
+setInterval(() => { if (gps.watch !== null) renderGpsBar(); }, 1000);
+
+// Cross-track distance (m) of point p from the great circle a->b; positive = right of track.
+function crossTrack(a, b, p) {
+  const R = 6371008.8, d13 = haversine(a, p) / R, t13 = bearing(a, p) * Math.PI / 180, t12 = bearing(a, b) * Math.PI / 180;
+  return Math.asin(Math.sin(d13) * Math.sin(t13 - t12)) * R;
+}
+let nextWp = 0;
+function navBlock() {
+  const f = gps.fix;
+  if (!f || route.length === 0) return "";
+  const me = [f.lon, f.lat];
+  while (nextWp < route.length - 1 && haversine(me, route[nextWp]) < 0.05 * NM) nextWp++;  // waypoint reached
+  nextWp = Math.min(nextWp, route.length - 1);
+  const wp = route[nextWp], dtw = haversine(me, wp), btw = bearing(me, wp);
+  let remaining = dtw;
+  for (let i = nextWp + 1; i < route.length; i++) remaining += haversine(route[i - 1], route[i]);
+  const spd = f.sog && f.sog > 1 ? f.sog : speedKn;
+  const eta = new Date(Date.now() + remaining / NM / spd * 3600000);
+  let xte = null;
+  if (nextWp > 0) xte = crossTrack(route[nextWp - 1], wp, me);
+  const off = xte !== null && Math.abs(xte) > 0.25 * NM;
+  return '<div class="nav"><span class="label">Navigating to waypoint ' + (nextWp + 1) + "</span>" +
+    '<span class="pos">' + (dtw / NM).toFixed(2) + " NM · bearing " + String(Math.round(btw)).padStart(3, "0") + "°T</span>" +
+    '<span class="muted">' + (remaining / NM).toFixed(1) + " NM to finish · ETA " + eta.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Maldives" }) +
+    " MVT at " + spd.toFixed(1) + " kn" + (f.sog && f.sog > 1 ? " (your speed)" : " (planned speed)") + "</span>" +
+    (xte !== null ? '<span class="' + (off ? "st lost" : "muted") + '">' + (off ? "⚠ OFF ROUTE: " : "Cross-track ") + (Math.abs(xte) / NM).toFixed(2) + " NM " + (xte > 0 ? "right" : "left") + " of the planned leg</span>" : "") +
+    "</div>";
 }
 
 // ---------- Captain: route planning ----------
@@ -326,21 +460,29 @@ function renderRoute() {
       : '<div class="big">' + (total / NM).toFixed(1) + " NM</div>" +
         '<div class="muted">ETA ' + Math.floor(mins / 60) + " h " + String(Math.round(mins % 60)).padStart(2, "0") + " min at " + speedKn + " kn · " + route.length + " waypoints</div>" +
         '<table class="legs"><tr><th>Leg</th><th>NM</th><th>Brg</th><th>Time</th></tr>' + rows + "</table>") +
+    navBlock() +
+    (route.length > 1 && !shallow ? '<div class="muted" style="margin-top:6px">No shallow crossing found in the ~460 m GEBCO grid. That does not mean the water is safe: small reefs and coral heads are often missing from it.</div>' : "") +
     (shallow ? '<div class="warn">⚠ ' + shallow + " leg(s) cross water shallower than 5 m or land in the GEBCO grid. Re-plan around reefs and check official charts.</div>" : "") +
     '<div class="row" style="margin-top:8px"><label for="spd" class="muted">Speed</label><input type="number" id="spd" min="1" max="60" value="' + speedKn + '"><span class="muted">kn</span>' +
-    '<button id="r-undo">Undo</button><button id="r-clear">Clear</button><button id="r-night" class="' + (document.body.classList.contains("night") ? "on" : "") + '">Night mode</button></div>' +
-    '<div class="muted" style="margin-top:6px">Live GPS, speed over ground and route deviation alerts work in the app; this preview cannot use location.</div>';
+    '<button id="r-me">Start from my position</button><button id="r-undo">Undo</button><button id="r-clear">Clear</button><button id="r-night" class="' + (document.body.classList.contains("night") ? "on" : "") + '">Night mode</button></div>' +
+    '<div class="muted" style="margin-top:6px">Tap the GPS button for your live position. Not a certified chart plotter: keep a proper lookout and use official charts.</div>';
   $("spd").onchange = (e) => { speedKn = Math.max(1, Math.min(60, Number(e.target.value) || 15)); renderRoute(); };
-  $("r-undo").onclick = () => { route.pop(); renderRoute(); };
-  $("r-clear").onclick = () => { route.length = 0; renderRoute(); };
+  $("r-undo").onclick = () => { route.pop(); nextWp = 0; renderRoute(); };
+  $("r-clear").onclick = () => { route.length = 0; nextWp = 0; renderRoute(); };
+  $("r-me").onclick = () => {
+    if (!gps.fix) { startGps(); $("r-me").textContent = "Waiting for GPS…"; return; }
+    route.unshift([gps.fix.lon, gps.fix.lat]); nextWp = 1; renderRoute();
+  };
   $("r-night").onclick = () => { document.body.classList.toggle("night"); renderRoute(); };
 }
 
 // ---------- layers & modes ----------
 const LAYERS = [
   { id: "s2", name: "Satellite (Sentinel-2, reef-enhanced)", ids: ["s2"] },
+  { id: "hires", name: "Sharp close-ups (Esri, zoom 13+)", ids: ["hires"] },
   { id: "depth", name: "Depth shading", ids: ["depth"], opacity: "raster-opacity" },
   { id: "contours", name: "Depth contours", ids: ["contours", "contour-labels"] },
+  { id: "fads", name: "FADs (Ministry of Fisheries)", ids: ["fads", "fad-labels"] },
   { id: "features", name: "Drop-offs & seamounts", ids: ["features"] },
   { id: "jig", name: "Jigging zones 30–300 m", ids: ["jigging_zones"], opacity: "raster-opacity" },
   { id: "tuna", name: "Tuna habitat (prediction)", ids: ["tuna_habitat"], opacity: "raster-opacity" },
@@ -350,11 +492,18 @@ const LAYERS = [
   { id: "slope", name: "Seafloor slope", ids: ["slope"], opacity: "raster-opacity" },
 ];
 const PRESETS = {
-  fishing: { s2: 1, depth: 1, contours: 1, features: 1, jig: 1, tuna: 1 },
-  captain: { s2: 1, depth: 1, contours: 1 },
-  weather: { s2: 1, sst: 1, front: 1 },
+  fishing: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1, features: 1, jig: 1, tuna: 1 },
+  captain: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1 },
+  weather: { s2: 1, hires: 1, sst: 1, front: 1 },
 };
 const state = {};
+// Overlays fade out when zoomed in, so close-ups show the real imagery underneath.
+const FADE = { depth: [9, 13], tuna_habitat: [10, 13], sst: [10, 13], chl: [10, 13], sst_front: [10, 13],
+               jigging_zones: [12, 15], slope: [11, 14] };
+function fadeExpr(lid, base) {
+  const f = FADE[lid];
+  return f ? ["interpolate", ["linear"], ["zoom"], f[0], base, f[1], 0] : base;
+}
 function setLayer(id, on) {
   state[id] = on;
   const L = LAYERS.find((l) => l.id === id);
@@ -364,8 +513,11 @@ function setLayer(id, on) {
 function buildLayersPanel() {
   const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
   const sub = {
+    hires: "Esri World Imagery, testing only · capture dates vary (not shown)",
     s2: "Captured " + m.imagery_from + " – " + m.imagery_to + " · 10 m · underwater detail lifted",
-    depth: "GEBCO 2026 · historical compilation", contours: "10 – 5000 m · derived from GEBCO",
+    depth: "GEBCO 2026 · only " + m.gebco_measured_pct + "% of cells measured, the rest estimated",
+    contours: "10 – 5000 m from GEBCO · mostly estimated depths, not survey lines",
+    fads: "Official lists: " + Object.values(fadData.lists).map((l) => l.title.replace(/\s+/g, " ")).join(" · ") + ". Yellow = in place, grey ring = reported broken away",
     features: "Computed candidates, not verified", jig: "Derived from GEBCO depth and slope",
     tuna: "Prediction for " + day(pr.tuna_habitat.valid_for) + " · not validated yet",
     sst: "Observed " + day(oc.sst.observed_at) + " · MUR L4 ~1 km", front: "Derived from SST " + day(oc.sst_front.observed_at),
@@ -376,7 +528,7 @@ function buildLayersPanel() {
     (l.opacity ? '<input type="range" min="0.1" max="1" step="0.05" value="' + (l.id === "depth" ? 0.45 : 0.8) + '" id="op-' + l.id + '" aria-label="' + l.name + ' opacity">' : "") + "</div>").join("");
   LAYERS.forEach((l) => {
     $("ly-" + l.id).onchange = (e) => setLayer(l.id, e.target.checked);
-    if (l.opacity) $("op-" + l.id).oninput = (e) => l.ids.forEach((lid) => map.setPaintProperty(lid, "raster-opacity", Number(e.target.value)));
+    if (l.opacity) $("op-" + l.id).oninput = (e) => l.ids.forEach((lid) => map.setPaintProperty(lid, "raster-opacity", fadeExpr(lid, Number(e.target.value))));
   });
 }
 function setMode(m) {
@@ -402,43 +554,61 @@ function labelImage(text) {
 
 (async () => {
   manifest = await (await fetch("data/manifest.json")).json();
-  const [contours, features] = await Promise.all([fetch("data/contours.json").then((r) => r.json()), fetch("data/features.json").then((r) => r.json())]);
+  const [contours, features, fads] = await Promise.all([fetch("data/contours.json").then((r) => r.json()),
+    fetch("data/features.json").then((r) => r.json()), fetch("data/fads.json").then((r) => r.json())]);
+  fadData = fads;
   const m = manifest.meta, B = [70, -3.5, 77.5, 8.5];
-  $("attrib").textContent = m.imagery_attribution + " · GEBCO 2026 · SST: NASA JPL MUR · Chlorophyll: NOAA STAR/CoastWatch · MapLibre";
+  $("attrib").textContent = m.imagery_attribution + " · Close-ups: Esri, Maxar, Earthstar Geographics · GEBCO 2026 · SST: NASA JPL MUR · Chlorophyll: NOAA STAR/CoastWatch · MapLibre";
   const raster = (id, maxzoom, extra = {}) => ({ type: "raster", tiles: ["pack://" + id + "/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom, bounds: B, ...extra });
-  const rl = (id, opacity) => ({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+  const rl = (id, opacity) => ({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": fadeExpr(id, opacity), "raster-fade-duration": 0 } });
   map = new maplibregl.Map({
     container: "map", center: [73.45, 4.22], zoom: 9.4, maxZoom: 17, attributionControl: false,
     style: {
       version: 8,
       sources: {
         s2: raster("s2", 14, { minzoom: 7, bounds: m.imagery_bounds }),
+        // Sharp close-ups (testing only; Esri capture dates vary and are not published per tile).
+        hires: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                 tileSize: 256, minzoom: 13, maxzoom: 19 },
         depth: raster("depth", 10), slope: raster("slope", 10),
         jigging_zones: raster("jigging_zones", 10), tuna_habitat: raster("tuna_habitat", 9),
         sst: raster("sst", 9), chl: raster("chl", 9), sst_front: raster("sst_front", 9),
         contours: { type: "geojson", data: contours }, features: { type: "geojson", data: features },
         route: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
         tap: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        me: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        fads: { type: "geojson", data: fads },
       },
       layers: [
         { id: "bg", type: "background", paint: { "background-color": "#06121f" } },
         { id: "s2", type: "raster", source: "s2", paint: { "raster-fade-duration": 0 } },
+        { id: "hires", type: "raster", source: "hires", minzoom: 13, paint: { "raster-fade-duration": 0 } },
         rl("depth", 0.45), rl("slope", 0.8), rl("sst", 0.8), rl("chl", 0.8), rl("sst_front", 0.9),
         rl("tuna_habitat", 0.8), rl("jigging_zones", 0.8),
         { id: "contours", type: "line", source: "contours",
-          filter: ["any", [">=", ["zoom"], 9], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
+          filter: ["any", [">=", ["zoom"], 11], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
           layout: { "line-join": "round" },
           paint: { "line-color": ["interpolate", ["linear"], ["get", "depth_m"], 10, "#b2ebf2", 50, "#4dd0e1", 200, "#26c6da", 1000, "#0097a7", 3000, "#006064"],
                    "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.1, 14, 1.8], "line-opacity": 0.85 } },
-        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 9,
+        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 10,
           layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]], "icon-rotation-alignment": "viewport" } },
         { id: "features", type: "circle", source: "features", minzoom: 6,
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],
                    "circle-color": ["match", ["get", "kind"], "drop_off", "#ff9800", "seamount", "#e040fb", "knoll", "#7c4dff", "#00e5ff"],
                    "circle-stroke-color": "#06121f", "circle-stroke-width": 1.5 } },
+        { id: "fads", type: "circle", source: "fads",
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4, 12, 8],
+                   "circle-color": ["match", ["get", "status"], "in_place", "#ffd54f", "rgba(0,0,0,0)"],
+                   "circle-stroke-color": ["match", ["get", "status"], "in_place", "#3e2723", "#9e9e9e"],
+                   "circle-stroke-width": ["match", ["get", "status"], "in_place", 2, 2.5] } },
+        { id: "fad-labels", type: "symbol", source: "fads", minzoom: 10,
+          layout: { "icon-image": ["concat", "fad-", ["get", "list"], "-", ["to-string", ["get", "row"]]], "icon-anchor": "left", "icon-offset": [14, 0], "icon-allow-overlap": false } },
         { id: "route-line", type: "line", source: "route", layout: { visibility: "none" }, paint: { "line-color": "#ffeb3b", "line-width": 3.5 } },
         { id: "route-pts", type: "circle", source: "route", filter: ["==", ["geometry-type"], "Point"], layout: { visibility: "none" },
           paint: { "circle-radius": 7, "circle-color": "#ffeb3b", "circle-stroke-color": "#06121f", "circle-stroke-width": 2 } },
+        { id: "me-acc", type: "fill", source: "me", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#4fc3f7", "fill-opacity": 0.18 } },
+        { id: "me-dot", type: "circle", source: "me", filter: ["==", ["geometry-type"], "Point"],
+          paint: { "circle-radius": 8, "circle-color": ["case", ["get", "stale"], "#9e9e9e", "#1e88e5"], "circle-stroke-color": "#fff", "circle-stroke-width": 3 } },
         { id: "tap", type: "circle", source: "tap", paint: { "circle-radius": 9, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } },
       ],
     },
@@ -447,14 +617,34 @@ function labelImage(text) {
   for (const d of [10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]) {
     const { image, ratio } = labelImage(d + " m"); map.addImage("d" + d, image, { pixelRatio: ratio });
   }
+  for (const f of fads.features) {
+    const id = "fad-" + f.properties.list + "-" + f.properties.row;  // codes are not unique in the official list
+    const { image, ratio } = labelImage(f.properties.code); if (!map.hasImage(id)) map.addImage(id, image, { pixelRatio: ratio });
+  }
   map.on("load", () => { $("loading").remove(); buildLayersPanel(); setMode("fishing"); });
   ["fishing", "captain", "weather"].forEach((k) => { $("tab-" + k).onclick = () => setMode(k); });
+  $("info-toggle").onclick = () => { const min = $("info").classList.toggle("min"); $("info-toggle").textContent = min ? "▴" : "▾"; };
+  new MutationObserver(() => { $("info").classList.remove("min"); $("info-toggle").textContent = "▾"; })
+    .observe($("info"), { childList: true });
   $("btn-layers").onclick = () => { $("layers").classList.toggle("open"); $("btn-layers").classList.toggle("on"); };
   $("btn-gps").onclick = () => {
-    $("info").innerHTML = '<div class="label">GPS</div><div>Your position is not available inside this preview: the page runs in a sandbox that blocks location. The JigMap app uses your phone’s GPS (position, speed in knots, course, accuracy).</div>';
+    if (gps.watch === null) { gps.follow = true; startGps(); }
+    else gps.follow = !gps.follow;
+    $("btn-gps").classList.toggle("on", gps.follow);
+    if (gps.follow && gps.fix) map.easeTo({ center: [gps.fix.lon, gps.fix.lat], zoom: Math.max(map.getZoom(), 12), duration: 600 });
+    renderGpsBar();
   };
+  map.on("dragstart", () => { if (gps.follow) { gps.follow = false; $("btn-gps").classList.remove("on"); renderGpsBar(); } });
   map.on("click", async (e) => {
     const ll = [e.lngLat.lng, e.lngLat.lat];
+    if (state.fads) {
+      const fh = map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers: ["fads"] });
+      if (fh.length) {
+        const fpos = [Number(fh[0].properties.lon), Number(fh[0].properties.lat)];  // exact, not the rendered (quantised) geometry
+        if (mode === "captain" && route.length) { route.push(fpos); await loadGrid(); renderRoute(); return; }  // snap waypoint to the FAD
+        lastFadPos = fpos; showFad(fh[0].properties); return;
+      }
+    }
     if (mode === "captain") { route.push(ll); await loadGrid(); renderRoute(); return; }
     map.getSource("tap").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: ll } }] });
     if (state.features) {

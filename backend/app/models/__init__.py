@@ -1,5 +1,6 @@
 from app.models.bathymetry import BathymetryContour, BathymetryDataset, BathymetryFeature
 from app.models.data import DataKind, DataProvider, IngestionJob, JobStatus, MapLayer, ProviderStatus
+from app.models.fads import FadList, FadPosition
 from app.models.imagery import ImageryMosaic
 from app.models.ocean import FishingPrediction, OceanObservation
 from app.models.offline import OfflineDownload, OfflinePackage
@@ -11,6 +12,8 @@ __all__ = [
     "BathymetryFeature",
     "DataKind",
     "DataProvider",
+    "FadList",
+    "FadPosition",
     "FishingPrediction",
     "ImageryMosaic",
     "IngestionJob",

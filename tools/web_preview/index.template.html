@@ -88,7 +88,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .panelwrap { position: relative; max-width: 580px; }
 .hide { position: absolute; top: 6px; right: 8px; z-index: 1; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line);
         background: var(--panel); color: var(--ink); cursor: pointer; font-size: 14px; }
-.panel.min { max-height: 34px; overflow: hidden; }
+[hidden] { display: none !important; }
+.panel.min { max-height: 40px; overflow: hidden; }
+.panel.min > * { display: none; }
+.panel.min::before { content: "Details hidden · tap ▴ to show"; color: var(--muted); font-size: 14px; }
 .spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .spot { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,171,64,.45);
         background: rgba(255,111,0,.12); color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; min-height: 44px; }
@@ -257,8 +260,11 @@ function depthBlock(lat, lon, d) {
   if (!d) return '<div class="muted">No bathymetry here.</div>';
   const measured = d.tid >= 10 && d.tid <= 17;
   return '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
-    '<div class="big">' + (d.elev < 0 ? "≈ " + (-d.elev) + " m deep" : "Land / reef flat in grid") + "</div>" +
-    '<div class="muted">Grid cell ~' + d.cellM + " m · slope " + d.slope.toFixed(1) + "°</div>" +
+    (d.elev >= 0 ? '<div class="big">Land or reef flat</div>'
+      : d.elev > -10 ? '<div class="big">Very shallow / reef</div>'
+      : '<div class="big">≈ ' + (-d.elev) + " m deep</div>") +
+    '<div class="muted">' + (d.elev < 0 ? "Grid value " + (-d.elev) + " m, the average of a ~" : "Average of a ~") + d.cellM + " m grid cell · slope " + d.slope.toFixed(1) + "°</div>" +
+    (d.elev > -30 ? '<div class="warn" style="margin-top:6px">Reefs, passes and channels are smaller than this grid cell: the real depth at this exact spot can be very different. Use your eyes and echo sounder.</div>' : "") +
     '<div class="src ' + (measured ? "measured" : "estimated") + '">Depth source: ' + esc(d.label) + (measured ? " (measured)" : " (not directly measured)") + "</div>";
 }
 function factorRow(name, valTxt, score, weight) {
@@ -641,7 +647,10 @@ function labelImage(text) {
         s2: raster("s2", 14, { minzoom: 7, bounds: m.imagery_bounds }),
         // Sharp close-ups (testing only; Esri capture dates vary and are not published per tile).
         hires: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                 tileSize: 256, minzoom: 13, maxzoom: 19 },
+                 // Esri has z17 (~1.2 m/px) across the Maldives but z18+ only around Male; beyond z17 it
+                 // serves grey "Map data not yet available" tiles, so cap at 17 and let the map overzoom.
+                 // On high-density phone screens 128 px tiles load the next zoom level for real sharpness.
+                 tileSize: window.devicePixelRatio >= 1.5 ? 128 : 256, minzoom: 12, maxzoom: 17 },
         depth: raster("depth", 10), slope: raster("slope", 10),
         jigging_zones: raster("jigging_zones", 10), tuna_habitat: raster("tuna_habitat", 9),
         sst: raster("sst", 9), chl: raster("chl", 9), sst_front: raster("sst_front", 9),
@@ -662,8 +671,10 @@ function labelImage(text) {
           filter: ["any", [">=", ["zoom"], 11], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
           layout: { "line-join": "round" },
           paint: { "line-color": ["interpolate", ["linear"], ["get", "depth_m"], 10, "#b2ebf2", 50, "#4dd0e1", 200, "#26c6da", 1000, "#0097a7", 3000, "#006064"],
-                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.1, 14, 1.8], "line-opacity": 0.85 } },
-        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 10,
+                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.1, 13, 1.5],
+                   // GEBCO cells are ~460 m: closer in, the lines would cut across islands and reefs.
+                   "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.85, 13.5, 0] } },
+        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 10, maxzoom: 13.5,
           layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]], "icon-rotation-alignment": "viewport" } },
         { id: "features", type: "circle", source: "features", minzoom: 6,
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],

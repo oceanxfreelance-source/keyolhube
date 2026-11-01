@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyolhube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}@media (hover:hover){.maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}}.maplibregl-ctrl button:not(:disabled):active{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-globe .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23333' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5'/%3E%3Cpath d='M17.5 11c0 4.819-3.02 8.5-6.5 8.5S4.5 15.819 4.5 11 7.52 2.5 11 2.5s6.5 3.681 6.5 8.5Z'/%3E%3Cpath d='M13.5 11c0 2.447-.331 4.64-.853 6.206-.262.785-.562 1.384-.872 1.777-.314.399-.58.517-.775.517s-.461-.118-.775-.517c-.31-.393-.61-.992-.872-1.777C8.831 15.64 8.5 13.446 8.5 11s.331-4.64.853-6.206c.262-.785.562-1.384.872-1.777.314-.399.58-.517.775-.517s.461.118.775.517c.31.393.61.992.872 1.777.522 1.565.853 3.76.853 6.206Z'/%3E%3Cpath d='M11 7.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138q.07-.058.224-.138c.299-.151.763-.302 1.379-.434C7.378 5.666 9.091 5.5 11 5.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138q-.07.058-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428ZM4.486 6.436ZM11 16.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138 1.3 1.3 0 0 1 .224-.138c.299-.151.763-.302 1.379-.434C7.378 14.666 9.091 14.5 11 14.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138a1.3 1.3 0 0 1-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428Zm-6.514-1.064ZM11 12.5c-2.46 0-4.672-.222-6.255-.574-.796-.177-1.406-.38-1.805-.59a1.5 1.5 0 0 1-.39-.272.3.3 0 0 1-.047-.064.3.3 0 0 1 .048-.064c.066-.073.189-.167.389-.272.399-.21 1.009-.413 1.805-.59C6.328 9.722 8.54 9.5 11 9.5s4.672.222 6.256.574c.795.177 1.405.38 1.804.59.2.105.323.2.39.272a.3.3 0 0 1 .047.064.3.3 0 0 1-.048.064 1.4 1.4 0 0 1-.389.272c-.399.21-1.009.413-1.804.59-1.584.352-3.796.574-6.256.574Zm-8.501-1.51v.002zm0 .018v.002zm17.002.002v-.002zm0-.018v-.002z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-globe-enabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%2333b5e5' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5'/%3E%3Cpath d='M17.5 11c0 4.819-3.02 8.5-6.5 8.5S4.5 15.819 4.5 11 7.52 2.5 11 2.5s6.5 3.681 6.5 8.5Z'/%3E%3Cpath d='M13.5 11c0 2.447-.331 4.64-.853 6.206-.262.785-.562 1.384-.872 1.777-.314.399-.58.517-.775.517s-.461-.118-.775-.517c-.31-.393-.61-.992-.872-1.777C8.831 15.64 8.5 13.446 8.5 11s.331-4.64.853-6.206c.262-.785.562-1.384.872-1.777.314-.399.58-.517.775-.517s.461.118.775.517c.31.393.61.992.872 1.777.522 1.565.853 3.76.853 6.206Z'/%3E%3Cpath d='M11 7.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138q.07-.058.224-.138c.299-.151.763-.302 1.379-.434C7.378 5.666 9.091 5.5 11 5.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138q-.07.058-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428ZM4.486 6.436ZM11 16.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138 1.3 1.3 0 0 1 .224-.138c.299-.151.763-.302 1.379-.434C7.378 14.666 9.091 14.5 11 14.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138a1.3 1.3 0 0 1-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428Zm-6.514-1.064ZM11 12.5c-2.46 0-4.672-.222-6.255-.574-.796-.177-1.406-.38-1.805-.59a1.5 1.5 0 0 1-.39-.272.3.3 0 0 1-.047-.064.3.3 0 0 1 .048-.064c.066-.073.189-.167.389-.272.399-.21 1.009-.413 1.805-.59C6.328 9.722 8.54 9.5 11 9.5s4.672.222 6.256.574c.795.177 1.405.38 1.804.59.2.105.323.2.39.272a.3.3 0 0 1 .047.064.3.3 0 0 1-.048.064 1.4 1.4 0 0 1-.389.272c-.399.21-1.009.413-1.804.59-1.584.352-3.796.574-6.256.574Zm-8.501-1.51v.002zm0 .018v.002zm17.002.002v-.002zm0-.018v-.002z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:"";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:"";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(pointer:coarse){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}
+</style>
+<style>
+/* Layout: full-bleed chart, instrument panels at the edges, mode tabs like a chartplotter. */
+:root {
+  --navy: #06121f;
+  --panel: #0c2236;
+  --line: #1b3a57;
+  --ink: #e6f1fa;
+  --muted: #8fa9c0;
+  --accent: #4fc3f7;
+  --good: #4caf50;
+  --warn: #ffc107;
+  --alert: #ff7043;
+  --route: #ffeb3b;
+  --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body.night {
+  --panel: #120606; --line: #3a1414; --ink: #ff8a80; --muted: #b25b52; --accent: #ff5252; --route: #ff5252;
+  --good: #ff8a80; --warn: #ff8a80;
+}
+body.night #map canvas { filter: brightness(0.45) saturate(0.4) sepia(0.6) hue-rotate(-30deg); }
+html, body { height: 100%; margin: 0; background: var(--navy); color: var(--ink); font-family: var(--body); }
+#map { position: absolute; inset: 0; }
+.chip, .panel, .btn, .tabs { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); }
+.top { position: absolute; top: 10px; left: 10px; right: 10px; display: grid; gap: 8px; pointer-events: none; }
+.top * { pointer-events: auto; }
+.toprow { display: flex; gap: 8px; align-items: center; }
+.brand { padding: 6px 10px; border-radius: 12px; display: grid; }
+.brand b { font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 16px; }
+.brand span { color: var(--muted); font-size: 11.5px; }
+.spacer { flex: 1; }
+.btn { width: 44px; height: 44px; border-radius: 50%; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.on { background: var(--accent); color: var(--navy); }
+.btn svg { width: 22px; height: 22px; fill: currentColor; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs { display: inline-flex; border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; }
+.tab { border: 0; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; letter-spacing: .06em;
+       text-transform: uppercase; font-size: 14px; padding: 8px 14px; border-radius: 9px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--navy); }
+.bottom { position: absolute; left: 10px; right: 10px; bottom: 8px; display: grid; gap: 6px; }
+.panel { border-radius: 16px; padding: 12px 14px; max-width: 580px; max-height: 36vh; overflow: auto; }
+.label { font-family: var(--display); font-weight: 600; letter-spacing: .08em; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.big { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.coords { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+.muted { color: var(--muted); font-size: 13px; }
+.src.measured { color: var(--good); } .src.estimated { color: var(--warn); }
+.warn { margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: color-mix(in srgb, var(--alert) 12%, transparent); border: 1px solid color-mix(in srgb, var(--alert) 50%, transparent); }
+.attrib { font-size: 10.5px; color: color-mix(in srgb, var(--ink) 80%, transparent); text-shadow: 0 0 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layers { position: absolute; top: 112px; right: 10px; width: min(330px, calc(100% - 20px)); border-radius: 16px; padding: 14px 16px; display: none; max-height: calc(100% - 260px); overflow: auto; z-index: 2; }
+.layers.open { display: grid; gap: 10px; }
+.layer { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+.layer small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.layer input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.switch { appearance: none; width: 40px; height: 22px; border-radius: 11px; background: var(--line); position: relative; cursor: pointer; margin: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: left .15s; }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { left: 21px; background: var(--navy); }
+.bar { height: 10px; border-radius: 5px; margin: 6px 0 2px; }
+.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.factors { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; margin-top: 8px; font-size: 13.5px; }
+.meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.score { font-family: var(--display); font-weight: 700; font-size: 34px; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; border: 1px solid var(--line); color: var(--muted); }
+.legs { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.legs td, .legs th { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+.legs th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.legs td:first-child, .legs th:first-child { text-align: left; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row button, .closebtn { background: transparent; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.row button.on { background: var(--accent); color: var(--navy); }
+.row input[type=number] { width: 64px; background: var(--navy); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; font: inherit; }
+.nc { display: grid; gap: 4px; margin-top: 8px; }
+.nc div { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+.panelwrap { position: relative; max-width: 580px; }
+.hide { position: absolute; top: 6px; right: 8px; z-index: 1; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line);
+        background: var(--panel); color: var(--ink); cursor: pointer; font-size: 14px; }
+.panel.min { max-height: 34px; overflow: hidden; }
+.spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.spot { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,171,64,.45);
+        background: rgba(255,111,0,.12); color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; min-height: 44px; }
+.spot b { background: #ff6f00; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 13px; flex: none; }
+.spot span:nth-of-type(1) { font-weight: 700; font-size: 16px; } .spot small { font-weight: 400; color: var(--muted); }
+.spot span:nth-of-type(2) { color: var(--muted); font-size: 13px; margin-left: auto; }
+.gpsbar { padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+.gpsbar .st { font-family: var(--display); font-weight: 700; letter-spacing: .05em; font-size: 12.5px; width: 100%; }
+.gpsbar .pos { font-variant-numeric: tabular-nums; font-size: 14.5px; font-weight: 600; }
+.gpsbar .nums { display: flex; gap: 10px; flex-wrap: wrap; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.gpsbar .nums b { color: var(--ink); font-weight: 600; }
+.st.good { color: var(--good); } .st.fair { color: var(--warn); } .st.lost { color: var(--alert); }
+.nav { margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); display: grid; gap: 2px; }
+.loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+@media (max-width: 420px) { .big { font-size: 26px; } .tab { padding: 8px 10px; font-size: 13px; } .brand span { display: none; } }
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="Map of the Maldives"></div>
+
+<div class="top">
+  <div class="toprow">
+    <div class="brand chip"><b>Keyolhube</b><span>Maldives · not for navigation</span></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btn-layers" title="Map layers" aria-label="Map layers"><svg viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5Zm-7.6 8.2L2 12.4l10 5 10-5-2.4-1.2L12 15 4.4 11.2Zm0 4L2 16.4l10 5 10-5-2.4-1.2L12 19l-7.6-3.8Z"/></svg></button>
+    <button class="btn" id="btn-gps" title="My position" aria-label="My position"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 3h-2.07A7 7 0 0 0 13 5.07V3h-2v2.07A7 7 0 0 0 5.07 11H3v2h2.07A7 7 0 0 0 11 18.93V21h2v-2.07A7 7 0 0 0 18.93 13H21v-2Zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg></button>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" role="tab" id="tab-tuna" aria-selected="true">Tuna &amp; sport</button>
+    <button class="tab" role="tab" id="tab-jigging" aria-selected="false">Jigging</button>
+    <button class="tab" role="tab" id="tab-captain" aria-selected="false">Captain</button>
+    <button class="tab" role="tab" id="tab-weather" aria-selected="false">Weather</button>
+  </div>
+</div>
+
+<div class="layers panel" id="layers" aria-label="Map layers"></div>
+
+<div class="bottom">
+  <div class="panel gpsbar" id="gpsbar" hidden></div>
+  <div class="panelwrap"><button class="hide" id="info-toggle" aria-label="Minimise panel" title="Minimise panel">▾</button>
+  <div class="panel" id="info" aria-live="polite"></div></div>
+  <div class="attrib" id="attrib"></div>
+</div>
+<div class="loading muted" id="loading">Loading map…</div>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NM = 1852;
+let manifest, map, grid = null, gridP = null, ogrid = null, ogridP = null;
+let mode = "tuna", lastTap = null, fadData = null, spotData = null;
+const packCache = {};
+
+// ---------- helpers ----------
+function dm(v, isLat) {
+  const h = isLat ? (v >= 0 ? "N" : "S") : (v >= 0 ? "E" : "W");
+  const a = Math.abs(v); let d = Math.floor(a); let m = (a - d) * 60;
+  if (Number(m.toFixed(3)) >= 60) { d += 1; m = 0; }
+  return String(d).padStart(isLat ? 2 : 3, "0") + "°" + m.toFixed(3).padStart(6, "0") + "'" + h;
+}
+function haversine(a, b) {
+  const R = 6371008.8, r = (x) => x * Math.PI / 180;
+  const s = Math.sin(r(b[1] - a[1]) / 2) ** 2 + Math.cos(r(a[1])) * Math.cos(r(b[1])) * Math.sin(r(b[0] - a[0]) / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+function bearing(a, b) {
+  const r = (x) => x * Math.PI / 180;
+  const y = Math.sin(r(b[0] - a[0])) * Math.cos(r(b[1]));
+  const x = Math.cos(r(a[1])) * Math.sin(r(b[1])) - Math.sin(r(a[1])) * Math.cos(r(b[1])) * Math.cos(r(b[0] - a[0]));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const day = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "unknown";
+function b64ToBuf(b64) {
+  const bin = atob(b64.trim()), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+async function gunzipText(url) {
+  if (manifest.encoding === "raw") url = url.replace("-gz.txt", "-gz.bin");
+  const res = await fetch(url);
+  const gz = manifest.encoding === "raw" ? await res.arrayBuffer() : b64ToBuf(await res.text());
+  return new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+}
+
+// ---------- tiles from bundled packs ----------
+maplibregl.addProtocol("pack", async (params) => {
+  const [layer, z, x, y] = params.url.replace("pack://", "").split("/");
+  const idx = manifest.index[layer], hit = idx && idx[z + "/" + x + "/" + y];
+  if (!hit) throw new Error("no tile");
+  const key = layer + hit[0];
+  if (!packCache[key]) packCache[key] = fetch("data/" + manifest.packs[layer][hit[0]])
+    .then((r) => (manifest.encoding === "raw" ? r.arrayBuffer() : r.text().then(b64ToBuf)));
+  const buf = await packCache[key];
+  return { data: buf.slice(hit[1], hit[1] + hit[2]) };
+});
+
+// ---------- data grids ----------
+async function loadGrid() {
+  if (grid) return grid;
+  gridP = gridP || gunzipText("data/grid-gz.txt").then((buf) => {
+    const g = manifest.grid, n = g.width * g.height;
+    grid = { ...g, elev: new Int16Array(buf, 0, n), tid: new Uint8Array(buf, n * 2, n) };
+    return grid;
+  });
+  return gridP;
+}
+async function loadOcean() {
+  if (ogrid) return ogrid;
+  ogridP = ogridP || gunzipText("data/ocean-gz.txt").then((buf) => {
+    const g = manifest.ocean_grid, n = g.width * g.height, out = { ...g };
+    g.order.forEach((k, i) => { out[k] = new Uint16Array(buf, i * n * 2, n); });
+    ogrid = out; return out;
+  });
+  return ogridP;
+}
+function depthAt(g, lat, lon) {
+  const c = Math.floor((lon - g.west) / g.res), r = Math.floor((g.north - lat) / g.res);
+  if (r < 0 || c < 0 || r >= g.height || c >= g.width) return null;
+  const at = (rr, cc) => g.elev[Math.min(g.height - 1, Math.max(0, rr)) * g.width + Math.min(g.width - 1, Math.max(0, cc))];
+  const latC = g.north - (r + 0.5) * g.res;
+  const dx = g.res * 111320 * Math.cos(latC * Math.PI / 180), dy = g.res * 110574;
+  const gx = (at(r, c + 1) - at(r, c - 1)) / (2 * dx), gy = (at(r + 1, c) - at(r - 1, c)) / (2 * dy);
+  const code = g.tid[r * g.width + c];
+  return { elev: at(r, c), tid: code, label: g.tid_labels[code] || "TID " + code,
+           slope: Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI, cellM: Math.round(dy) };
+}
+function oceanAt(o, lat, lon) {
+  const c = Math.floor((lon - o.west) / o.res), r = Math.floor((o.north - lat) / o.res);
+  if (r < 0 || c < 0 || r >= o.height || c >= o.width) return null;
+  const i = r * o.width + c, v = (k) => (o[k][i] === o.nan ? null : o[k][i] / o.scale[k]);
+  return { score: v("score"), sst: v("sst"), front: v("front"), chl: v("chl"), dist: v("dist_km"),
+           fSst: v("f_sst"), fFront: v("f_front"), fChl: v("f_chl"), fStruct: v("f_structure"), chlObs: v("chl_obs") };
+}
+
+// ---------- panels ----------
+const DISCLAIMER = "Not for navigation. GEBCO depths are a regional ~460 m grid; reefs and channels can differ by tens of metres.";
+function intro() {
+  const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
+  if (mode === "tuna") {
+    renderSpots();
+  } else if (mode === "jigging") {
+    $("info").innerHTML =
+      '<div class="label">Jigging · tap the sea</div>' +
+      '<div style="font-size:15px;margin:4px 0">Green = 30–300 m on sloping seabed (reef edges, drop-offs) · orange dots = drop-off candidates · purple = seamounts / knolls · yellow = FADs. Tap for depth and slope.</div>' +
+      '<div class="muted" style="margin-top:6px">Derived from the GEBCO 2026 grid (~460 m cells; only ' + m.gebco_measured_pct + "% measured). Check with your echo sounder.</div>";
+  } else if (mode === "captain") {
+    renderRoute();
+  } else {
+    $("info").innerHTML =
+      '<div class="label">Weather & ocean</div>' +
+      '<div class="nc">' +
+      "<div><span>Sea surface temperature</span><span class=\"pill\">Observed " + day(oc.sst.observed_at) + "</span></div>" +
+      "<div><span>Temperature fronts</span><span class=\"pill\">Derived " + day(oc.sst_front.observed_at) + "</span></div>" +
+      "<div><span>Chlorophyll</span><span class=\"pill\">Observed, gap-filled " + day(oc.chl.observed_at) + "</span></div>" +
+      "<div><span>Wind, waves, rain</span><span class=\"pill\">Not connected yet</span></div>" +
+      "<div><span>Ocean currents</span><span class=\"pill\">Not connected yet</span></div></div>" +
+      '<div class="bar" style="background:linear-gradient(90deg,#2c7bb6,#00a6ca,#00ccbc,#90eb9d,#ffff8c,#f9d057,#f29e2e,#d7191c)"></div>' +
+      '<div class="ticks"><span>27.5 °C</span><span>29.75</span><span>32 °C</span></div>' +
+      '<div class="muted" style="margin-top:6px">Tap for values at a point. Sources: ' + esc(oc.sst.product) + "; " + esc(oc.chl.product) + ".</div>";
+  }
+}
+function depthBlock(lat, lon, d) {
+  if (!d) return '<div class="muted">No bathymetry here.</div>';
+  const measured = d.tid >= 10 && d.tid <= 17;
+  return '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
+    '<div class="big">' + (d.elev < 0 ? "≈ " + (-d.elev) + " m deep" : "Land / reef flat in grid") + "</div>" +
+    '<div class="muted">Grid cell ~' + d.cellM + " m · slope " + d.slope.toFixed(1) + "°</div>" +
+    '<div class="src ' + (measured ? "measured" : "estimated") + '">Depth source: ' + esc(d.label) + (measured ? " (measured)" : " (not directly measured)") + "</div>";
+}
+function factorRow(name, valTxt, score, weight) {
+  const s = score == null ? null : Math.max(0, Math.min(1, score));
+  return "<span>" + name + "</span><div class=\"meter\" title=\"factor score\"><i style=\"width:" + (s == null ? 0 : s * 100) + "%\"></i></div><span>" +
+    valTxt + " · " + (s == null ? "not used" : s.toFixed(2)) + " × " + weight + "</span>";
+}
+// ---------- best tuna spots ----------
+function spotList() { return spotData ? spotData.features.filter((f) => f.properties.kind === "spot") : []; }
+function fromHere() {
+  if (gps.fix) return { pos: [gps.fix.lon, gps.fix.lat], label: "from you" };
+  const c = map.getCenter(); return { pos: [c.lng, c.lat], label: "from map centre" };
+}
+function renderSpots() {
+  const pr = manifest.predictions, oc = manifest.ocean, sp = spotList(), ref = fromHere();
+  let html = '<div class="label">Best tuna conditions · ' + day(pr.tuna_habitat.valid_for) + "</div>";
+  if (!sp.length) {
+    html += '<div style="font-size:15px;margin:4px 0">No spot reaches the minimum score today, so none are shown.</div>';
+  } else {
+    html += '<div class="muted" style="margin:2px 0 6px">Top ' + sp.length + " spots in Maldivian waters, best first. Distance " + ref.label + ". Tap one.</div>" +
+      '<div class="spots">' + sp.map((f) => {
+        const p = f.properties, c = f.geometry.coordinates;
+        return '<button class="spot" data-rank="' + p.rank + '"><b>' + p.rank + "</b><span>" + Math.round(p.score) + "<small>/100</small></span><span>" +
+          (haversine(ref.pos, c) / NM).toFixed(0) + " NM · " + String(Math.round(bearing(ref.pos, c))).padStart(3, "0") + "°</span></button>";
+      }).join("") + "</div>";
+  }
+  html += '<div class="muted" style="margin-top:6px">Ranked from the habitat model: sea temperature (' + day(oc.sst.observed_at) + "), temperature fronts, chlorophyll (" +
+    day(oc.chl.observed_at) + ") and seabed structure. Shows conditions, not fish: satellites cannot see tuna. Not yet checked against real catches.</div>";
+  $("info").innerHTML = html;
+  document.querySelectorAll(".spot").forEach((b) => { b.onclick = () => showSpot(Number(b.dataset.rank), true); });
+}
+async function showSpot(rank, fly) {
+  const f = spotList().find((x) => x.properties.rank === rank); if (!f) return;
+  const p = typeof f.properties.factors === "string" ? { ...f.properties, factors: JSON.parse(f.properties.factors) } : f.properties;
+  const pos = f.geometry.coordinates, ref = fromHere(), w = manifest.predictions.tuna_habitat.params.weights, r = spotData.rules;
+  if (fly) map.easeTo({ center: pos, zoom: Math.max(map.getZoom(), 10), duration: 700 });
+  const names = { sst: "Sea temp", front: "Fronts ≤4 km", chl: "Chlorophyll", structure: "Structure" };
+  const t = oceanAt(await loadOcean(), pos[1], pos[0]) || {};
+  const vals = { sst: t.sst == null ? "–" : t.sst.toFixed(1) + " °C", front: t.front == null ? "–" : t.front.toFixed(3) + " °C/km here",
+                 chl: t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³", structure: t.dist == null ? "–" : t.dist.toFixed(1) + " km away" };
+  $("info").innerHTML =
+    '<div class="label">Tuna spot #' + p.rank + " of " + spotList().length + " · " + day(manifest.predictions.tuna_habitat.valid_for) + "</div>" +
+    '<div class="row"><span class="score">' + Math.round(p.score) + '</span><span class="muted">/ 100 habitat score (average over ~3 km)</span></div>' +
+    '<div class="coords">' + dm(pos[1], true) + "  " + dm(pos[0], false) + "</div>" +
+    '<div class="nc"><div><span>' + (ref.label === "from you" ? "From you" : "From map centre") + "</span><span>" + (haversine(ref.pos, pos) / NM).toFixed(1) + " NM · " +
+      String(Math.round(bearing(ref.pos, pos))).padStart(3, "0") + "°T</span></div>" +
+    (p.reef_km != null ? "<div><span>Nearest reef / island</span><span>" + p.reef_km.toFixed(1) + " km</span></div>" : "") + "</div>" +
+    '<div class="factors">' + ["sst", "front", "chl", "structure"].map((k) => factorRow(names[k], vals[k], p.factors[k] == null ? null : p.factors[k], w[k])).join("") + "</div>" +
+    '<div class="muted" style="margin-top:6px">' + (Object.keys(p.factors).length < 4 ? "Chlorophyll is not used within ~4 km of reefs (seabed glare). " : "") +
+      "Shown because it is a top-" + r.top_pct + "% peak today (score ≥ " + spotData.threshold + "), at least " + r.separation_km + " km from a better spot.</div>" +
+    '<div class="row" style="margin-top:8px"><button id="spot-go">Go here</button><button id="spot-back">All spots</button></div>' +
+    '<div class="warn">Conditions, not fish: satellites cannot see tuna. Not validated against catches yet. ' + DISCLAIMER + "</div>";
+  $("spot-go").onclick = () => {
+    setMode("captain"); route.length = 0; nextWp = 0;
+    if (gps.fix) { route.push([gps.fix.lon, gps.fix.lat]); nextWp = 1; }
+    route.push(pos); loadGrid().then(renderRoute);
+  };
+  $("spot-back").onclick = renderSpots;
+}
+async function showFishing(lat, lon) {
+  const [g, o] = await Promise.all([loadGrid(), loadOcean()]);
+  const d = depthAt(g, lat, lon), t = oceanAt(o, lat, lon);
+  const pr = manifest.predictions, w = pr.tuna_habitat.params.weights;
+  let html = depthBlock(lat, lon, d);
+  const depth = d && d.elev < 0 ? -d.elev : 0;
+  const jig = d && depth >= 30 && depth <= 300 && d.slope >= 6;
+  html += '<div style="margin-top:8px"><span class="pill">' + (jig ? "Jigging zone: yes" : "Jigging zone: no") + "</span> " +
+    '<span class="muted">30–300 m on sloping seabed (derived from GEBCO, not verified)</span></div>';
+  if (mode === "jigging") {
+    $("info").innerHTML = html + '<div class="warn">' + DISCLAIMER + "</div>"; return;
+  }
+  if (t && t.score != null) {
+    // Factor scores below are the exact values the model combined (exported from the server grids).
+    const rows = [["Sea temp", t.sst == null ? "–" : t.sst.toFixed(1) + " °C", t.fSst, w.sst],
+                  ["Fronts ≤4 km", t.front == null ? "–" : t.front.toFixed(3) + " °C/km here", t.fFront, w.front],
+                  ["Chlorophyll", t.chl == null ? "not used near reefs" : t.chl.toFixed(2) + " mg/m³", t.fChl, w.chl],
+                  ["Structure", t.dist == null ? "–" : t.dist.toFixed(1) + " km away", t.fStruct, w.structure]];
+    const used = rows.filter((r) => r[2] != null);
+    const check = 100 * used.reduce((a, r) => a + r[2] * r[3], 0) / used.reduce((a, r) => a + r[3], 0);
+    html += '<div class="label" style="margin-top:10px">Tuna habitat (prediction)</div>' +
+      '<div class="row"><span class="score">' + Math.round(t.score) + '</span><span class="muted">/ 100 for ' + day(pr.tuna_habitat.valid_for) + "</span></div>" +
+      '<div class="factors">' + rows.map((r) => factorRow(r[0], r[1], r[2], r[3])).join("") + "</div>" +
+      '<div class="muted" style="margin-top:6px">Score = weighted average of the factors used (' + check.toFixed(0) + ")" +
+      (used.length < 4 ? "; unused factors are left out, not guessed" : "") +
+      ". Rates conditions only: satellites cannot see tuna. Not yet checked against real catches.</div>";
+  } else {
+    html += '<div class="muted" style="margin-top:8px">No tuna-habitat score here (lagoon, reef or shallower than 50 m).</div>';
+  }
+  $("info").innerHTML = html + '<div class="warn">' + DISCLAIMER + "</div>";
+}
+async function showWeather(lat, lon) {
+  const o = await loadOcean(), t = oceanAt(o, lat, lon), oc = manifest.ocean;
+  if (!t) { $("info").innerHTML = '<div class="muted">Outside the ocean data area.</div>'; return; }
+  $("info").innerHTML = '<div class="coords">' + dm(lat, true) + "  " + dm(lon, false) + "</div>" +
+    '<div class="big">' + (t.sst == null ? "–" : t.sst.toFixed(2) + " °C") + '</div><div class="muted">Sea surface temperature · observed ' + day(oc.sst.observed_at) + " (satellite L4 analysis, ~1 km)</div>" +
+    '<div class="nc"><div><span>Temperature front</span><span>' + (t.front == null ? "–" : t.front.toFixed(3) + " °C/km") + "</span></div>" +
+    "<div><span>Chlorophyll</span><span>" + (t.chlObs == null ? "no data" : t.chlObs.toFixed(2) + " mg/m³ · " + day(oc.chl.observed_at)) + "</span></div>" +
+    (t.chlObs != null && t.chl == null ? '<div class="muted">Near reefs, seabed reflection can make satellite chlorophyll read too high.</div>' : "") +
+    "<div><span>Wind / waves / rain</span><span class=\"pill\">Not connected yet</span></div>" +
+    "<div><span>Currents</span><span class=\"pill\">Not connected yet</span></div></div>";
+}
+function showFad(p) {
+  const lst = fadData.lists[p.list] || {}, notes = typeof p.notes === "string" ? JSON.parse(p.notes) : (p.notes || []);
+  const f = gps.fix, me = f ? [f.lon, f.lat] : null, pos = lastFadPos;
+  const away = p.status !== "in_place";
+  $("info").innerHTML =
+    '<div class="label">FAD ' + esc(p.code) + " · " + (p.list === "sport" ? "sport fishing" : "tuna, pole and line") + "</div>" +
+    '<div class="big" style="font-size:24px;color:' + (away ? "var(--alert)" : "var(--ink)") + '">' + (away ? "Reported broken away" : "In place") + "</div>" +
+    '<div class="muted">Status as shown in the Ministry list: ' + esc(lst.title || "") + "</div>" +
+    '<div class="nc"><div><span>Deployed</span><span>' + day(p.deployed) + "</span></div>" +
+    "<div><span>Position (as published)</span><span>" + esc(p.raw_lat) + " · " + esc(p.raw_lon) + "</span></div>" +
+    "<div><span>Position (read as)</span><span>" + dm(pos[1], true) + " " + dm(pos[0], false) + "</span></div>" +
+    (p.depth != null ? "<div><span>Depth here (GEBCO grid)</span><span>~" + Math.round(p.depth) + " m</span></div>" : "") +
+    (me ? "<div><span>From you</span><span>" + (haversine(me, pos) / NM).toFixed(1) + " NM · " + String(Math.round(bearing(me, pos))).padStart(3, "0") + "°T</span></div>" : "") +
+    "</div>" +
+    (notes.length ? '<div class="muted" style="margin-top:6px">' + notes.map(esc).join("<br>") + "</div>" : "") +
+    '<div class="row" style="margin-top:8px"><button id="fad-go">Go here</button><a class="muted" href="' + esc(lst.url || "https://fisheries.gov.mv/fad") + '" target="_blank" rel="noopener">Official list (PDF)</a></div>' +
+    '<div class="warn">Positions are where the FAD was deployed, per the Ministry list. FADs can drift, sink or break away after the list date.</div>';
+  $("fad-go").onclick = () => {
+    setMode("captain"); route.length = 0; nextWp = 0;
+    if (gps.fix) { route.push([gps.fix.lon, gps.fix.lat]); nextWp = 1; }
+    route.push(pos); loadGrid().then(renderRoute);
+  };
+}
+let lastFadPos = null;
+
+const KIND = { drop_off: "Drop-off candidate", pinnacle: "Pinnacle candidate", knoll: "Knoll candidate", seamount: "Seamount candidate" };
+function showFeature(p) {
+  const facts = ["~" + Math.round(p.depth_m) + " m deep"];
+  if (p.relief_m != null) facts.push("rises ~" + Math.round(p.relief_m) + " m");
+  if (p.max_slope_deg != null) facts.push("slope ~" + Math.round(p.max_slope_deg) + "°");
+  $("info").innerHTML = '<div class="label">' + (KIND[p.kind] || "Terrain candidate") + "</div>" +
+    '<div style="font-size:17px;font-weight:600;margin:2px 0">' + facts.join(" · ") + "</div>" +
+    '<div style="font-size:14px;max-width:65ch">' + esc(p.explanation) + '</div><div class="warn">' + DISCLAIMER + "</div>";
+}
+
+// ---------- GPS (device location; works on the live website, blocked inside embedded previews) ----------
+const gps = { fix: null, prev: null, watch: null, follow: false, error: null };
+function startGps() {
+  if (!("geolocation" in navigator)) { gps.error = "This browser has no location support."; renderGpsBar(); return; }
+  if (gps.watch !== null) return;
+  gps.watch = navigator.geolocation.watchPosition(onFix, onGpsError, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  renderGpsBar();
+}
+function onFix(p) {
+  const c = p.coords, t = p.timestamp || Date.now();
+  let sog = Number.isFinite(c.speed) && c.speed !== null ? c.speed * 3600 / NM : null;
+  let cog = Number.isFinite(c.heading) && c.heading !== null ? c.heading : null;
+  const fix = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t };
+  if (sog === null && gps.fix) {  // browser gave no speed: derive it from consecutive fixes
+    const dt = (t - gps.fix.t) / 1000, d = haversine([gps.fix.lon, gps.fix.lat], [fix.lon, fix.lat]);
+    if (dt >= 2 && dt <= 30 && d > Math.max(c.accuracy, gps.fix.acc) * 0.5) { sog = d / dt * 3600 / NM; cog = bearing([gps.fix.lon, gps.fix.lat], [fix.lon, fix.lat]); }
+  }
+  fix.sog = sog; fix.cog = sog !== null && sog >= 0.5 ? cog : null;
+  gps.prev = gps.fix; gps.fix = fix; gps.error = null;
+  drawMe();
+  if (gps.follow) map.easeTo({ center: [fix.lon, fix.lat], duration: 500 });
+  renderGpsBar();
+  if (mode === "captain") renderRoute();
+}
+function onGpsError(e) {
+  gps.error = e.code === 1 ? "Location permission denied. Allow location for this website in your browser settings, then tap the GPS button again."
+    : e.code === 3 ? "Waiting for a GPS fix… (go outside or near a window)" : "Location unavailable: " + e.message;
+  if (e.code === 1 && gps.watch !== null) { navigator.geolocation.clearWatch(gps.watch); gps.watch = null; }
+  renderGpsBar();
+}
+function circle(lat, lon, r) {
+  const pts = [], R = 6371008.8, d = r / R, la = lat * Math.PI / 180, lo = lon * Math.PI / 180;
+  for (let i = 0; i <= 48; i++) {
+    const b = 2 * Math.PI * i / 48;
+    const pla = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+    const plo = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(pla));
+    pts.push([plo * 180 / Math.PI, pla * 180 / Math.PI]);
+  }
+  return { type: "Polygon", coordinates: [pts] };
+}
+function drawMe() {
+  const f = gps.fix; if (!f || !map.getSource("me")) return;
+  map.getSource("me").setData({ type: "FeatureCollection", features: [
+    { type: "Feature", properties: {}, geometry: circle(f.lat, f.lon, Math.max(f.acc || 0, 1)) },
+    { type: "Feature", properties: { stale: Date.now() - f.t > 15000 }, geometry: { type: "Point", coordinates: [f.lon, f.lat] } }] });
+}
+function renderGpsBar() {
+  const bar = $("gpsbar");
+  if (gps.watch === null && !gps.error) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const f = gps.fix;
+  if (!f) { bar.innerHTML = '<span class="st fair">' + esc(gps.error || "Waiting for GPS fix…") + "</span>"; return; }
+  const age = Math.max(0, Math.round((Date.now() - f.t) / 1000));
+  const lost = age > 15, q = lost ? "lost" : f.acc <= 15 ? "good" : f.acc <= 50 ? "fair" : "lost";
+  bar.innerHTML = '<span class="st ' + q + '">' + (lost ? "GPS SIGNAL LOST · last fix " + age + " s ago" : "GPS " + (q === "good" ? "GOOD" : q === "fair" ? "FAIR" : "POOR") + " · " + age + " s ago") +
+    (gps.follow ? " · following" : "") + "</span>" +
+    '<span class="pos">' + dm(f.lat, true) + "  " + dm(f.lon, false) + "</span>" +
+    '<span class="nums"><span>SOG <b>' + (f.sog === null ? "—" : f.sog.toFixed(1) + " kn") + "</b></span><span>COG <b>" +
+    (f.cog === null ? "—" : String(Math.round(f.cog)).padStart(3, "0") + "°") + "</b></span><span>±<b>" + Math.round(f.acc) + " m</b></span></span>" +
+    (gps.error ? '<span class="muted">' + esc(gps.error) + "</span>" : "");
+  if (map && map.getSource("me")) drawMe();
+}
+setInterval(() => { if (gps.watch !== null) renderGpsBar(); }, 1000);
+
+// Cross-track distance (m) of point p from the great circle a->b; positive = right of track.
+function crossTrack(a, b, p) {
+  const R = 6371008.8, d13 = haversine(a, p) / R, t13 = bearing(a, p) * Math.PI / 180, t12 = bearing(a, b) * Math.PI / 180;
+  return Math.asin(Math.sin(d13) * Math.sin(t13 - t12)) * R;
+}
+let nextWp = 0;
+function navBlock() {
+  const f = gps.fix;
+  if (!f || route.length === 0) return "";
+  const me = [f.lon, f.lat];
+  while (nextWp < route.length - 1 && haversine(me, route[nextWp]) < 0.05 * NM) nextWp++;  // waypoint reached
+  nextWp = Math.min(nextWp, route.length - 1);
+  const wp = route[nextWp], dtw = haversine(me, wp), btw = bearing(me, wp);
+  let remaining = dtw;
+  for (let i = nextWp + 1; i < route.length; i++) remaining += haversine(route[i - 1], route[i]);
+  const spd = f.sog && f.sog > 1 ? f.sog : speedKn;
+  const eta = new Date(Date.now() + remaining / NM / spd * 3600000);
+  let xte = null;
+  if (nextWp > 0) xte = crossTrack(route[nextWp - 1], wp, me);
+  const off = xte !== null && Math.abs(xte) > 0.25 * NM;
+  return '<div class="nav"><span class="label">Navigating to waypoint ' + (nextWp + 1) + "</span>" +
+    '<span class="pos">' + (dtw / NM).toFixed(2) + " NM · bearing " + String(Math.round(btw)).padStart(3, "0") + "°T</span>" +
+    '<span class="muted">' + (remaining / NM).toFixed(1) + " NM to finish · ETA " + eta.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Maldives" }) +
+    " MVT at " + spd.toFixed(1) + " kn" + (f.sog && f.sog > 1 ? " (your speed)" : " (planned speed)") + "</span>" +
+    (xte !== null ? '<span class="' + (off ? "st lost" : "muted") + '">' + (off ? "⚠ OFF ROUTE: " : "Cross-track ") + (Math.abs(xte) / NM).toFixed(2) + " NM " + (xte > 0 ? "right" : "left") + " of the planned leg</span>" : "") +
+    "</div>";
+}
+
+// ---------- Captain: route planning ----------
+const route = [];
+let speedKn = 15;
+function routeGeo() {
+  const f = route.map((p, i) => ({ type: "Feature", properties: { n: String(i + 1) }, geometry: { type: "Point", coordinates: p } }));
+  if (route.length > 1) f.unshift({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: route } });
+  return { type: "FeatureCollection", features: f };
+}
+function legShallow(a, b) {
+  if (!grid) return false;
+  const n = Math.max(2, Math.ceil(haversine(a, b) / 200));
+  for (let i = 0; i <= n; i++) {
+    const lon = a[0] + (b[0] - a[0]) * i / n, lat = a[1] + (b[1] - a[1]) * i / n;
+    const d = depthAt(grid, lat, lon);
+    if (d && d.elev > -5) return true;
+  }
+  return false;
+}
+function renderRoute() {
+  map && map.getSource("route") && map.getSource("route").setData(routeGeo());
+  let total = 0, rows = "", shallow = 0;
+  for (let i = 1; i < route.length; i++) {
+    const d = haversine(route[i - 1], route[i]); total += d;
+    const sh = legShallow(route[i - 1], route[i]); if (sh) shallow++;
+    rows += "<tr><td>" + i + "→" + (i + 1) + (sh ? " ⚠" : "") + "</td><td>" + (d / NM).toFixed(2) + "</td><td>" +
+      String(Math.round(bearing(route[i - 1], route[i]))).padStart(3, "0") + "°</td><td>" + Math.round(d / NM / speedKn * 60) + " min</td></tr>";
+  }
+  const mins = total / NM / speedKn * 60;
+  $("info").innerHTML =
+    '<div class="label">Captain · route planner</div>' +
+    (route.length < 2 ? '<div style="font-size:15.5px;margin:4px 0">Tap the map to add waypoints. Distances in nautical miles, bearings true.</div>'
+      : '<div class="big">' + (total / NM).toFixed(1) + " NM</div>" +
+        '<div class="muted">ETA ' + Math.floor(mins / 60) + " h " + String(Math.round(mins % 60)).padStart(2, "0") + " min at " + speedKn + " kn · " + route.length + " waypoints</div>" +
+        '<table class="legs"><tr><th>Leg</th><th>NM</th><th>Brg</th><th>Time</th></tr>' + rows + "</table>") +
+    navBlock() +
+    (route.length > 1 && !shallow ? '<div class="muted" style="margin-top:6px">No shallow crossing found in the ~460 m GEBCO grid. That does not mean the water is safe: small reefs and coral heads are often missing from it.</div>' : "") +
+    (shallow ? '<div class="warn">⚠ ' + shallow + " leg(s) cross water shallower than 5 m or land in the GEBCO grid. Re-plan around reefs and check official charts.</div>" : "") +
+    '<div class="row" style="margin-top:8px"><label for="spd" class="muted">Speed</label><input type="number" id="spd" min="1" max="60" value="' + speedKn + '"><span class="muted">kn</span>' +
+    '<button id="r-me">Start from my position</button><button id="r-undo">Undo</button><button id="r-clear">Clear</button><button id="r-night" class="' + (document.body.classList.contains("night") ? "on" : "") + '">Night mode</button></div>' +
+    '<div class="muted" style="margin-top:6px">Tap the GPS button for your live position. Not a certified chart plotter: keep a proper lookout and use official charts.</div>';
+  $("spd").onchange = (e) => { speedKn = Math.max(1, Math.min(60, Number(e.target.value) || 15)); renderRoute(); };
+  $("r-undo").onclick = () => { route.pop(); nextWp = 0; renderRoute(); };
+  $("r-clear").onclick = () => { route.length = 0; nextWp = 0; renderRoute(); };
+  $("r-me").onclick = () => {
+    if (!gps.fix) { startGps(); $("r-me").textContent = "Waiting for GPS…"; return; }
+    route.unshift([gps.fix.lon, gps.fix.lat]); nextWp = 1; renderRoute();
+  };
+  $("r-night").onclick = () => { document.body.classList.toggle("night"); renderRoute(); };
+}
+
+// ---------- layers & modes ----------
+const LAYERS = [
+  { id: "s2", name: "Satellite (Sentinel-2, reef-enhanced)", ids: ["s2"] },
+  { id: "hires", name: "Sharp close-ups (Esri, zoom 13+)", ids: ["hires"] },
+  { id: "depth", name: "Depth shading", ids: ["depth"], opacity: "raster-opacity" },
+  { id: "contours", name: "Depth contours", ids: ["contours", "contour-labels"] },
+  { id: "fads", name: "FADs (Ministry of Fisheries)", ids: ["fads", "fad-labels"] },
+  { id: "features", name: "Drop-offs & seamounts", ids: ["features"] },
+  { id: "jig", name: "Jigging zones 30–300 m", ids: ["jigging_zones"], opacity: "raster-opacity" },
+  { id: "spots", name: "Best tuna spots today (top 10)", ids: ["spot-areas", "spot-line", "spot-dots", "spot-labels"] },
+  { id: "tuna", name: "Tuna habitat, whole map (prediction)", ids: ["tuna_habitat"], opacity: "raster-opacity" },
+  { id: "sst", name: "Sea temperature", ids: ["sst"], opacity: "raster-opacity" },
+  { id: "front", name: "Temperature fronts", ids: ["sst_front"] },
+  { id: "chl", name: "Chlorophyll", ids: ["chl"], opacity: "raster-opacity" },
+  { id: "slope", name: "Seafloor slope", ids: ["slope"], opacity: "raster-opacity" },
+];
+const PRESETS = {
+  tuna: { s2: 1, hires: 1, contours: 1, fads: 1, spots: 1 },
+  jigging: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1, features: 1, jig: 1 },
+  captain: { s2: 1, hires: 1, depth: 1, contours: 1, fads: 1 },
+  weather: { s2: 1, hires: 1, sst: 1, front: 1 },
+};
+const state = {};
+// Overlays fade out when zoomed in, so close-ups show the real imagery underneath.
+const FADE = { depth: [9, 13], tuna_habitat: [10, 13], sst: [10, 13], chl: [10, 13], sst_front: [10, 13],
+               jigging_zones: [12, 15], slope: [11, 14] };
+function fadeExpr(lid, base) {
+  const f = FADE[lid];
+  return f ? ["interpolate", ["linear"], ["zoom"], f[0], base, f[1], 0] : base;
+}
+function setLayer(id, on) {
+  state[id] = on;
+  const L = LAYERS.find((l) => l.id === id);
+  L.ids.forEach((lid) => map.getLayer(lid) && map.setLayoutProperty(lid, "visibility", on ? "visible" : "none"));
+  const box = $("ly-" + id); if (box) box.checked = on;
+}
+function buildLayersPanel() {
+  const m = manifest.meta, oc = manifest.ocean, pr = manifest.predictions;
+  const sub = {
+    hires: "Esri World Imagery, testing only · capture dates vary (not shown)",
+    s2: "Captured " + m.imagery_from + " – " + m.imagery_to + " · 10 m · underwater detail lifted",
+    depth: "GEBCO 2026 · only " + m.gebco_measured_pct + "% of cells measured, the rest estimated",
+    contours: "10 – 5000 m from GEBCO · mostly estimated depths, not survey lines",
+    fads: "Official lists: " + Object.values(fadData.lists).map((l) => l.title.replace(/\s+/g, " ")).join(" · ") + ". Yellow = in place, grey ring = reported broken away",
+    features: "Computed candidates, not verified", jig: "Derived from GEBCO depth and slope",
+    spots: "Ranked peaks of the habitat model, " + day(pr.tuna_habitat.valid_for) + " · conditions, not fish",
+    tuna: "Prediction for " + day(pr.tuna_habitat.valid_for) + " · not validated yet",
+    sst: "Observed " + day(oc.sst.observed_at) + " · MUR L4 ~1 km", front: "Derived from SST " + day(oc.sst_front.observed_at),
+    chl: "Observed (gap-filled) " + day(oc.chl.observed_at) + " · ~9 km", slope: "Derived from GEBCO",
+  };
+  $("layers").innerHTML = '<div class="label">Map layers</div>' + LAYERS.map((l) =>
+    '<div class="layer"><label for="ly-' + l.id + '">' + l.name + '</label><input type="checkbox" class="switch" id="ly-' + l.id + '"><small>' + sub[l.id] + "</small>" +
+    (l.opacity ? '<input type="range" min="0.1" max="1" step="0.05" value="' + (l.id === "depth" ? 0.45 : 0.8) + '" id="op-' + l.id + '" aria-label="' + l.name + ' opacity">' : "") + "</div>").join("");
+  LAYERS.forEach((l) => {
+    $("ly-" + l.id).onchange = (e) => setLayer(l.id, e.target.checked);
+    if (l.opacity) $("op-" + l.id).oninput = (e) => l.ids.forEach((lid) => map.setPaintProperty(lid, "raster-opacity", fadeExpr(lid, Number(e.target.value))));
+  });
+}
+function setMode(m) {
+  mode = m;
+  ["tuna", "jigging", "captain", "weather"].forEach((k) => $("tab-" + k).setAttribute("aria-selected", String(k === m)));
+  LAYERS.forEach((l) => setLayer(l.id, !!PRESETS[m][l.id]));
+  if (map.getLayer("route-line")) ["route-line", "route-pts"].forEach((lid) => map.setLayoutProperty(lid, "visibility", m === "captain" ? "visible" : "none"));
+  if (m !== "captain") document.body.classList.remove("night");
+  if (m === "captain") loadGrid().then(renderRoute);
+  intro();
+}
+
+function rankImage(text) {
+  const ratio = 2, c = document.createElement("canvas"), ctx = c.getContext("2d"), sz = 20 * ratio;
+  c.width = sz; c.height = sz;
+  ctx.font = "700 " + 13 * ratio + "px 'Source Sans 3', sans-serif"; ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, sz / 2, sz / 2 + ratio);
+  return { image: ctx.getImageData(0, 0, sz, sz), ratio };
+}
+function labelImage(text) {
+  const ratio = 2, c = document.createElement("canvas"), ctx = c.getContext("2d");
+  ctx.font = "600 " + 10 * ratio + "px 'Source Sans 3', sans-serif";
+  const w = Math.ceil(ctx.measureText(text).width + 8 * ratio), h = 14 * ratio;
+  c.width = w; c.height = h;
+  ctx.fillStyle = "rgba(6,18,31,0.72)"; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 3 * ratio); ctx.fill();
+  ctx.font = "600 " + 10 * ratio + "px 'Source Sans 3', sans-serif"; ctx.fillStyle = "#e0f7fa"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 4 * ratio, h / 2 + ratio / 2);
+  return { image: ctx.getImageData(0, 0, w, h), ratio };
+}
+
+(async () => {
+  manifest = await (await fetch("data/manifest.json")).json();
+  const [contours, features, fads, spots] = await Promise.all([fetch("data/contours.json").then((r) => r.json()),
+    fetch("data/features.json").then((r) => r.json()), fetch("data/fads.json").then((r) => r.json()),
+    fetch("data/tuna_spots.json").then((r) => r.json())]);
+  fadData = fads; spotData = spots;
+  const m = manifest.meta, B = [70, -3.5, 77.5, 8.5];
+  $("attrib").textContent = m.imagery_attribution + " · Close-ups: Esri, Maxar, Earthstar Geographics · GEBCO 2026 · SST: NASA JPL MUR · Chlorophyll: NOAA STAR/CoastWatch · MapLibre";
+  const raster = (id, maxzoom, extra = {}) => ({ type: "raster", tiles: ["pack://" + id + "/{z}/{x}/{y}"], tileSize: 256, minzoom: 4, maxzoom, bounds: B, ...extra });
+  const rl = (id, opacity) => ({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": fadeExpr(id, opacity), "raster-fade-duration": 0 } });
+  map = new maplibregl.Map({
+    container: "map", center: [73.45, 4.22], zoom: 9.4, maxZoom: 17, attributionControl: false,
+    style: {
+      version: 8,
+      sources: {
+        s2: raster("s2", 14, { minzoom: 7, bounds: m.imagery_bounds }),
+        // Sharp close-ups (testing only; Esri capture dates vary and are not published per tile).
+        hires: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                 tileSize: 256, minzoom: 13, maxzoom: 19 },
+        depth: raster("depth", 10), slope: raster("slope", 10),
+        jigging_zones: raster("jigging_zones", 10), tuna_habitat: raster("tuna_habitat", 9),
+        sst: raster("sst", 9), chl: raster("chl", 9), sst_front: raster("sst_front", 9),
+        contours: { type: "geojson", data: contours }, features: { type: "geojson", data: features },
+        route: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        tap: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        me: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        fads: { type: "geojson", data: fads },
+        spots: { type: "geojson", data: spots },
+      },
+      layers: [
+        { id: "bg", type: "background", paint: { "background-color": "#06121f" } },
+        { id: "s2", type: "raster", source: "s2", paint: { "raster-fade-duration": 0 } },
+        { id: "hires", type: "raster", source: "hires", minzoom: 13, paint: { "raster-fade-duration": 0 } },
+        rl("depth", 0.45), rl("slope", 0.8), rl("sst", 0.8), rl("chl", 0.8), rl("sst_front", 0.9),
+        rl("tuna_habitat", 0.8), rl("jigging_zones", 0.8),
+        { id: "contours", type: "line", source: "contours",
+          filter: ["any", [">=", ["zoom"], 11], ["in", ["get", "depth_m"], ["literal", [50, 100, 200, 500, 1000, 2000, 3000, 4000, 5000]]]],
+          layout: { "line-join": "round" },
+          paint: { "line-color": ["interpolate", ["linear"], ["get", "depth_m"], 10, "#b2ebf2", 50, "#4dd0e1", 200, "#26c6da", 1000, "#0097a7", 3000, "#006064"],
+                   "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 1.1, 14, 1.8], "line-opacity": 0.85 } },
+        { id: "contour-labels", type: "symbol", source: "contours", minzoom: 10,
+          layout: { "symbol-placement": "line", "symbol-spacing": 320, "icon-image": ["concat", "d", ["to-string", ["get", "depth_m"]]], "icon-rotation-alignment": "viewport" } },
+        { id: "features", type: "circle", source: "features", minzoom: 6,
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 12, 7],
+                   "circle-color": ["match", ["get", "kind"], "drop_off", "#ff9800", "seamount", "#e040fb", "knoll", "#7c4dff", "#00e5ff"],
+                   "circle-stroke-color": "#06121f", "circle-stroke-width": 1.5 } },
+        { id: "spot-areas", type: "fill", source: "spots", filter: ["==", ["get", "kind"], "area"], layout: { visibility: "none" },
+          paint: { "fill-color": "#ff6f00", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0.3, 10, 0.12, 13, 0.04] } },
+        { id: "spot-line", type: "line", source: "spots", filter: ["==", ["get", "kind"], "area"], layout: { visibility: "none" },
+          paint: { "line-color": "#ffab40", "line-width": 1.5 } },
+        { id: "spot-dots", type: "circle", source: "spots", filter: ["==", ["get", "kind"], "spot"], layout: { visibility: "none" },
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 9, 12, 13], "circle-color": "#ff6f00",
+                   "circle-stroke-color": "#fff", "circle-stroke-width": 2 } },
+        { id: "spot-labels", type: "symbol", source: "spots", filter: ["==", ["get", "kind"], "spot"],
+          layout: { visibility: "none", "icon-image": ["concat", "spot-", ["to-string", ["get", "rank"]]], "icon-allow-overlap": true, "icon-ignore-placement": true } },
+        { id: "fads", type: "circle", source: "fads",
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4, 12, 8],
+                   "circle-color": ["match", ["get", "status"], "in_place", "#ffd54f", "rgba(0,0,0,0)"],
+                   "circle-stroke-color": ["match", ["get", "status"], "in_place", "#3e2723", "#9e9e9e"],
+                   "circle-stroke-width": ["match", ["get", "status"], "in_place", 2, 2.5] } },
+        { id: "fad-labels", type: "symbol", source: "fads", minzoom: 10,
+          layout: { "icon-image": ["concat", "fad-", ["get", "list"], "-", ["to-string", ["get", "row"]]], "icon-anchor": "left", "icon-offset": [14, 0], "icon-allow-overlap": false } },
+        { id: "route-line", type: "line", source: "route", layout: { visibility: "none" }, paint: { "line-color": "#ffeb3b", "line-width": 3.5 } },
+        { id: "route-pts", type: "circle", source: "route", filter: ["==", ["geometry-type"], "Point"], layout: { visibility: "none" },
+          paint: { "circle-radius": 7, "circle-color": "#ffeb3b", "circle-stroke-color": "#06121f", "circle-stroke-width": 2 } },
+        { id: "me-acc", type: "fill", source: "me", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#4fc3f7", "fill-opacity": 0.18 } },
+        { id: "me-dot", type: "circle", source: "me", filter: ["==", ["geometry-type"], "Point"],
+          paint: { "circle-radius": 8, "circle-color": ["case", ["get", "stale"], "#9e9e9e", "#1e88e5"], "circle-stroke-color": "#fff", "circle-stroke-width": 3 } },
+        { id: "tap", type: "circle", source: "tap", paint: { "circle-radius": 9, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } },
+      ],
+    },
+  });
+  window.jigmap = map;
+  for (const d of [10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]) {
+    const { image, ratio } = labelImage(d + " m"); map.addImage("d" + d, image, { pixelRatio: ratio });
+  }
+  for (const f of fads.features) {
+    const id = "fad-" + f.properties.list + "-" + f.properties.row;  // codes are not unique in the official list
+    const { image, ratio } = labelImage(f.properties.code); if (!map.hasImage(id)) map.addImage(id, image, { pixelRatio: ratio });
+  }
+  for (const f of spots.features.filter((x) => x.properties.kind === "spot")) {
+    const { image, ratio } = rankImage(String(f.properties.rank)); map.addImage("spot-" + f.properties.rank, image, { pixelRatio: ratio });
+  }
+  map.on("load", () => { $("loading").remove(); buildLayersPanel(); setMode("tuna"); });
+  ["tuna", "jigging", "captain", "weather"].forEach((k) => { $("tab-" + k).onclick = () => setMode(k); });
+  $("info-toggle").onclick = () => { const min = $("info").classList.toggle("min"); $("info-toggle").textContent = min ? "▴" : "▾"; };
+  new MutationObserver(() => { $("info").classList.remove("min"); $("info-toggle").textContent = "▾"; })
+    .observe($("info"), { childList: true });
+  $("btn-layers").onclick = () => { $("layers").classList.toggle("open"); $("btn-layers").classList.toggle("on"); };
+  $("btn-gps").onclick = () => {
+    if (gps.watch === null) { gps.follow = true; startGps(); }
+    else gps.follow = !gps.follow;
+    $("btn-gps").classList.toggle("on", gps.follow);
+    if (gps.follow && gps.fix) map.easeTo({ center: [gps.fix.lon, gps.fix.lat], zoom: Math.max(map.getZoom(), 12), duration: 600 });
+    renderGpsBar();
+  };
+  map.on("dragstart", () => { if (gps.follow) { gps.follow = false; $("btn-gps").classList.remove("on"); renderGpsBar(); } });
+  map.on("click", async (e) => {
+    const ll = [e.lngLat.lng, e.lngLat.lat];
+    if (state.fads) {
+      const fh = map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers: ["fads"] });
+      if (fh.length) {
+        const fpos = [Number(fh[0].properties.lon), Number(fh[0].properties.lat)];  // exact, not the rendered (quantised) geometry
+        if (mode === "captain" && route.length) { route.push(fpos); await loadGrid(); renderRoute(); return; }  // snap waypoint to the FAD
+        lastFadPos = fpos; showFad(fh[0].properties); return;
+      }
+    }
+    if (state.spots && mode !== "captain") {
+      const sh = map.queryRenderedFeatures([[e.point.x - 12, e.point.y - 12], [e.point.x + 12, e.point.y + 12]], { layers: ["spot-dots"] });
+      if (sh.length) { showSpot(Number(sh[0].properties.rank), false); return; }
+    }
+    if (mode === "captain") { route.push(ll); await loadGrid(); renderRoute(); return; }
+    map.getSource("tap").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: ll } }] });
+    if (state.features) {
+      const hit = map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ["features"] });
+      if (hit.length) { showFeature(hit[0].properties); return; }
+    }
+    $("info").innerHTML = '<div class="label">Reading data…</div><div class="muted">Loading grids (once).</div>';
+    try { mode === "weather" ? await showWeather(e.lngLat.lat, e.lngLat.lng) : await showFishing(e.lngLat.lat, e.lngLat.lng); }
+    catch (err) { $("info").innerHTML = '<div class="label">Data unavailable</div><div>' + esc(err.message) + "</div>"; }
+  });
+})().catch((err) => { $("loading").textContent = "The map could not load: " + err.message; });
+</script>
+</body>
+</html>

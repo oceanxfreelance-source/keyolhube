@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   // Loaded by Node at runtime instead of bundled (PGlite ships WebAssembly and data files).
   serverExternalPackages: ["@electric-sql/pglite"],
   devIndicators: false,
+  // SQL migrations are read at runtime (RUN_MIGRATIONS=1), so ship them with the server code.
+  outputFileTracingIncludes: { "/**": ["./drizzle/**/*"] },
   webpack(config) {
     // paper.js has optional Node-only paths (jsdom/canvas) for server-side drawing. The editor
     // only runs paper.js in the browser, so stub them out of every bundle.

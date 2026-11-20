@@ -14,6 +14,8 @@ function makeAuth(db: Awaited<ReturnType<typeof getDb>>) {
     }),
     // Email + password, no email service connected yet: so no verification or reset emails.
     emailAndPassword: { enabled: true, minPasswordLength: 8, autoSignIn: true },
+    // Extra site addresses allowed to sign in (comma-separated), e.g. a custom domain.
+    trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean),
     session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
     plugins: [nextCookies()],
   });

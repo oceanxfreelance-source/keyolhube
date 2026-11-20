@@ -3,7 +3,8 @@ import Konva from "konva";
 import { resolvedDirection } from "../doc/factory";
 import type { DesignDoc, DesignNode, Fill, Page, Shadow, Stroke } from "../doc/types";
 import { fontStack, nearestWeight } from "../fonts";
-import { fillProps, polyPoints, textProps } from "../editor/render";
+import { fillProps, loadImage, polyPoints, textProps } from "../editor/render";
+import { applyAdjustments, isNeutral } from "../photo/adjust";
 import { ensureFonts, googleCssUrl, loadDocFonts } from "../fonts";
 import { fontsUsed } from "./raster";
 
@@ -100,15 +101,29 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
         break;
       }
       case "image": {
-        const c = n.crop ?? { x: 0, y: 0, width: n.naturalWidth, height: n.naturalHeight };
-        const href = await dataUrl(n.src);
+        let c = n.crop ?? { x: 0, y: 0, width: n.naturalWidth, height: n.naturalHeight };
+        let href: string, natW = n.naturalWidth, natH = n.naturalHeight;
+        if (!isNeutral(n.adjust)) {
+          // Adjusted photos are embedded already processed (same pixels as the PNG/PDF export).
+          const img = await loadImage(n.src);
+          const s = Math.min(1, 4096 / Math.max(c.width, c.height));
+          const cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(c.width * s)); cv.height = Math.max(1, Math.round(c.height * s));
+          const ctx = cv.getContext("2d")!;
+          ctx.drawImage(img, c.x, c.y, c.width, c.height, 0, 0, cv.width, cv.height);
+          const data = ctx.getImageData(0, 0, cv.width, cv.height);
+          applyAdjustments(data, n.adjust!, (cv.width / n.width) * (Math.max(n.width, n.height) / 1000));
+          ctx.putImageData(data, 0, 0);
+          href = cv.toDataURL("image/png");
+          c = { x: 0, y: 0, width: cv.width, height: cv.height }; natW = cv.width; natH = cv.height;
+        } else href = await dataUrl(n.src);
         let clip = "";
         if (n.cornerRadius) {
           const cid = id("c");
           defs.push(`<clipPath id="${cid}"><rect width="${f(n.width)}" height="${f(n.height)}" rx="${f(n.cornerRadius)}"/></clipPath>`);
           clip = ` clip-path="url(#${cid})"`;
         }
-        body = `<g${clip}><svg width="${f(n.width)}" height="${f(n.height)}" viewBox="${f(c.x)} ${f(c.y)} ${f(c.width)} ${f(c.height)}" preserveAspectRatio="none"><image href="${href}" width="${n.naturalWidth}" height="${n.naturalHeight}"/></svg></g>`
+        body = `<g${clip}><svg width="${f(n.width)}" height="${f(n.height)}" viewBox="${f(c.x)} ${f(c.y)} ${f(c.width)} ${f(c.height)}" preserveAspectRatio="none"><image href="${href}" width="${natW}" height="${natH}"/></svg></g>`
           + (n.stroke ? `<rect width="${f(n.width)}" height="${f(n.height)}"${n.cornerRadius ? ` rx="${f(n.cornerRadius)}"` : ""} fill="none"${strokeAttr(n.stroke)}/>` : "");
         break;
       }

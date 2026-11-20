@@ -1,4 +1,5 @@
 "use client";
+import { isTypingTarget } from "@/lib/editor/keys";
 import Konva from "konva";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Arrow, Ellipse, Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
@@ -12,6 +13,7 @@ import { fillProps, loadImage, primitive } from "@/lib/editor/render";
 import { activePage, fitText, useEd, useEditorCtx, useUi } from "./context";
 import { Rulers } from "./Rulers";
 import { useImageDrop } from "./useUploads";
+import { applyToNode } from "@/lib/photo/konva";
 
 Konva.pixelRatio = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
 const PRIM = { Rect, Ellipse, Line, Arrow, Path, Text, Image: KImage } as const;
@@ -68,8 +70,10 @@ export function CanvasView() {
 
   // ---- space bar = temporary hand tool ----
   useEffect(() => {
-    const isField = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-    const down = (e: KeyboardEvent) => { if (e.code === "Space" && !isField(e.target)) { setSpaceDown(true); e.preventDefault(); } };
+    const isField = isTypingTarget;
+    // Space pans only when no control has focus (Space must still press buttons and toggles).
+    const onControl = (t: EventTarget | null) => isField(t) || (t instanceof HTMLElement && /^(BUTTON|INPUT|A)$/.test(t.tagName));
+    const down = (e: KeyboardEvent) => { if (e.code === "Space" && !onControl(e.target)) { setSpaceDown(true); e.preventDefault(); } };
     const up = (e: KeyboardEvent) => { if (e.code === "Space") setSpaceDown(false); };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -351,6 +355,18 @@ function NodeViewInner({ node, selection, editingTextId, canDrag, onDragMove, on
 const Shape = memo(ShapeInner);
 function ShapeInner({ node, hidden }: { node: ShapeNode; hidden: boolean }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
+  const ref = useRef<Konva.Image>(null);
+  const adjust = node.type === "image" ? node.adjust : undefined;
+  // Re-cache adjusted images only when the zoom changes by about 2x (keeps zooming smooth).
+  const zoomBucket = useUi((s) => (adjust ? Math.round(Math.log2(s.zoom * 4)) : 0));
+  const showOriginal = useUi((s) => (adjust ? s.showOriginal : false));
+  useEffect(() => {
+    const k = ref.current;
+    if (!k || node.type !== "image" || !img) return;
+    const pr = Math.min(4, Math.max(0.1, 2 ** zoomBucket / 4) * (window.devicePixelRatio || 1));
+    applyToNode(k, showOriginal ? undefined : adjust, pr);
+    k.getLayer()?.batchDraw();
+  }, [img, adjust, zoomBucket, showOriginal, node]); // eslint-disable-line react-hooks/exhaustive-deps
   const src = node.type === "image" ? node.src : null;
   useEffect(() => {
     if (!src) return;
@@ -363,7 +379,7 @@ function ShapeInner({ node, hidden }: { node: ShapeNode; hidden: boolean }) {
   if (node.type === "image" && !img) {
     return <Rect width={node.width} height={node.height} fill="#d0d4db" cornerRadius={node.cornerRadius} opacity={node.opacity} />;
   }
-  return <C {...p.props} opacity={hidden ? 0 : node.opacity} />;
+  return <C {...p.props} ref={node.type === "image" ? ref : undefined} opacity={hidden ? 0 : node.opacity} />;
 }
 
 function Grid({ w, h, step, zoom }: { w: number; h: number; step: number; zoom: number }) {

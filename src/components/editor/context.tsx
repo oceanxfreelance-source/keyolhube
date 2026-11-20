@@ -26,6 +26,8 @@ export interface UiState {
   /** Bumped to ask the canvas to fit the page to the screen. */
   fitRequest: number;
   stage: Konva.Stage | null;
+  /** Temporarily show images without their adjustments (before/after). */
+  showOriginal: boolean;
 }
 
 export function createUiStore() {
@@ -33,7 +35,7 @@ export function createUiStore() {
   try { pro = localStorage.getItem("pro") === "1"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
-    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null,
+    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false,
     set: (p) => set(p),
   }));
 }

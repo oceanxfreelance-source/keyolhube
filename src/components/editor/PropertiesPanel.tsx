@@ -11,6 +11,7 @@ import { alignNodes, distributeNodes, duplicateNodes, groupNodes, removeNodes, r
 import { BLEND_MODES, type DesignNode, type Fill, type ImageNode, type Page, type Shadow, type Stroke, type TextNode } from "@/lib/doc/types";
 import { fontDef, fontStack, hasItalic, nearestWeight } from "@/lib/fonts";
 import { FontPicker } from "./FontPicker";
+import { AdjustPanel } from "./AdjustPanel";
 import { fromUnit, toUnit } from "@/lib/presets";
 import { activePage, fitText, selectedNodes, useEd, useEditorCtx, useUi } from "./context";
 
@@ -119,6 +120,7 @@ function NodeProps({ node, pro }: { node: DesignNode; pro: boolean }) {
     <>
       {node.type === "text" && <TextProps node={node} />}
       {node.type === "image" && <ImageProps node={node} pro={pro} />}
+      {node.type === "image" && <Section title="Adjust photo"><AdjustPanel node={node} pro={pro} /></Section>}
       {hasFill && (
         <Section title={node.type === "text" ? "Text colour" : "Fill"}>
           <FillEditor fill={(node as { fill: Fill }).fill} allowNone={node.type !== "text"} onChange={(f, m) => upd("Fill", (n) => { (n as { fill: Fill }).fill = f; }, m ? "fill" : undefined)} />

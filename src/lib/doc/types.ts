@@ -87,6 +87,8 @@ export interface TextNode extends BaseNode {
   stroke: Stroke;
 }
 export type ImageCrop = { x: number; y: number; width: number; height: number }; // in source pixels
+export type { Adjustments } from "../photo/adjust";
+import type { Adjustments } from "../photo/adjust";
 export interface ImageNode extends BaseNode {
   type: "image";
   assetId: string;
@@ -96,6 +98,7 @@ export interface ImageNode extends BaseNode {
   crop: ImageCrop | null;
   cornerRadius: number;
   stroke: Stroke;
+  adjust?: Adjustments; // non-destructive photo adjustments
 }
 export interface GroupNode extends BaseNode {
   type: "group";

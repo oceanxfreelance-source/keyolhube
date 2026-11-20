@@ -34,9 +34,21 @@ const shapes = [
     ...base, type: z.literal("image"), assetId: z.string().max(40), src: z.string().max(500),
     naturalWidth: num.positive(), naturalHeight: num.positive(), cornerRadius: num.min(0), stroke,
     crop: z.object({ x: num.min(0), y: num.min(0), width: num.positive(), height: num.positive() }).nullable(),
+    adjust: z.lazy(() => adjust).optional(),
   }),
 ] as const;
 type NodeSchema = z.ZodType<unknown>;
+const pct = num.min(-100).max(100);
+const curve = z.array(z.tuple([num.min(0).max(255), num.min(0).max(255)])).min(2).max(32);
+const band = z.object({ h: num.min(-180).max(180).optional(), s: pct.optional(), l: pct.optional() });
+const adjust = z.object({
+  exposure: num.min(-5).max(5), brightness: pct, contrast: pct, highlights: pct, shadows: pct, whites: pct, blacks: pct,
+  temperature: pct, tint: pct, saturation: pct, vibrance: pct, hue: num.min(-180).max(180),
+  sharpen: num.min(0).max(100), blur: num.min(0).max(100), noise: num.min(0).max(100), vignette: pct, grain: num.min(0).max(100),
+  curves: z.object({ rgb: curve, r: curve, g: curve, b: curve }).partial(),
+  levels: z.object({ inBlack: num.min(0).max(255), inWhite: num.min(0).max(255), gamma: num.min(0.05).max(10), outBlack: num.min(0).max(255), outWhite: num.min(0).max(255) }),
+  hsl: z.object({ red: band, orange: band, yellow: band, green: band, aqua: band, blue: band, purple: band, magenta: band }).partial(),
+}).partial().strict();
 const node: NodeSchema = z.lazy(() =>
   z.union([...shapes, z.object({ ...base, type: z.literal("group"), children: z.array(node).max(5000) })]),
 );

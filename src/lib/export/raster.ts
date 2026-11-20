@@ -3,6 +3,7 @@ import Konva from "konva";
 import type { DesignDoc, DesignNode, Page } from "../doc/types";
 import { ensureFonts, loadDocFonts, nearestWeight } from "../fonts";
 import { fillProps, loadImage, primitive } from "../editor/render";
+import { applyToNodeForExport } from "../photo/konva";
 
 /** Largest canvas we create (pixels). iOS Safari's limit is about 16.7 million. */
 export function maxCanvasPixels(): number {
@@ -20,17 +21,19 @@ export function fontsUsed(pages: Page[]) {
   return out;
 }
 
-async function build(n: DesignNode): Promise<Konva.Group | null> {
+async function build(n: DesignNode, pixelRatio: number): Promise<Konva.Group | null> {
   if (!n.visible) return null;
   const g = new Konva.Group({ x: n.x, y: n.y, rotation: n.rotation, opacity: n.type === "group" ? n.opacity : 1 });
   if (n.type === "group") {
-    for (const c of n.children) { const k = await build(c); if (k) g.add(k); }
+    for (const c of n.children) { const k = await build(c, pixelRatio); if (k) g.add(k); }
     return g;
   }
   const img = n.type === "image" ? await loadImage(n.src) : null;
   const p = primitive(n, img);
   const Ctor = (Konva as unknown as Record<string, new (cfg: object) => Konva.Shape>)[p.kind];
-  g.add(new Ctor({ ...p.props, opacity: n.opacity }));
+  const shape = new Ctor({ ...p.props, opacity: n.opacity });
+  g.add(shape);
+  if (n.type === "image") applyToNodeForExport(shape as Konva.Image, n.adjust, pixelRatio);
   return g;
 }
 
@@ -48,7 +51,7 @@ export async function renderPageCanvas(doc: DesignDoc, page: Page, opts: { pixel
     layer.add(new Konva.Rect({ x: 0, y: 0, width: doc.width, height: doc.height,
       ...(page.background.type === "none" ? { fill: "#ffffff" } : fillProps(page.background, doc.width, doc.height)) }));
   }
-  for (const n of page.children) { const k = await build(n); if (k) layer.add(k); }
+  for (const n of page.children) { const k = await build(n, pixelRatio); if (k) layer.add(k); }
   layer.draw();
   const canvas = stage.toCanvas({ pixelRatio });
   stage.destroy();

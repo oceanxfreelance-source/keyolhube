@@ -1,4 +1,5 @@
 "use client";
+import { isTypingTarget } from "@/lib/editor/keys";
 import { useEffect } from "react";
 import { make } from "@/lib/doc/factory";
 import { locate } from "@/lib/doc/geometry";
@@ -14,7 +15,7 @@ export function useShortcuts() {
   const addImage = useAddImage();
 
   useEffect(() => {
-    const isField = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    const isField = isTypingTarget;
     const onKey = (e: KeyboardEvent) => {
       if (isField(e.target)) return;
       const s = store.getState(), u = ui.getState();
@@ -51,6 +52,8 @@ export function useShortcuts() {
         const n = locate(activePage(s), sel[0])?.node;
         if (sel.length === 1 && n?.type === "text") return run(() => u.set({ editingTextId: n.id }));
       }
+      // Arrow keys on a focused slider move the slider, not the selection.
+      if (e.target instanceof HTMLInputElement && e.target.type === "range" && k.startsWith("arrow")) return;
       const step = e.shiftKey ? 10 : 1;
       const arrows: Record<string, [number, number]> = { arrowleft: [-step, 0], arrowright: [step, 0], arrowup: [0, -step], arrowdown: [0, step] };
       if (arrows[k]) return run(() => s.changePage("Nudge", (p) => sel.forEach((id) => translateInPage(p as Page, id, ...arrows[k])), { merge: "nudge" }));

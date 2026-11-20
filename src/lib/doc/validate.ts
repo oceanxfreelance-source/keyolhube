@@ -11,7 +11,7 @@ const fill = z.discriminatedUnion("type", [
   z.object({ type: z.literal("radial"), stops: z.array(stop).min(2).max(16) }),
   z.object({ type: z.literal("none") }),
 ]);
-const stroke = z.object({ color, width: num.min(0).max(1000), dash: z.array(num.min(0)).max(8).optional() }).nullable();
+const stroke = z.object({ color, width: num.min(0).max(1000), dash: z.array(num.min(0)).max(8).optional(), cap: z.enum(["butt", "round", "square"]).optional(), join: z.enum(["miter", "round", "bevel"]).optional() }).nullable();
 const shadow = z.object({ color, blur: num.min(0).max(500), offsetX: num, offsetY: num, opacity: num.min(0).max(1) }).nullable();
 const base = {
   id: z.string().min(1).max(40), name: z.string().max(200), x: num, y: num, width: num.min(0), height: num.min(0),

@@ -101,3 +101,35 @@ export const asset = pgTable(
   },
   (t) => [index("asset_owner_idx").on(t.ownerId, t.createdAt)],
 );
+
+// ---- brand kits ----
+export type BrandFont = { role: "heading" | "subheading" | "body"; family: string; weight: number; ref?: import("@/lib/doc/types").FontRef };
+export const brandKit = pgTable(
+  "brand_kit",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    colors: jsonb("colors").$type<string[]>().notNull().default([]),
+    fonts: jsonb("fonts").$type<BrandFont[]>().notNull().default([]),
+    logos: jsonb("logos").$type<{ assetId: string; width: number; height: number; name: string }[]>().notNull().default([]),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("brand_owner_idx").on(t.ownerId)],
+);
+
+// ---- user templates (built-in templates live in code) ----
+export const template = pgTable(
+  "template",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    category: text("category").notNull().default("My templates"),
+    doc: jsonb("doc").$type<DesignDoc>().notNull(),
+    thumbnailAssetId: text("thumbnail_asset_id"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("template_owner_idx").on(t.ownerId, t.createdAt)],
+);

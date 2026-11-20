@@ -14,6 +14,7 @@ import { BLEND_MODES, type DesignNode, type Fill, type ImageNode, type Page, typ
 import { fontDef, fontStack, hasItalic, nearestWeight } from "@/lib/fonts";
 import { FontPicker } from "./FontPicker";
 import { AdjustPanel } from "./AdjustPanel";
+import { fillShapeWithPhoto, pickPhoto, replacePhoto } from "./photoFrames";
 import { fromUnit, toUnit } from "@/lib/presets";
 import { activePage, fitText, selectedNodes, useEd, useEditorCtx, useUi } from "./context";
 
@@ -140,6 +141,16 @@ function VectorActions({ nodes }: { nodes: DesignNode[] }) {
         </div>
       )}
       {siblings && <button className="btn w-full" onClick={() => { let g: string | null = null; s().changePage("Mask", (p) => { g = makeMask(p as Page, ids); }); if (g) s().select([g]); }}>Mask with bottom shape</button>}
+      {single && isVector(single) && single.type !== "line" && (
+        <button className="btn btn-primary w-full" onClick={async () => {
+          try { const a = await pickPhoto(); if (a) fillShapeWithPhoto(store, single.id, a); } catch (e) { alert((e as Error).message); }
+        }}>Put a photo in this shape</button>
+      )}
+      {maskGroup && maskGroup.children.some((c) => c.type === "image") && (
+        <button className="btn w-full" onClick={async () => {
+          try { const a = await pickPhoto(); if (a) replacePhoto(store, maskGroup.id, a); } catch (e) { alert((e as Error).message); }
+        }}>Replace photo</button>
+      )}
       {maskGroup && <button className="btn w-full" onClick={() => { let k: string[] = []; s().changePage("Release mask", (p) => { k = releaseMask(p as Page, maskGroup.id); }); s().select(k); }}>Release mask</button>}
       {single && isVector(single) && single.type !== "path" && (
         <button className="btn w-full" onClick={() => { let id: string | null = null; s().changePage("Convert to path", (p) => {
@@ -195,8 +206,9 @@ function NodeProps({ node, pro }: { node: DesignNode; pro: boolean }) {
         <Section title="Line">
           <ColorRow label="Colour" value={node.stroke.color} onChange={(c) => upd("Line colour", (n) => { if (n.type === "line") n.stroke.color = c; }, "stroke")} />
           <Slider label="Thickness" value={node.stroke.width} min={1} max={Math.max(100, Math.round(doc.width / 20))} onChange={(v) => upd("Line thickness", (n) => { if (n.type === "line") n.stroke.width = v; }, "sw")} />
+          <StrokeStyle stroke={node.stroke} onChange={(st) => upd("Line style", (n) => { if (n.type === "line") n.stroke = st; })} />
           <div className="flex gap-2">
-            <Toggle label="Dashed" on={!!node.stroke.dash?.length} onChange={(on) => upd("Dash", (n) => { if (n.type === "line") n.stroke.dash = on ? [n.stroke.width * 3, n.stroke.width * 2] : undefined; })} />
+
             <Toggle label="Arrow" on={node.arrowEnd} onChange={(on) => upd("Arrow", (n) => { if (n.type === "line") n.arrowEnd = on; })} />
           </div>
         </Section>
@@ -336,6 +348,7 @@ function AlignIcon({ a }: { a: "left" | "center" | "right" | "justify" }) {
 
 function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
   const upd = useUpdate();
+  const { store } = useEditorCtx();
   const crop = node.crop ?? { x: 0, y: 0, width: node.naturalWidth, height: node.naturalHeight };
   // Crop as zoom (1 = whole image) + focus point, keeping the frame's aspect ratio.
   const frameAspect = node.width / node.height, natAspect = node.naturalWidth / node.naturalHeight;
@@ -354,6 +367,9 @@ function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
   const cropped = !!node.crop;
   return (
     <Section title="Image" right={<span className="text-xs text-muted">{node.naturalWidth} × {node.naturalHeight}px</span>}>
+      <button className="btn w-full" onClick={async () => {
+        try { const a = await pickPhoto(); if (a) replacePhoto(store, node.id, a); } catch (e) { alert((e as Error).message); }
+      }}>Replace photo</button>
       <div className="flex gap-2">
         <button className="btn flex-1" onClick={() => setCrop(1, 0.5, 0.5)}>Fill frame</button>
         <button className="btn flex-1" disabled={!cropped && Math.abs(node.width / node.height - natAspect) < 0.01}
@@ -454,6 +470,7 @@ function ColorRow({ label, value, onChange }: { label: string; value: string; on
 const SWATCHES = ["#111827", "#ffffff", "#ef4444", "#f97316", "#f59e0b", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "#8b5e3c"];
 
 function FillEditor({ fill, allowNone, onChange }: { fill: Fill; allowNone: boolean; onChange: (f: Fill, merge: boolean) => void }) {
+  const brand = useUi((s) => [...new Set((s.brandKits ?? []).flatMap((k) => k.colors))]);
   const first = fill.type === "solid" ? fill.color : fill.type === "none" ? "#ffffff" : fill.stops[0].color;
   const last = fill.type === "linear" || fill.type === "radial" ? fill.stops[fill.stops.length - 1].color : "#000000";
   const kinds = useMemo(() => [...(allowNone ? ["none"] : []), "solid", "linear", "radial"] as Fill["type"][], [allowNone]);
@@ -475,6 +492,11 @@ function FillEditor({ fill, allowNone, onChange }: { fill: Fill; allowNone: bool
       {fill.type === "solid" && (
         <>
           <ColorRow label="Colour" value={fill.color} onChange={(c) => onChange({ type: "solid", color: c }, true)} />
+          {brand.length > 0 && (
+            <div className="flex flex-wrap gap-1.5" aria-label="Brand colours">
+              {brand.map((c) => <button key={c} className="size-6 rounded-md border-2 border-accent/40" style={{ background: c }} aria-label={`Brand colour ${c}`} title={`Brand colour ${c}`} onClick={() => onChange({ type: "solid", color: c }, false)} />)}
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {SWATCHES.map((c) => <button key={c} className="size-6 rounded-md border border-line" style={{ background: c }} aria-label={`Colour ${c}`} onClick={() => onChange({ type: "solid", color: c }, false)} />)}
           </div>
@@ -500,10 +522,38 @@ function StrokeEditor({ stroke, max, onChange }: { stroke: Stroke; max: number; 
     <div className="space-y-2">
       <ColorRow label="Colour" value={stroke.color} onChange={(c) => onChange({ ...stroke, color: c }, true)} />
       <Slider label="Width" value={stroke.width} min={1} max={max} onChange={(v) => onChange({ ...stroke, width: v }, true)} />
-      <div className="flex gap-2">
-        <Toggle label="Dashed" on={!!stroke.dash?.length} onChange={(on) => onChange({ ...stroke, dash: on ? [stroke.width * 3, stroke.width * 2] : undefined }, false)} />
-        <button className="btn btn-danger" onClick={() => onChange(null, false)}>Remove</button>
-      </div>
+      <StrokeStyle stroke={stroke} onChange={(s) => onChange(s, false)} />
+      <button className="btn btn-danger w-full" onClick={() => onChange(null, false)}>Remove border</button>
+    </div>
+  );
+}
+
+/** Dash pattern, line ends and corners (shared by borders and lines). */
+function StrokeStyle({ stroke, onChange }: { stroke: NonNullable<Stroke>; onChange: (s: NonNullable<Stroke>) => void }) {
+  const w = stroke.width;
+  const dashes: [string, number[] | undefined][] = [["Solid", undefined], ["Dashed", [w * 3, w * 2]], ["Dotted", [0.01, w * 2]], ["Long dash", [w * 6, w * 3]]];
+  const cur = !stroke.dash?.length ? 0 : stroke.dash[0] < 0.1 ? 2 : stroke.dash[0] > w * 4 ? 3 : 1;
+  const Seg = <T extends string>({ label, value, opts }: { label: string; value: T; opts: [T, string][] }) => (
+    <label className="flex items-center gap-2 text-sm">
+      <span className="w-20 text-muted shrink-0">{label}</span>
+      <select className="input h-8" value={value} aria-label={label} onChange={(e) => onChange({ ...stroke, [label === "Ends" ? "cap" : "join"]: e.target.value })}>
+        {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </label>
+  );
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm">
+        <span className="w-20 text-muted shrink-0">Style</span>
+        <select className="input h-8" value={cur} aria-label="Line style" onChange={(e) => {
+          const d = dashes[Number(e.target.value)][1];
+          onChange({ ...stroke, dash: d, ...(Number(e.target.value) === 2 ? { cap: "round" as const } : {}) });
+        }}>
+          {dashes.map(([l], i) => <option key={l} value={i}>{l}</option>)}
+        </select>
+      </label>
+      <Seg label="Ends" value={stroke.cap ?? "butt"} opts={[["butt", "Flat"], ["round", "Round"], ["square", "Square"]]} />
+      <Seg label="Corners" value={stroke.join ?? "miter"} opts={[["miter", "Sharp"], ["round", "Round"], ["bevel", "Bevel"]]} />
     </div>
   );
 }

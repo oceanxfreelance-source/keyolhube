@@ -10,7 +10,7 @@ import { measureTextHeight } from "@/lib/editor/render";
 import type { EditorActions, EditorState, EditorStore } from "@/lib/editor/store";
 
 export type Tool = "select" | "hand" | "pen";
-export type LeftTab = "elements" | "text" | "uploads" | "pages" | "layers";
+export type LeftTab = "templates" | "elements" | "text" | "brand" | "uploads" | "pages" | "layers";
 
 export interface UiState {
   zoom: number;
@@ -30,14 +30,19 @@ export interface UiState {
   showOriginal: boolean;
   /** Path whose anchor points are being edited. */
   editingPathId: string | null;
+  /** Save pending edits now (set by the editor shell). */
+  saveNow: (() => Promise<void>) | null;
+  /** The user's brand kits (loaded once, shared by panels and colour pickers). */
+  brandKits: BrandKit[] | null;
 }
+export type BrandKit = { id: string; name: string; colors: string[]; fonts: { role: "heading" | "subheading" | "body"; family: string; weight: number; ref?: import("@/lib/doc/types").FontRef }[]; logos: { assetId: string; width: number; height: number; name: string }[] };
 
 export function createUiStore() {
   let pro = false;
   try { pro = localStorage.getItem("pro") === "1"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
-    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null,
+    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null,
     set: (p) => set(p),
   }));
 }

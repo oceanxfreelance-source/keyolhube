@@ -40,6 +40,10 @@ export function Editor({ project }: { project: LoadedProject }) {
 function Shell({ project, title, setTitle }: { project: LoadedProject; title: string; setTitle: (t: string) => void }) {
   const ctx = useEdCtx();
   const autosave = useAutosave(ctx.store, project.id, project.revision);
+  useEffect(() => { ctx.ui.getState().set({ saveNow: autosave.saveNow }); }); // keep the latest closure
+  useEffect(() => {
+    fetch("/api/brand-kits").then((r) => r.json()).then((b) => ctx.ui.getState().set({ brandKits: b.kits })).catch(() => ctx.ui.getState().set({ brandKits: [] }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useShortcuts();
   const pageCount = useEd((s) => s.doc.pages.length);
   const pageIndex = useEd((s) => s.doc.pages.findIndex((p) => p.id === s.pageId));

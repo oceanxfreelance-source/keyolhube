@@ -8,7 +8,9 @@ export type Fill =
   | { type: "radial"; stops: ColorStop[] }
   | { type: "none" };
 
-export type Stroke = { color: string; width: number; dash?: number[] } | null;
+export type LineCap = "butt" | "round" | "square";
+export type LineJoin = "miter" | "round" | "bevel";
+export type Stroke = { color: string; width: number; dash?: number[]; cap?: LineCap; join?: LineJoin } | null;
 export type Shadow = { color: string; blur: number; offsetX: number; offsetY: number; opacity: number } | null;
 
 export const BLEND_MODES = [

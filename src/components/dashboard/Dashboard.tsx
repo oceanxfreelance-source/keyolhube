@@ -8,6 +8,10 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { authClient } from "@/lib/auth-client";
 import { newDoc } from "@/lib/doc/factory";
 import { fromUnit, PRESETS, type Preset } from "@/lib/presets";
+import type { DesignDoc } from "@/lib/doc/types";
+import { BUILTIN_TEMPLATES } from "@/lib/templates/builtin";
+import { instantiate } from "@/lib/templates/instantiate";
+import { useTemplateThumbs } from "@/components/templates/useTemplateThumbs";
 
 type Summary = { id: string; title: string; width: number; height: number; pages: number; thumbnailAssetId: string | null; updatedAt: string };
 
@@ -19,6 +23,7 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
   const [creating, setCreating] = useState(false);
   const [custom, setCustom] = useState({ w: 1080, h: 1080, unit: "px" as "px" | "mm" | "in" });
   const [menu, setMenu] = useState<string | null>(null);
+  const thumbs = useTemplateThumbs(200);
 
   const load = useCallback(async (query: string) => {
     const r = await fetch(`/api/projects${query ? `?q=${encodeURIComponent(query)}` : ""}`);
@@ -35,6 +40,14 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
   async function create(p: Pick<Preset, "name" | "width" | "height" | "dpi" | "unit">) {
     setCreating(true);
     const r = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: `Untitled ${p.name.toLowerCase()}`, doc: newDoc(p.width, p.height, p.dpi, p.unit) }) });
+    setCreating(false);
+    if (!r.ok) return setError("Could not create the design.");
+    router.push(`/editor/${(await r.json()).id}`);
+  }
+
+  async function createFromTemplate(title: string, tdoc: DesignDoc) {
+    setCreating(true);
+    const r = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title, doc: instantiate(tdoc) }) });
     setCreating(false);
     if (!r.ok) return setError("Could not create the design.");
     router.push(`/editor/${(await r.json()).id}`);
@@ -74,6 +87,20 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
       <main className="mx-auto max-w-7xl px-4 py-8 space-y-10">
         <section>
           <h1 className="text-2xl font-semibold">What will you design today?</h1>
+          <h2 className="label mt-5 mb-2">Start from a template</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+            {BUILTIN_TEMPLATES.map((t) => (
+              <button key={t.id} disabled={creating} data-template={t.id} onClick={() => createFromTemplate(t.title, t.build())}
+                className="card shrink-0 w-40 p-2 text-left hover:border-accent transition-colors">
+                <div className="h-32 grid place-items-center bg-surface-2 rounded-lg overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {thumbs[t.id] ? <img src={thumbs[t.id]} alt="" className="max-h-full max-w-full" /> : <span className="text-xs text-muted">Loading…</span>}
+                </div>
+                <div className="text-sm font-medium mt-2 leading-tight">{t.title}</div>
+                <div className="text-xs text-muted">{t.category}</div>
+              </button>
+            ))}
+          </div>
           {groups.map((g) => (
             <div key={g} className="mt-5">
               <h2 className="label mb-2">{g}</h2>

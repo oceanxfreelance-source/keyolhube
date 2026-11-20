@@ -1,5 +1,5 @@
 "use client";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FileText, Layers, Lock, Plus, Shapes, Trash2, Type, Unlock, Upload, X } from "lucide-react";
+import { LayoutTemplate, Palette, ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FileText, Layers, Lock, Plus, Shapes, Trash2, Type, Unlock, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { make, newId, newPage } from "@/lib/doc/factory";
 import { locate } from "@/lib/doc/geometry";
@@ -9,10 +9,14 @@ import type { DesignNode, TextNode } from "@/lib/doc/types";
 import { polyPoints } from "@/lib/editor/render";
 import { activePage, fitText, type LeftTab, useEd, useEditorCtx, useUi } from "./context";
 import { uploadImage, useAddImage, type UploadedAsset } from "./useUploads";
+import { TemplatesPanel } from "./TemplatesPanel";
+import { BrandPanel } from "./BrandPanel";
 
 const TABS: { id: LeftTab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: "templates", label: "Templates", icon: LayoutTemplate },
   { id: "elements", label: "Elements", icon: Shapes },
   { id: "text", label: "Text", icon: Type },
+  { id: "brand", label: "Brand", icon: Palette },
   { id: "uploads", label: "Uploads", icon: Upload },
   { id: "pages", label: "Pages", icon: FileText },
   { id: "layers", label: "Layers", icon: Layers },
@@ -22,10 +26,10 @@ export function LeftRail() {
   const tab = useUi((s) => s.leftTab);
   const set = useUi((s) => s.set);
   return (
-    <nav className="max-md:order-3 flex md:flex-col gap-1 p-1.5 bg-surface border-line md:border-r max-md:border-t max-md:justify-around shrink-0" aria-label="Editor panels">
+    <nav className="max-md:order-3 flex md:flex-col gap-1 p-1.5 bg-surface border-line md:border-r max-md:border-t max-md:overflow-x-auto shrink-0" aria-label="Editor panels">
       {TABS.map((t) => (
         <button key={t.id} onClick={() => set({ leftTab: tab === t.id ? null : t.id })} aria-pressed={tab === t.id}
-          className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium w-16 ${tab === t.id ? "bg-accent-soft text-accent" : "text-muted hover:text-ink hover:bg-surface-2"}`}>
+          className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium w-16 shrink-0 ${tab === t.id ? "bg-accent-soft text-accent" : "text-muted hover:text-ink hover:bg-surface-2"}`}>
           <t.icon size={20} />
           {t.label}
         </button>
@@ -45,6 +49,8 @@ export function LeftPanel() {
         <button className="btn btn-ghost btn-icon" onClick={() => set({ leftTab: null })} aria-label="Close panel"><X size={16} /></button>
       </div>
       <div className="p-4 pt-2">
+        {tab === "templates" && <TemplatesPanel />}
+        {tab === "brand" && <BrandPanel />}
         {tab === "elements" && <ElementsTab />}
         {tab === "text" && <TextTab />}
         {tab === "uploads" && <UploadsTab />}

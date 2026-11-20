@@ -37,7 +37,7 @@ export function fillProps(fill: Fill, w: number, h: number): Record<string, unkn
 
 export function strokeProps(stroke: Stroke): Record<string, unknown> {
   if (!stroke || stroke.width <= 0) return { strokeEnabled: false };
-  return { stroke: stroke.color, strokeWidth: stroke.width, dash: stroke.dash, strokeEnabled: true };
+  return { stroke: stroke.color, strokeWidth: stroke.width, dash: stroke.dash, strokeEnabled: true, ...(stroke.cap ? { lineCap: stroke.cap } : {}), ...(stroke.join ? { lineJoin: stroke.join } : {}) };
 }
 
 export function shadowProps(shadow: Shadow): Record<string, unknown> {
@@ -89,7 +89,7 @@ export function primitive(n: ShapeNode, image?: CanvasImageSource | null): Primi
     case "line":
       return {
         kind: n.arrowEnd ? "Arrow" : "Line",
-        props: { ...common, points: n.points, ...strokeProps(n.stroke), lineCap: "round", lineJoin: "round", hitStrokeWidth: Math.max(12, n.stroke.width), fill: n.stroke.color, pointerLength: n.stroke.width * 3, pointerWidth: n.stroke.width * 3 },
+        props: { ...common, points: n.points, lineCap: "round", lineJoin: "round", ...strokeProps(n.stroke), hitStrokeWidth: Math.max(12, n.stroke.width), fill: n.stroke.color, pointerLength: n.stroke.width * 3, pointerWidth: n.stroke.width * 3 },
       };
     case "path":
       return {

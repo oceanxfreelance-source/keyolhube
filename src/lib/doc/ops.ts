@@ -159,6 +159,8 @@ export function distributeNodes(page: Page, ids: string[], axis: "x" | "y"): voi
  * carry hidden scale. Text keeps its font size when only the width changed.
  */
 export function bakeScale(n: DesignNode, sx: number, sy: number, widthOnly = false): void {
+  // Proportional resize scales the styling too (borders, corners, spacing, shadows).
+  if (!widthOnly && Math.abs(sx - sy) < 1e-6 && Math.abs(sx - 1) > 1e-6) scaleStyle(n, Math.abs(sx));
   if (n.type === "text") {
     n.width = Math.max(10, n.width * sx);
     if (!widthOnly) {
@@ -204,4 +206,12 @@ export function releaseMask(page: Page, groupId: string): string[] {
   if (!l || l.node.type !== "group") return [];
   l.node.mask = false;
   return ungroup(page, groupId);
+}
+
+function scaleStyle(n: DesignNode, k: number) {
+  const r = (v: number) => Math.round(v * k * 100) / 100;
+  if ("stroke" in n && n.stroke) { n.stroke.width = r(n.stroke.width); if (n.stroke.dash) n.stroke.dash = n.stroke.dash.map(r); }
+  if ("cornerRadius" in n) n.cornerRadius = r(n.cornerRadius);
+  if (n.type === "text") n.letterSpacing = r(n.letterSpacing);
+  if (n.shadow) n.shadow = { ...n.shadow, blur: r(n.shadow.blur), offsetX: r(n.shadow.offsetX), offsetY: r(n.shadow.offsetY) };
 }

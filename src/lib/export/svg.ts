@@ -37,7 +37,7 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
     }
     return `url(#${gid})`;
   };
-  const strokeAttr = (s: Stroke) => (s && s.width > 0 ? ` stroke="${esc(s.color)}" stroke-width="${f(s.width)}"${s.dash?.length ? ` stroke-dasharray="${s.dash.map(f).join(" ")}"` : ""}` : "");
+  const strokeAttr = (s: Stroke) => (s && s.width > 0 ? ` stroke="${esc(s.color)}" stroke-width="${f(s.width)}"${s.dash?.length ? ` stroke-dasharray="${s.dash.map(f).join(" ")}"` : ""}${s.cap ? ` stroke-linecap="${s.cap}"` : ""}${s.join ? ` stroke-linejoin="${s.join}"` : ""}` : "");
   const shadowAttr = (s: Shadow) => {
     if (!s) return "";
     const fid = id("s");
@@ -85,7 +85,7 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
           defs.push(`<marker id="${mid}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${esc(n.stroke.color)}"/></marker>`);
           marker = ` marker-end="url(#${mid})"`;
         }
-        body = `<polyline points="${n.points.map(f).join(" ")}" fill="none" stroke-linecap="round" stroke-linejoin="round"${strokeAttr(n.stroke)}${marker}/>`;
+        body = `<polyline points="${n.points.map(f).join(" ")}" fill="none"${strokeAttr({ cap: "round", join: "round", ...n.stroke })}${marker}/>`;
         break;
       }
       case "path":

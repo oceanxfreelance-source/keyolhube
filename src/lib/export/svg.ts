@@ -5,6 +5,7 @@ import type { DesignDoc, DesignNode, Fill, Page, Shadow, Stroke } from "../doc/t
 import { fontStack, nearestWeight } from "../fonts";
 import { fillProps, loadImage, polyPoints, textProps } from "../editor/render";
 import { applyAdjustments, isNeutral } from "../photo/adjust";
+import { maskData } from "../editor/mask";
 import { ensureFonts, googleCssUrl, loadDocFonts } from "../fonts";
 import { fontsUsed } from "./raster";
 
@@ -53,7 +54,15 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
     const tr = `translate(${f(n.x)} ${f(n.y)})${n.rotation ? ` rotate(${f(n.rotation)})` : ""}`;
     const blend = n.blendMode !== "source-over" ? ` style="mix-blend-mode:${n.blendMode}"` : "";
     const op = n.opacity < 1 ? ` opacity="${f(n.opacity)}"` : "";
-    if (n.type === "group") return `<g transform="${tr}"${op}>${(await Promise.all(n.children.map(node))).join("")}</g>`;
+    if (n.type === "group") {
+      if (n.mask && n.children.length) {
+        const shape = n.children[0], d = maskData(shape);
+        const cid = id("mask");
+        defs.push(`<clipPath id="${cid}"><path transform="translate(${f(shape.x)} ${f(shape.y)})${shape.rotation ? ` rotate(${f(shape.rotation)})` : ""}" d="${esc(d ?? "")}"/></clipPath>`);
+        return `<g transform="${tr}"${op}><g clip-path="url(#${cid})">${(await Promise.all(n.children.slice(1).map(node))).join("")}</g></g>`;
+      }
+      return `<g transform="${tr}"${op}>${(await Promise.all(n.children.map(node))).join("")}</g>`;
+    }
     const sh = shadowAttr(n.shadow);
     let body = "";
     switch (n.type) {

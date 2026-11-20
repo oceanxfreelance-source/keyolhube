@@ -50,7 +50,7 @@ const adjust = z.object({
   hsl: z.object({ red: band, orange: band, yellow: band, green: band, aqua: band, blue: band, purple: band, magenta: band }).partial(),
 }).partial().strict();
 const node: NodeSchema = z.lazy(() =>
-  z.union([...shapes, z.object({ ...base, type: z.literal("group"), children: z.array(node).max(5000) })]),
+  z.union([...shapes, z.object({ ...base, type: z.literal("group"), children: z.array(node).max(5000), mask: z.boolean().optional() })]),
 );
 export const docSchema = z.object({
   schemaVersion: z.literal(1),

@@ -189,3 +189,19 @@ function normAngle(a: number): number {
 }
 
 export { mul };
+
+/** Clip the selected siblings to the bottom-most one (it becomes the mask shape). */
+export function makeMask(page: Page, ids: string[]): string | null {
+  const gid = groupNodes(page, ids);
+  if (!gid) return null;
+  const l = locate(page, gid);
+  if (l && l.node.type === "group") { l.node.mask = true; l.node.name = "Mask group"; }
+  return gid;
+}
+
+export function releaseMask(page: Page, groupId: string): string[] {
+  const l = locate(page, groupId);
+  if (!l || l.node.type !== "group") return [];
+  l.node.mask = false;
+  return ungroup(page, groupId);
+}

@@ -13,7 +13,9 @@ import { fillProps, loadImage, primitive } from "@/lib/editor/render";
 import { activePage, fitText, useEd, useEditorCtx, useUi } from "./context";
 import { Rulers } from "./Rulers";
 import { useImageDrop } from "./useUploads";
+import { PenPreview, PointEditor, usePen } from "./VectorTools";
 import { applyToNode } from "@/lib/photo/konva";
+import { maskClipFunc } from "@/lib/editor/mask";
 
 Konva.pixelRatio = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
 const PRIM = { Rect, Ellipse, Line, Arrow, Path, Text, Image: KImage } as const;
@@ -25,7 +27,8 @@ export function CanvasView() {
   const doc = useEd((s) => s.doc);
   const page = useEd(activePage);
   const selection = useEd((s) => s.selection);
-  const { zoom, panX, panY, tool, showGrid, gridSize, editingTextId, fitRequest, showRulers, pro } = useUi((s) => s);
+  const { zoom, panX, panY, tool, showGrid, gridSize, editingTextId, fitRequest, showRulers, pro, editingPathId } = useUi((s) => s);
+  const { pen, handlers: penH } = usePen();
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const contentRef = useRef<Konva.Group>(null);
@@ -85,14 +88,14 @@ export function CanvasView() {
   useEffect(() => {
     const tr = trRef.current, stage = stageRef.current;
     if (!tr || !stage) return;
-    const nodes = editingTextId ? [] : selectable.map((id) => stage.findOne((n: Konva.Node) => n.id() === id)).filter(Boolean) as Konva.Node[];
+    const nodes = editingTextId || editingPathId ? [] : selectable.map((id) => stage.findOne((n: Konva.Node) => n.id() === id)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
     const only = selectable.length === 1 ? locate(page, selectable[0])?.node : null;
     tr.enabledAnchors(only?.type === "text" ? ["top-left", "top-right", "bottom-left", "bottom-right", "middle-left", "middle-right"]
       : only?.type === "line" ? ["middle-left", "middle-right"] : ["top-left", "top-center", "top-right", "middle-right", "middle-left", "bottom-left", "bottom-center", "bottom-right"]);
     tr.keepRatio(only?.type === "image" || only?.type === "text" || selectable.length > 1);
     tr.getLayer()?.batchDraw();
-  }, [selectable, page, editingTextId, doc]);
+  }, [selectable, page, editingTextId, editingPathId, doc]);
 
   const nodeIdOf = (target: Konva.Node, deep: boolean): string | null => {
     let n: Konva.Node | null = target;
@@ -119,6 +122,12 @@ export function CanvasView() {
       return;
     }
     if (e.target.getParent()?.className === "Transformer") return;
+    if (tool === "pen") { penH.down(contentRef.current!.getRelativePointerPosition()!); return; }
+    if (editingPathId) {
+      const nm = e.target.name();
+      if (nm === "anchor" || nm === "handle" || nm === "path-hit") return;
+      ui.getState().set({ editingPathId: null });
+    }
     if (editingTextId) {
       // Clicking away finishes text editing: blurring the textarea saves it.
       (document.activeElement as HTMLElement | null)?.blur();
@@ -140,6 +149,7 @@ export function CanvasView() {
     const stage = stageRef.current!;
     const p = stage.getPointerPosition();
     if (!p) return;
+    if (tool === "pen") { penH.move(contentRef.current!.getRelativePointerPosition()!); return; }
     if (pan.current) {
       ui.getState().set({ panX: pan.current.px + p.x - pan.current.x, panY: pan.current.py + p.y - pan.current.y });
       return;
@@ -152,6 +162,7 @@ export function CanvasView() {
   };
   const onMouseUp = () => {
     pan.current = null;
+    if (tool === "pen") { penH.up(); return; }
     if (marqueeStart.current && marquee && (marquee.width > 2 || marquee.height > 2)) {
       const hits = flatten(page).filter((f) => f.depth === 0 && f.node.visible && !f.node.locked && intersects(f.box, marquee)).map((f) => f.node.id);
       const s = store.getState();
@@ -252,8 +263,10 @@ export function CanvasView() {
   };
 
   const onDblClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (tool === "pen") { penH.dbl(); return; }
     const id = nodeIdOf(e.target, true);
     const n = id ? locate(page, id)?.node : null;
+    if (n?.type === "path" && !n.locked) { store.getState().select([n.id]); ui.getState().set({ editingPathId: n.id }); return; }
     if (n?.type === "text" && !n.locked) { store.getState().select([n.id]); ui.getState().set({ editingTextId: n.id }); }
   };
 
@@ -268,7 +281,7 @@ export function CanvasView() {
     return { x: (sx - s.panX - (rulers ? RULER : 0)) / s.zoom, y: (sy - s.panY - (rulers ? RULER : 0)) / s.zoom };
   });
 
-  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : "default";
+  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : tool === "pen" ? "crosshair" : "default";
   const stageW = Math.max(1, size.w - (rulers ? RULER : 0)), stageH = Math.max(1, size.h - (rulers ? RULER : 0));
   const editing = editingTextId ? (locate(page, editingTextId)?.node as TextNode | undefined) : undefined;
 
@@ -283,11 +296,11 @@ export function CanvasView() {
           onMouseOver={onOver} onMouseLeave={() => setHover(null)}>
           <Layer>
             <Rect x={0} y={0} width={doc.width} height={doc.height} fill="#000" opacity={0.08} shadowBlur={24 / zoom} shadowOpacity={0.25} listening={false} />
-            <Group ref={contentRef} clipX={0} clipY={0} clipWidth={doc.width} clipHeight={doc.height}>
+            <Group ref={contentRef} name="page-content" clipX={0} clipY={0} clipWidth={doc.width} clipHeight={doc.height}>
               <Rect name="page-bg" x={0} y={0} width={doc.width} height={doc.height}
                 {...(page.background.type === "none" ? { fill: "#ffffff" } : fillProps(page.background, doc.width, doc.height))} />
               {page.children.map((n) => (
-                <NodeView key={n.id} node={n} selection={selection} editingTextId={editingTextId} canDrag={tool === "select" && !spaceDown}
+                <NodeView key={n.id} node={n} selection={selection} editingTextId={editingTextId} canDrag={tool === "select" && !spaceDown && !editingPathId}
                   onDragMove={stableDragMove} onDragEnd={stableDragEnd} />
               ))}
               {showGrid && <Grid w={doc.width} h={doc.height} step={gridSize} zoom={zoom} />}
@@ -300,6 +313,8 @@ export function CanvasView() {
                 <Line key={i} points={g.axis === "x" ? [g.pos, g.from, g.pos, g.to] : [g.from, g.pos, g.to, g.pos]} stroke="#ff2d87" strokeWidth={1 / zoom} dash={[4 / zoom, 3 / zoom]} listening={false} />
               ))}
               {marquee && <Rect {...marquee} fill="rgba(91,76,240,0.08)" stroke="#5b4cf0" strokeWidth={1 / zoom} listening={false} />}
+              {tool === "pen" && <PenPreview pen={pen} />}
+              {editingPathId && <PointEditor pathId={editingPathId} />}
             </Group>
             <Transformer ref={trRef} rotateEnabled flipEnabled={false} anchorSize={9} anchorCornerRadius={5} borderStroke="#5b4cf0" anchorStroke="#5b4cf0"
               anchorFill="#fff" rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]} rotationSnapTolerance={4} ignoreStroke
@@ -339,9 +354,10 @@ function NodeViewInner({ node, selection, editingTextId, canDrag, onDragMove, on
     draggable, listening: !node.locked, onDragMove, onDragEnd,
   };
   if (node.type === "group") {
+    const clip = maskClipFunc(node);
     return (
-      <Group {...common}>
-        {node.children.map((c) => <NodeView key={c.id} node={c} selection={selection} editingTextId={editingTextId} canDrag={canDrag} onDragMove={onDragMove} onDragEnd={onDragEnd} />)}
+      <Group {...common} clipFunc={clip}>
+        {(node.mask ? node.children.slice(1) : node.children).map((c) => <NodeView key={c.id} node={c} selection={selection} editingTextId={editingTextId} canDrag={canDrag} onDragMove={onDragMove} onDragEnd={onDragEnd} />)}
       </Group>
     );
   }

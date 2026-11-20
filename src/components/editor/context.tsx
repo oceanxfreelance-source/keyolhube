@@ -9,7 +9,7 @@ import type { DesignNode, Page, TextNode } from "@/lib/doc/types";
 import { measureTextHeight } from "@/lib/editor/render";
 import type { EditorActions, EditorState, EditorStore } from "@/lib/editor/store";
 
-export type Tool = "select" | "hand";
+export type Tool = "select" | "hand" | "pen";
 export type LeftTab = "elements" | "text" | "uploads" | "pages" | "layers";
 
 export interface UiState {
@@ -28,6 +28,8 @@ export interface UiState {
   stage: Konva.Stage | null;
   /** Temporarily show images without their adjustments (before/after). */
   showOriginal: boolean;
+  /** Path whose anchor points are being edited. */
+  editingPathId: string | null;
 }
 
 export function createUiStore() {
@@ -35,7 +37,7 @@ export function createUiStore() {
   try { pro = localStorage.getItem("pro") === "1"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
-    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false,
+    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null,
     set: (p) => set(p),
   }));
 }

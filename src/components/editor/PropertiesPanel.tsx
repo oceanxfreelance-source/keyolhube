@@ -7,7 +7,9 @@ import {
 import type { Draft } from "immer";
 import { useMemo, useState } from "react";
 import { locate } from "@/lib/doc/geometry";
-import { alignNodes, distributeNodes, duplicateNodes, groupNodes, removeNodes, reorder, ungroup, type Align } from "@/lib/doc/ops";
+import { alignNodes, distributeNodes, duplicateNodes, groupNodes, makeMask, releaseMask, removeNodes, reorder, ungroup, type Align } from "@/lib/doc/ops";
+import { booleanOp, convertToPath, isVector, type BoolOp } from "@/lib/vector/paths";
+import { IDENTITY } from "@/lib/doc/geometry";
 import { BLEND_MODES, type DesignNode, type Fill, type ImageNode, type Page, type Shadow, type Stroke, type TextNode } from "@/lib/doc/types";
 import { fontDef, fontStack, hasItalic, nearestWeight } from "@/lib/fonts";
 import { FontPicker } from "./FontPicker";
@@ -24,6 +26,7 @@ export function PropertiesPanel() {
         {nodes.length === 0 ? <PageSettings /> : (
           <>
             <Arrange nodes={nodes} />
+            <VectorActions nodes={nodes} />
             {nodes.length === 1 ? <NodeProps node={nodes[0]} pro={pro} /> : <MultiProps nodes={nodes} pro={pro} />}
           </>
         )}
@@ -98,6 +101,68 @@ function Arrange({ nodes }: { nodes: DesignNode[] }) {
         <button className="btn btn-ghost btn-icon btn-danger" title="Delete (Del)" aria-label="Delete" onClick={() => s().changePage("Delete", (p) => removeNodes(p as Page, ids))}><Trash2 size={17} /></button>
       </div>
     </Section>
+  );
+}
+
+function VectorActions({ nodes }: { nodes: DesignNode[] }) {
+  const { store, ui } = useEditorCtx();
+  const s = () => store.getState();
+  const ids = nodes.map((n) => n.id);
+  const page = useEd(activePage);
+  const siblings = nodes.length > 1 && (() => { const ls = ids.map((id) => locate(page, id)); return ls.every((l) => l && l.list === ls[0]!.list); })();
+  const vectors = nodes.filter(isVector);
+  const single = nodes.length === 1 ? nodes[0] : null;
+  const maskGroup = single?.type === "group" && single.mask ? single : null;
+  const bool = (op: BoolOp) => {
+    let out: string | null = null;
+    s().changePage({ unite: "Unite shapes", subtract: "Subtract shapes", intersect: "Intersect shapes", exclude: "Exclude shapes" }[op], (p) => {
+      const ls = ids.map((id) => locate(p as Page, id)!).sort((a, b) => a.index - b.index);
+      const res = booleanOp(ls.map((l) => ({ node: l.node as DesignNode, parent: IDENTITY })), op);
+      if (!res) return;
+      const list = ls[0].list, top = ls[ls.length - 1].index;
+      list.splice(top + 1, 0, res);
+      for (let k = ls.length - 1; k >= 0; k--) list.splice(ls[k].index, 1);
+      out = res.id;
+    });
+    if (out) s().select([out]);
+  };
+  const showBool = siblings && vectors.length === nodes.length;
+  if (!showBool && !siblings && !(single && isVector(single)) && !maskGroup) return null;
+  return (
+    <Section title="Shape tools">
+      {showBool && (
+        <div className="grid grid-cols-4 gap-1">
+          {([["unite", "Unite"], ["subtract", "Subtract"], ["intersect", "Intersect"], ["exclude", "Exclude"]] as [BoolOp, string][]).map(([op, label]) => (
+            <button key={op} className="btn h-auto py-1.5 flex-col gap-0.5 text-[11px]" onClick={() => bool(op)} aria-label={`${label} shapes`} title={`${label} (bottom shape's style is kept)`}>
+              <BoolIcon op={op} />{label}
+            </button>
+          ))}
+        </div>
+      )}
+      {siblings && <button className="btn w-full" onClick={() => { let g: string | null = null; s().changePage("Mask", (p) => { g = makeMask(p as Page, ids); }); if (g) s().select([g]); }}>Mask with bottom shape</button>}
+      {maskGroup && <button className="btn w-full" onClick={() => { let k: string[] = []; s().changePage("Release mask", (p) => { k = releaseMask(p as Page, maskGroup.id); }); s().select(k); }}>Release mask</button>}
+      {single && isVector(single) && single.type !== "path" && (
+        <button className="btn w-full" onClick={() => { let id: string | null = null; s().changePage("Convert to path", (p) => {
+          const l = locate(p as Page, single.id)!; const res = convertToPath(l.node as DesignNode, IDENTITY);
+          if (res) { l.list.splice(l.index, 1, res); id = res.id; }
+        }); if (id) { s().select([id]); ui.getState().set({ editingPathId: id }); } }}>Convert to path</button>
+      )}
+      {single?.type === "path" && <button className="btn w-full" onClick={() => ui.getState().set({ editingPathId: single.id })}>Edit points</button>}
+      {single?.type === "path" && <p className="text-xs text-muted">Drag points and handles; click the outline to add a point; Delete removes the selected point; double-click a point for corner/smooth; Alt-drag a handle to break it.</p>}
+    </Section>
+  );
+}
+
+function BoolIcon({ op }: { op: BoolOp }) {
+  const a = "M3 3h11v11H3z", b = "M8 8h11v11H8z";
+  return (
+    <svg viewBox="0 0 22 22" width="22" height="22">
+      <defs><clipPath id={`ca-${op}`}><path d={a} /></clipPath><clipPath id={`cb-${op}`}><path d={b} /></clipPath></defs>
+      {op === "unite" && <path d={`${a} ${b}`} fill="currentColor" fillRule="nonzero" />}
+      {op === "subtract" && <><path d={a} fill="currentColor" /><path d={b} fill="var(--surface)" stroke="currentColor" strokeDasharray="2 2" /></>}
+      {op === "intersect" && <><path d={a} fill="none" stroke="currentColor" strokeDasharray="2 2" /><path d={b} fill="none" stroke="currentColor" strokeDasharray="2 2" /><path d={b} clipPath={`url(#ca-${op})`} fill="currentColor" /></>}
+      {op === "exclude" && <path d={`${a} ${b}`} fill="currentColor" fillRule="evenodd" />}
+    </svg>
   );
 }
 

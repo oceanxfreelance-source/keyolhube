@@ -3,7 +3,8 @@ import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FileT
 import { useEffect, useRef, useState } from "react";
 import { make, newId, newPage } from "@/lib/doc/factory";
 import { locate } from "@/lib/doc/geometry";
-import { cloneWithNewIds } from "@/lib/doc/ops";
+import { bakeScale, cloneWithNewIds } from "@/lib/doc/ops";
+import { importSvg } from "@/lib/vector/paths";
 import type { DesignNode, TextNode } from "@/lib/doc/types";
 import { polyPoints } from "@/lib/editor/render";
 import { activePage, fitText, type LeftTab, useEd, useEditorCtx, useUi } from "./context";
@@ -142,6 +143,16 @@ function UploadsTab() {
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const add = useAddImage();
+  const { store } = useEditorCtx();
+  const addSvg = (n: DesignNode) => {
+    const s = store.getState();
+    const { width: W, height: H } = s.doc;
+    const k = Math.min(1, (W * 0.8) / Math.max(1, n.width), (H * 0.8) / Math.max(1, n.height));
+    if (k < 1) bakeScale(n, k, k);
+    n.x = Math.round(W / 2 - n.width / 2); n.y = Math.round(H / 2 - n.height / 2);
+    s.changePage("Import SVG", (p) => { p.children.push(n); });
+    s.select([n.id]);
+  };
   useEffect(() => {
     fetch("/api/assets").then((r) => r.json()).then((b) => setAssets(b.assets.map((a: { id: string; width: number; height: number; filename: string | null }) => ({ ...a, url: `/api/assets/${a.id}` })))).catch(() => setAssets([]));
   }, []);
@@ -151,6 +162,14 @@ function UploadsTab() {
     setError(null);
     for (const f of [...files]) {
       try {
+        if (f.type === "image/svg+xml" || /\.svg$/i.test(f.name)) {
+          // SVG: imported as editable vector layers (not uploaded as a bitmap)
+          const r = importSvg(await f.text());
+          if (!r.node) throw new Error("No drawable shapes found in this SVG");
+          addSvg(r.node);
+          if (r.skipped.text || r.skipped.images) setError(`${f.name}: imported ${r.count} shapes; ${r.skipped.text ? `${r.skipped.text} text element(s)` : ""}${r.skipped.text && r.skipped.images ? " and " : ""}${r.skipped.images ? `${r.skipped.images} embedded image(s)` : ""} were not imported.`);
+          continue;
+        }
         const a = await uploadImage(f);
         setAssets((as) => [{ ...a, filename: f.name }, ...(as ?? [])]);
         add(a);
@@ -163,9 +182,9 @@ function UploadsTab() {
   }
   return (
     <div className="space-y-3">
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden onChange={(e) => onFiles(e.target.files)} data-testid="upload-input" />
+      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" multiple hidden onChange={(e) => onFiles(e.target.files)} data-testid="upload-input" />
       <button className="btn btn-primary w-full" disabled={busy} onClick={() => input.current?.click()}><Upload size={16} /> {busy ? "Uploading…" : "Upload images"}</button>
-      <p className="text-xs text-muted">PNG, JPEG, WebP or GIF, up to 15 MB. Original quality is kept for print.</p>
+      <p className="text-xs text-muted">PNG, JPEG, WebP or GIF up to 15 MB (original quality kept for print). SVG files import as editable vector shapes.</p>
       {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       {assets === null ? <p className="text-sm text-muted">Loading…</p> : (
         <div className="grid grid-cols-2 gap-2">

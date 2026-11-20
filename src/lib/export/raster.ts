@@ -4,6 +4,7 @@ import type { DesignDoc, DesignNode, Page } from "../doc/types";
 import { ensureFonts, loadDocFonts, nearestWeight } from "../fonts";
 import { fillProps, loadImage, primitive } from "../editor/render";
 import { applyToNodeForExport } from "../photo/konva";
+import { maskClipFunc } from "../editor/mask";
 
 /** Largest canvas we create (pixels). iOS Safari's limit is about 16.7 million. */
 export function maxCanvasPixels(): number {
@@ -25,7 +26,9 @@ async function build(n: DesignNode, pixelRatio: number): Promise<Konva.Group | n
   if (!n.visible) return null;
   const g = new Konva.Group({ x: n.x, y: n.y, rotation: n.rotation, opacity: n.type === "group" ? n.opacity : 1 });
   if (n.type === "group") {
-    for (const c of n.children) { const k = await build(c, pixelRatio); if (k) g.add(k); }
+    const clip = maskClipFunc(n);
+    if (clip) g.clipFunc(clip as never);
+    for (const c of n.mask ? n.children.slice(1) : n.children) { const k = await build(c, pixelRatio); if (k) g.add(k); }
     return g;
   }
   const img = n.type === "image" ? await loadImage(n.src) : null;

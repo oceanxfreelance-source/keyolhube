@@ -103,6 +103,8 @@ export interface ImageNode extends BaseNode {
 export interface GroupNode extends BaseNode {
   type: "group";
   children: DesignNode[];
+  /** Clipping mask: the first (bottom) child is the mask shape and is not drawn itself. */
+  mask?: boolean;
 }
 
 export type ShapeNode = RectNode | EllipseNode | PolygonNode | StarNode | LineNode | PathNode | TextNode | ImageNode;

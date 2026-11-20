@@ -57,3 +57,26 @@ export function replacePhoto(store: EditorStore, id: string, a: UploadedAsset) {
     delete img.adjust;
   });
 }
+
+/** Swap an image's picture for a new version (e.g. a cut-out), keeping the original for undo-free restore. */
+export function setCutout(store: EditorStore, id: string, a: UploadedAsset) {
+  store.getState().changePage("Remove background", (p) => {
+    const img = locate(p as Page, id)?.node;
+    if (img?.type !== "image") return;
+    img.original ??= { assetId: img.assetId, src: img.src, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight };
+    const k = a.width / img.naturalWidth;
+    if (img.crop) img.crop = { x: img.crop.x * k, y: img.crop.y * k, width: img.crop.width * k, height: img.crop.height * k };
+    img.assetId = a.id; img.src = a.url; img.naturalWidth = a.width; img.naturalHeight = a.height;
+  });
+}
+
+export function restoreOriginal(store: EditorStore, id: string) {
+  store.getState().changePage("Restore background", (p) => {
+    const img = locate(p as Page, id)?.node;
+    if (img?.type !== "image" || !img.original) return;
+    const o = img.original, k = o.naturalWidth / img.naturalWidth;
+    if (img.crop) img.crop = { x: img.crop.x * k, y: img.crop.y * k, width: img.crop.width * k, height: img.crop.height * k };
+    img.assetId = o.assetId; img.src = o.src; img.naturalWidth = o.naturalWidth; img.naturalHeight = o.naturalHeight;
+    delete img.original;
+  });
+}

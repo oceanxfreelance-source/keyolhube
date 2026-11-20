@@ -14,7 +14,9 @@ import { BLEND_MODES, type DesignNode, type Fill, type ImageNode, type Page, typ
 import { fontDef, fontStack, hasItalic, nearestWeight } from "@/lib/fonts";
 import { FontPicker } from "./FontPicker";
 import { AdjustPanel } from "./AdjustPanel";
-import { fillShapeWithPhoto, pickPhoto, replacePhoto } from "./photoFrames";
+import { fillShapeWithPhoto, pickPhoto, replacePhoto, restoreOriginal, setCutout } from "./photoFrames";
+import { uploadImage } from "./useUploads";
+import { loadImage } from "@/lib/editor/render";
 import { fromUnit, toUnit } from "@/lib/presets";
 import { activePage, fitText, selectedNodes, useEd, useEditorCtx, useUi } from "./context";
 
@@ -346,6 +348,34 @@ function AlignIcon({ a }: { a: "left" | "center" | "right" | "justify" }) {
   );
 }
 
+function BackgroundRemoval({ node }: { node: ImageNode }) {
+  const { store } = useEditorCtx();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  if (node.original) {
+    return <button className="btn w-full" onClick={() => restoreOriginal(store, node.id)}>Restore background</button>;
+  }
+  return (
+    <div className="space-y-1">
+      <button className="btn btn-primary w-full" disabled={!!busy} onClick={async () => {
+        setBusy("Loading the AI model (first time only)…"); setError(null);
+        try {
+          const { loadSegmenter, removeBackground } = await import("@/lib/photo/bgremove");
+          await loadSegmenter();
+          setBusy("Removing background…");
+          const img = await loadImage(node.src);
+          const r = await removeBackground(img);
+          setBusy("Saving…");
+          const a = await uploadImage(new File([r.blob], "cutout.png", { type: "image/png" }));
+          setCutout(store, node.id, a);
+        } catch (e) { setError((e as Error).message); } finally { setBusy(null); }
+      }}>{busy ?? "Remove background (people)"}</button>
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      <p className="text-xs text-muted">Runs on your device. Works on photos of people (portraits, candidates, players); not on products or objects. The original is kept.</p>
+    </div>
+  );
+}
+
 function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
   const upd = useUpdate();
   const { store } = useEditorCtx();
@@ -370,6 +400,7 @@ function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
       <button className="btn w-full" onClick={async () => {
         try { const a = await pickPhoto(); if (a) replacePhoto(store, node.id, a); } catch (e) { alert((e as Error).message); }
       }}>Replace photo</button>
+      <BackgroundRemoval node={node} />
       <div className="flex gap-2">
         <button className="btn flex-1" onClick={() => setCrop(1, 0.5, 0.5)}>Fill frame</button>
         <button className="btn flex-1" disabled={!cropped && Math.abs(node.width / node.height - natAspect) < 0.01}

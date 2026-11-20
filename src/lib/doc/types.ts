@@ -101,6 +101,8 @@ export interface ImageNode extends BaseNode {
   cornerRadius: number;
   stroke: Stroke;
   adjust?: Adjustments; // non-destructive photo adjustments
+  /** The untouched photo, kept when the background was removed (so it can be restored). */
+  original?: { assetId: string; src: string; naturalWidth: number; naturalHeight: number };
 }
 export interface GroupNode extends BaseNode {
   type: "group";

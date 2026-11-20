@@ -35,6 +35,7 @@ const shapes = [
     naturalWidth: num.positive(), naturalHeight: num.positive(), cornerRadius: num.min(0), stroke,
     crop: z.object({ x: num.min(0), y: num.min(0), width: num.positive(), height: num.positive() }).nullable(),
     adjust: z.lazy(() => adjust).optional(),
+    original: z.object({ assetId: z.string().max(40), src: z.string().max(500), naturalWidth: num.positive(), naturalHeight: num.positive() }).optional(),
   }),
 ] as const;
 type NodeSchema = z.ZodType<unknown>;

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "./fonts.css";
+
+/* Design tokens. Light by default; dark from the system setting or the theme switch. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --border: #e3e6eb;
+  --text: #15181e;
+  --muted: #646b78;
+  --accent: #5b4cf0;
+  --accent-ink: #ffffff;
+  --accent-soft: #ecebfe;
+  --danger: #d92d20;
+  --ok: #12805c;
+  --canvas: #e8eaee;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 4px 16px rgb(16 24 40 / 6%);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --surface: #171a20; --surface-2: #1f232b; --border: #2b3039; --text: #eceef2; --muted: #9aa1ad;
+    --accent: #8b80ff; --accent-ink: #0f1115; --accent-soft: #262246; --danger: #ff6b5e; --ok: #3ccf91; --canvas: #0b0d10;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 20px rgb(0 0 0 / 35%);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115; --surface: #171a20; --surface-2: #1f232b; --border: #2b3039; --text: #eceef2; --muted: #9aa1ad;
+  --accent: #8b80ff; --accent-ink: #0f1115; --accent-soft: #262246; --danger: #ff6b5e; --ok: #3ccf91; --canvas: #0b0d10;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 20px rgb(0 0 0 / 35%);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --color-canvas: var(--canvas);
+  --font-sans: "Inter", "Noto Sans Thaana", system-ui, sans-serif;
+  --font-thaana: "Noto Sans Thaana", "Inter", sans-serif;
+}
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+/* Shared building blocks */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; height: 2.25rem; padding: 0 .85rem; border-radius: .6rem; font-size: .875rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: background .12s, border-color .12s; white-space: nowrap; }
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-icon { width: 2.25rem; padding: 0; }
+.btn-danger { color: var(--danger); }
+.input { height: 2.25rem; width: 100%; padding: 0 .65rem; border-radius: .55rem; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: .875rem; }
+.input:focus, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.label { font-size: .72rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; box-shadow: var(--shadow); }
+.thaana { font-family: var(--font-thaana); }
+input[type="range"] { accent-color: var(--accent); }
+input[type="color"] { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); border-radius: .5rem; padding: 2px; background: var(--surface); width: 2.25rem; height: 2.25rem; cursor: pointer; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: .35rem; }

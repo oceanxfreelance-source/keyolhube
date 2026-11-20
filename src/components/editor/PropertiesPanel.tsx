@@ -274,7 +274,7 @@ function TextProps({ node }: { node: TextNode }) {
       <button className="input text-start truncate" aria-label={`Font: ${node.fontFamily}`} style={{ fontFamily: fontStack(node.fontFamily) }} onClick={() => setPicker(true)}>
         {node.fontFamily}
       </button>
-      {picker && <FontPicker current={node.fontFamily} onClose={() => setPicker(false)} onPick={(family, refs) => {
+      {picker && <FontPicker current={node.fontFamily} weights={[node.fontWeight]} onClose={() => setPicker(false)} onPick={(family, refs) => {
         const ids = store.getState().selection;
         store.getState().change("Font", (d) => {
           d.fonts ??= [];

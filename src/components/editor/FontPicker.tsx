@@ -2,7 +2,7 @@
 import { Check, Search, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FontRef } from "@/lib/doc/types";
-import { BUILTIN, googleCatalogue, registerFont, type GoogleFont } from "@/lib/fonts";
+import { BUILTIN, googleCatalogue, nearestWeight, registerFont, type GoogleFont } from "@/lib/fonts";
 import { Dialog } from "./Dialog";
 
 type Uploaded = { id: string; family: string; weight: number; italic: boolean; file: string };
@@ -13,7 +13,7 @@ const CATS: Record<string, string> = { sans: "Sans serif", serif: "Serif", displ
  * before it is applied, so text measures correctly. `onPick` receives the font reference(s) to
  * record in the design (none for built-in fonts).
  */
-export function FontPicker({ current, onPick, onClose }: { current: string; onPick: (family: string, refs: FontRef[]) => void; onClose: () => void }) {
+export function FontPicker({ current, weights = [400], onPick, onClose }: { current: string; weights?: number[]; onPick: (family: string, refs: FontRef[]) => void; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
   const [google, setGoogle] = useState<GoogleFont[] | null>(null);
@@ -48,7 +48,9 @@ export function FontPicker({ current, onPick, onClose }: { current: string; onPi
     setBusy(family); setError(null);
     try {
       await Promise.all(refs.map(registerFont));
-      await document.fonts.ready;
+      // Download the actual font files for the weights in use before applying, so text is
+      // measured with the real font (a stylesheet alone does not fetch the files).
+      await Promise.all(weights.map((w) => document.fonts.load(`${nearestWeight(family, w)} 32px "${family}"`, "Aa")));
       onPick(family, refs);
       onClose();
     } catch (e) {

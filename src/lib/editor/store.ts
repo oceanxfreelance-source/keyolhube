@@ -59,7 +59,8 @@ export function createEditorStore(doc: DesignDoc) {
       } else {
         nextPast = [...past, { label, patches, inverse, mergeKey: opts?.merge, at: now }].slice(-HISTORY_LIMIT);
       }
-      set({ doc: next, past: nextPast, future: [], revision: revision + 1, selection: validSelection(next, get().pageId, get().selection) });
+      const pageId = keepPage(cur, next, get().pageId);
+      set({ doc: next, past: nextPast, future: [], revision: revision + 1, pageId, selection: validSelection(next, pageId, get().selection) });
     },
 
     changePage(label, recipe, opts) {
@@ -75,7 +76,7 @@ export function createEditorStore(doc: DesignDoc) {
       const e = past[past.length - 1];
       if (!e) return;
       const next = applyPatches(cur, e.inverse);
-      const pageId = next.pages.some((p) => p.id === get().pageId) ? get().pageId : next.pages[0].id;
+      const pageId = keepPage(cur, next, get().pageId);
       set({ doc: next, past: past.slice(0, -1), future: [...future, e], revision: revision + 1, pageId, selection: validSelection(next, pageId, get().selection) });
     },
 
@@ -84,7 +85,7 @@ export function createEditorStore(doc: DesignDoc) {
       const e = future[future.length - 1];
       if (!e) return;
       const next = applyPatches(cur, e.patches);
-      const pageId = next.pages.some((p) => p.id === get().pageId) ? get().pageId : next.pages[0].id;
+      const pageId = keepPage(cur, next, get().pageId);
       set({ doc: next, past: [...past, e], future: future.slice(0, -1), revision: revision + 1, pageId, selection: validSelection(next, pageId, get().selection) });
     },
 
@@ -101,6 +102,13 @@ export function createEditorStore(doc: DesignDoc) {
       return d.pages.find((p) => p.id === pageId) ?? d.pages[0];
     },
   }));
+}
+
+/** If the active page was removed, move to the page that took its place (or the last one). */
+function keepPage(prev: DesignDoc, next: DesignDoc, pageId: string): string {
+  if (next.pages.some((p) => p.id === pageId)) return pageId;
+  const i = prev.pages.findIndex((p) => p.id === pageId);
+  return next.pages[Math.min(Math.max(i, 0), next.pages.length - 1)].id;
 }
 
 /** Drop selected ids that no longer exist on the active page (after delete, undo, etc.). */

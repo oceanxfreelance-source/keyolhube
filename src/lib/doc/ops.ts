@@ -4,7 +4,8 @@ import { apply, boundsIn, invert, localMatrix, locate, mul, union, type Box } fr
 import type { DesignNode, GroupNode, Page } from "./types";
 
 export function cloneWithNewIds<T extends DesignNode>(n: T): T {
-  const c = structuredClone(n);
+  // JSON round-trip (not structuredClone): works on immer drafts, and nodes are plain JSON.
+  const c = JSON.parse(JSON.stringify(n)) as T;
   const renew = (x: DesignNode) => {
     x.id = newId();
     if (x.type === "group") x.children.forEach(renew);

@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:api": "vitest run -c vitest.api.config.ts",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.17",
@@ -38,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.5",
     "@types/react": "^19",

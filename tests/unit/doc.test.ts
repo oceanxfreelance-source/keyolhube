@@ -167,3 +167,21 @@ describe("history", () => {
     expect(doc.pages[0].children).toHaveLength(0);
   });
 });
+
+describe("pages", () => {
+  it("deleting the active page moves to a neighbour (and undo restores it)", async () => {
+    const { newPage } = await import("@/lib/doc/factory");
+    const doc = newDoc(100, 100);
+    doc.pages.push(newPage("Page 2"), newPage("Page 3"));
+    const s = createEditorStore(doc);
+    const [p1, p2, p3] = doc.pages.map((p) => p.id);
+    s.getState().setPage(p3);
+    s.getState().change("Delete page", (d) => { d.pages.splice(2, 1); });
+    expect(s.getState().pageId).toBe(p2);
+    s.getState().setPage(p1);
+    s.getState().change("Delete page", (d) => { d.pages.splice(0, 1); });
+    expect(s.getState().pageId).toBe(p2);
+    s.getState().undo();
+    expect(s.getState().doc.pages.map((p) => p.id)).toEqual([p1, p2]);
+  });
+});

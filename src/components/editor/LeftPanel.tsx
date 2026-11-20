@@ -204,7 +204,7 @@ function PagesTab() {
             onClick={() => s().change("Reorder pages", (d) => { const [x] = d.pages.splice(i, 1); d.pages.splice(i + 1, 0, x); })}><ArrowDown size={14} /></button>
           <button className="btn btn-ghost btn-icon size-7" title="Duplicate page" aria-label={`Duplicate ${p.name}`}
             onClick={() => {
-              const copy = { ...structuredClone(p), id: newId(), name: `${p.name} copy`, children: p.children.map((c) => cloneWithNewIds(c)) };
+              const copy = { ...(JSON.parse(JSON.stringify(p)) as typeof p), id: newId(), name: `${p.name} copy`, children: p.children.map((c) => cloneWithNewIds(c)) };
               s().change("Duplicate page", (d) => { d.pages.splice(i + 1, 0, copy); });
               s().setPage(copy.id);
             }}><Copy size={14} /></button>

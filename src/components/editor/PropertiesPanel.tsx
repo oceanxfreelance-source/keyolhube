@@ -17,7 +17,7 @@ export function PropertiesPanel() {
   const nodes = useEd(selectedNodes);
   const pro = useUi((s) => s.pro);
   return (
-    <aside className="w-full md:w-72 shrink-0 bg-surface md:border-l border-line max-md:border-t overflow-y-auto max-md:max-h-[40vh]" aria-label="Properties">
+    <aside className="max-md:order-2 w-full md:w-72 shrink-0 bg-surface md:border-l border-line max-md:border-t overflow-y-auto max-md:max-h-[38dvh]" aria-label="Properties">
       <div className="p-4 space-y-5">
         {nodes.length === 0 ? <PageSettings /> : (
           <>

@@ -52,7 +52,10 @@ export function CanvasView() {
     const zz = Math.max(ZMIN, Math.min(ZMAX, z));
     ui.getState().set({ zoom: zz, panX: (size.w - doc.width * zz) / 2, panY: (size.h - doc.height * zz) / 2 });
   }, [size.w, size.h, doc.width, doc.height, ui]);
-  useEffect(() => { fit(); }, [fitRequest, doc.width, doc.height, size.w > 0 && size.h > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Keep the page fitted while the layout settles or the window resizes, until the user zooms or pans.
+  const autoFit = useRef(true);
+  useEffect(() => { autoFit.current = true; fit(); }, [fitRequest, doc.width, doc.height]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (autoFit.current) fit(); }, [size.w, size.h]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { ui.getState().set({ stage: stageRef.current }); return () => ui.getState().set({ stage: null }); }, [ui]);
 
   // ---- zoom helper keeping a screen point fixed ----
@@ -107,6 +110,7 @@ export function CanvasView() {
     const p = stage.getPointerPosition();
     if (!p) return;
     if (tool === "hand" || spaceDown || evt.button === 1) {
+      autoFit.current = false;
       pan.current = { x: p.x, y: p.y, px: ui.getState().panX, py: ui.getState().panY };
       return;
     }
@@ -154,6 +158,7 @@ export function CanvasView() {
   };
   const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
+    autoFit.current = false;
     const p = stageRef.current!.getPointerPosition();
     if (!p) return;
     if (e.evt.ctrlKey || e.evt.metaKey) zoomAt(ui.getState().zoom * Math.exp(-e.evt.deltaY * 0.01), p.x, p.y);
@@ -163,6 +168,7 @@ export function CanvasView() {
     const t = e.evt.touches;
     if (t.length !== 2) return;
     e.evt.preventDefault();
+    autoFit.current = false;
     const rect = stageRef.current!.container().getBoundingClientRect();
     const cx = (t[0].clientX + t[1].clientX) / 2 - rect.left, cy = (t[0].clientY + t[1].clientY) / 2 - rect.top;
     const dist = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);

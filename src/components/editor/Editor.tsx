@@ -5,7 +5,7 @@ import { ensureFonts } from "@/lib/fonts";
 import { fontsUsed } from "@/lib/export/raster";
 import { createEditorStore } from "@/lib/editor/store";
 import { CanvasView } from "./CanvasView";
-import { createUiStore, EditorProvider, useEd } from "./context";
+import { createUiStore, EditorProvider, useEd, useUi } from "./context";
 import { LeftPanel, LeftRail } from "./LeftPanel";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { TopBar } from "./TopBar";
@@ -35,6 +35,18 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
   useShortcuts();
   const pageCount = useEd((s) => s.doc.pages.length);
   const pageIndex = useEd((s) => s.doc.pages.findIndex((p) => p.id === s.pageId));
+  const hasSelection = useEd((s) => s.selection.length > 0);
+  const leftTab = useUi((s) => s.leftTab);
+  const mobile = useIsMobile();
+  // On phones one panel at a time: picking something to add closes the menu so the canvas shows.
+  useEffect(() => {
+    if (!mobile) return;
+    ctx.ui.getState().set({ leftTab: null });
+    return ctx.store.subscribe((st, prev) => {
+      const ui = ctx.ui.getState();
+      if (st.selection !== prev.selection && st.selection.length && ui.leftTab && ui.leftTab !== "layers") ui.set({ leftTab: null });
+    });
+  }, [mobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function rename(t: string) {
     await autosave.saveNow();
@@ -51,20 +63,32 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
   }
 
   return (
-    <div className="h-dvh flex flex-col">
+    <div className="h-dvh flex flex-col overflow-hidden">
       <TopBar title={title} onRename={rename} status={autosave.status} errorText={autosave.errorText}
         onRestored={(doc, rev) => { ctx.store.getState().load(doc); autosave.adopt(rev); }} onReloadLatest={reloadLatest} />
-      <div className="flex-1 min-h-0 flex max-md:flex-col-reverse">
+      <div className="flex-1 min-h-0 flex max-md:flex-col">
         <LeftRail />
-        <LeftPanel />
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        {(!mobile || leftTab) && <LeftPanel />}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col max-md:order-1">
           <CanvasView />
           {pageCount > 1 && <div className="text-xs text-muted text-center py-1 bg-surface border-t border-line">Page {pageIndex + 1} of {pageCount}</div>}
         </div>
-        <PropertiesPanel />
+        {(!mobile || (!leftTab && hasSelection)) && <PropertiesPanel />}
       </div>
     </div>
   );
 }
 
 import { useEditorCtx as useEdCtx } from "./context";
+
+function useIsMobile() {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia("(max-width: 767px)");
+    const on = () => setM(q.matches);
+    on();
+    q.addEventListener("change", on);
+    return () => q.removeEventListener("change", on);
+  }, []);
+  return m;
+}

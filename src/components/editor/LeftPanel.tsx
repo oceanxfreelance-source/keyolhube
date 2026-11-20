@@ -21,7 +21,7 @@ export function LeftRail() {
   const tab = useUi((s) => s.leftTab);
   const set = useUi((s) => s.set);
   return (
-    <nav className="flex md:flex-col gap-1 p-1.5 bg-surface border-line md:border-r max-md:border-t max-md:justify-around shrink-0" aria-label="Editor panels">
+    <nav className="max-md:order-3 flex md:flex-col gap-1 p-1.5 bg-surface border-line md:border-r max-md:border-t max-md:justify-around shrink-0" aria-label="Editor panels">
       {TABS.map((t) => (
         <button key={t.id} onClick={() => set({ leftTab: tab === t.id ? null : t.id })} aria-pressed={tab === t.id}
           className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium w-16 ${tab === t.id ? "bg-accent-soft text-accent" : "text-muted hover:text-ink hover:bg-surface-2"}`}>
@@ -38,7 +38,7 @@ export function LeftPanel() {
   const set = useUi((s) => s.set);
   if (!tab) return null;
   return (
-    <aside className="w-full md:w-72 shrink-0 bg-surface border-line md:border-r max-md:border-t max-md:max-h-[45vh] overflow-y-auto" aria-label={tab}>
+    <aside className="max-md:order-2 w-full md:w-72 shrink-0 bg-surface border-line md:border-r max-md:border-t max-md:max-h-[40dvh] overflow-y-auto" aria-label={tab}>
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <h2 className="font-semibold capitalize">{tab}</h2>
         <button className="btn btn-ghost btn-icon" onClick={() => set({ leftTab: null })} aria-label="Close panel"><X size={16} /></button>

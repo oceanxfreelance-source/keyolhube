@@ -1,6 +1,6 @@
 "use client";
 import Konva from "konva";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Arrow, Ellipse, Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
 import { resolvedDirection } from "@/lib/doc/factory";
 import { flatten, locate, type Box } from "@/lib/doc/geometry";
@@ -253,6 +253,12 @@ export function CanvasView() {
     if (n?.type === "text" && !n.locked) { store.getState().select([n.id]); ui.getState().set({ editingTextId: n.id }); }
   };
 
+  // Stable handler identities so unchanged elements are not re-rendered (see NodeView memo).
+  const dragMoveRef = useRef(onDragMove); dragMoveRef.current = onDragMove;
+  const dragEndRef = useRef(onDragEnd); dragEndRef.current = onDragEnd;
+  const stableDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => dragMoveRef.current(e), []);
+  const stableDragEnd = useCallback(() => dragEndRef.current(), []);
+
   const drop = useImageDrop((sx, sy) => {
     const s = ui.getState();
     return { x: (sx - s.panX - (rulers ? RULER : 0)) / s.zoom, y: (sy - s.panY - (rulers ? RULER : 0)) / s.zoom };
@@ -278,7 +284,7 @@ export function CanvasView() {
                 {...(page.background.type === "none" ? { fill: "#ffffff" } : fillProps(page.background, doc.width, doc.height))} />
               {page.children.map((n) => (
                 <NodeView key={n.id} node={n} selection={selection} editingTextId={editingTextId} canDrag={tool === "select" && !spaceDown}
-                  onDragMove={onDragMove} onDragEnd={onDragEnd} />
+                  onDragMove={stableDragMove} onDragEnd={stableDragEnd} />
               ))}
               {showGrid && <Grid w={doc.width} h={doc.height} step={gridSize} zoom={zoom} />}
             </Group>
@@ -302,10 +308,26 @@ export function CanvasView() {
   );
 }
 
-function NodeView({ node, selection, editingTextId, canDrag, onDragMove, onDragEnd }: {
+type NodeViewProps = {
   node: DesignNode; selection: string[]; editingTextId: string | null; canDrag: boolean;
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void; onDragEnd: () => void;
-}) {
+};
+
+/** True if this node or anything inside it is in `ids`. */
+function touches(n: DesignNode, ids: string[] | string | null): boolean {
+  if (!ids || !ids.length) return false;
+  const has = (id: string) => (typeof ids === "string" ? ids === id : ids.includes(id));
+  if (has(n.id)) return true;
+  return n.type === "group" && n.children.some((c) => touches(c, ids));
+}
+
+// Documents are immutable (immer), so an unchanged element keeps the same object: skip its render.
+const NodeView = memo(NodeViewInner, (a: NodeViewProps, b: NodeViewProps) =>
+  a.node === b.node && a.canDrag === b.canDrag && a.onDragMove === b.onDragMove && a.onDragEnd === b.onDragEnd &&
+  (a.editingTextId === b.editingTextId || (!touches(b.node, a.editingTextId) && !touches(b.node, b.editingTextId))) &&
+  (a.selection === b.selection || (!touches(b.node, a.selection) && !touches(b.node, b.selection))));
+
+function NodeViewInner({ node, selection, editingTextId, canDrag, onDragMove, onDragEnd }: NodeViewProps) {
   if (!node.visible) return null;
   const draggable = canDrag && selection.includes(node.id) && !node.locked && editingTextId !== node.id;
   const common = {
@@ -326,7 +348,8 @@ function NodeView({ node, selection, editingTextId, canDrag, onDragMove, onDragE
   );
 }
 
-function Shape({ node, hidden }: { node: ShapeNode; hidden: boolean }) {
+const Shape = memo(ShapeInner);
+function ShapeInner({ node, hidden }: { node: ShapeNode; hidden: boolean }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const src = node.type === "image" ? node.src : null;
   useEffect(() => {

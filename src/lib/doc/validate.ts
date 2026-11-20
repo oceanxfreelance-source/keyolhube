@@ -26,7 +26,7 @@ const shapes = [
   z.object({ ...base, type: z.literal("path"), data: z.string().max(200_000), sourceWidth: num.positive(), sourceHeight: num.positive(), fill, stroke }),
   z.object({
     ...base, type: z.literal("text"), text: z.string().max(20_000), fontFamily: z.string().max(100), fontSize: num.min(1).max(5000),
-    fontWeight: z.union([z.literal(400), z.literal(500), z.literal(600), z.literal(700), z.literal(800)]), italic: z.boolean(),
+    fontWeight: z.number().int().min(100).max(900), italic: z.boolean(),
     underline: z.boolean(), align: z.enum(["left", "center", "right", "justify"]), direction: z.enum(["auto", "ltr", "rtl"]),
     lineHeight: num.min(0.5).max(5), letterSpacing: num.min(-50).max(500), fill, stroke,
   }),
@@ -44,6 +44,10 @@ export const docSchema = z.object({
   schemaVersion: z.literal(1),
   width: num.min(1).max(30000), height: num.min(1).max(30000), dpi: num.min(36).max(1200), unit: z.enum(["px", "mm", "in"]),
   pages: z.array(z.object({ id: z.string().min(1).max(40), name: z.string().max(200), background: fill, children: z.array(node).max(5000) })).min(1).max(500),
+  fonts: z.array(z.discriminatedUnion("source", [
+    z.object({ source: z.literal("google"), family: z.string().min(1).max(100), weights: z.array(z.number().int().min(1).max(1000)).max(20), italics: z.array(z.number().int().min(1).max(1000)).max(20) }),
+    z.object({ source: z.literal("upload"), family: z.string().min(1).max(100), assetId: z.string().max(40), weight: z.number().int().min(1).max(1000), italic: z.boolean() }),
+  ])).max(200).optional(),
 });
 
 export function parseDoc(input: unknown): { ok: true; doc: DesignDoc } | { ok: false; error: string } {

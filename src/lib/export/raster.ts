@@ -1,7 +1,7 @@
 "use client";
 import Konva from "konva";
 import type { DesignDoc, DesignNode, Page } from "../doc/types";
-import { ensureFonts, nearestWeight } from "../fonts";
+import { ensureFonts, loadDocFonts, nearestWeight } from "../fonts";
 import { fillProps, loadImage, primitive } from "../editor/render";
 
 /** Largest canvas we create (pixels). iOS Safari's limit is about 16.7 million. */
@@ -36,6 +36,7 @@ async function build(n: DesignNode): Promise<Konva.Group | null> {
 
 /** Render one page to a canvas at `pixelRatio`, clamped to the browser's canvas limit. */
 export async function renderPageCanvas(doc: DesignDoc, page: Page, opts: { pixelRatio: number; transparent: boolean }) {
+  await loadDocFonts(doc);
   await ensureFonts(fontsUsed([page]));
   const maxPr = Math.sqrt(maxCanvasPixels() / (doc.width * doc.height));
   const pixelRatio = Math.max(0.05, Math.min(opts.pixelRatio, maxPr));

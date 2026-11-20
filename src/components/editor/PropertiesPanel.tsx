@@ -5,11 +5,12 @@ import {
   SendToBack, Trash2, Underline, Ungroup, Unlock,
 } from "lucide-react";
 import type { Draft } from "immer";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { locate } from "@/lib/doc/geometry";
 import { alignNodes, distributeNodes, duplicateNodes, groupNodes, removeNodes, reorder, ungroup, type Align } from "@/lib/doc/ops";
 import { BLEND_MODES, type DesignNode, type Fill, type ImageNode, type Page, type Shadow, type Stroke, type TextNode } from "@/lib/doc/types";
-import { fontDef, FONTS, nearestWeight } from "@/lib/fonts";
+import { fontDef, fontStack, hasItalic, nearestWeight } from "@/lib/fonts";
+import { FontPicker } from "./FontPicker";
 import { fromUnit, toUnit } from "@/lib/presets";
 import { activePage, fitText, selectedNodes, useEd, useEditorCtx, useUi } from "./context";
 
@@ -196,23 +197,39 @@ function Transform({ node }: { node: DesignNode }) {
 
 function TextProps({ node }: { node: TextNode }) {
   const upd = useUpdate();
+  const { store } = useEditorCtx();
+  const [picker, setPicker] = useState(false);
   const t = (label: string, fn: (n: TextNode) => void, merge?: string) => upd(label, (n) => { if (n.type === "text") fn(n as TextNode); }, merge);
   const weights = fontDef(node.fontFamily).weights;
   const W = useEd((s) => s.doc.width);
   return (
     <Section title="Text">
-      <select className="input" value={node.fontFamily} aria-label="Font" style={{ fontFamily: `"${node.fontFamily}"` }}
-        onChange={(e) => t("Font", (n) => { n.fontFamily = e.target.value; n.fontWeight = nearestWeight(e.target.value, n.fontWeight) as TextNode["fontWeight"]; })}>
-        {["Dhivehi", "Sans", "Serif", "Display", "Script"].map((cat) => (
-          <optgroup key={cat} label={cat}>
-            {FONTS.filter((f) => f.category === cat).map((f) => <option key={f.family} value={f.family}>{f.family}</option>)}
-          </optgroup>
-        ))}
-      </select>
+      <button className="input text-start truncate" aria-label={`Font: ${node.fontFamily}`} style={{ fontFamily: fontStack(node.fontFamily) }} onClick={() => setPicker(true)}>
+        {node.fontFamily}
+      </button>
+      {picker && <FontPicker current={node.fontFamily} onClose={() => setPicker(false)} onPick={(family, refs) => {
+        const ids = store.getState().selection;
+        store.getState().change("Font", (d) => {
+          d.fonts ??= [];
+          for (const r of refs) {
+            const i = d.fonts.findIndex((f) => (r.source === "google" ? f.source === "google" && f.family === r.family : f.source === "upload" && f.assetId === r.assetId));
+            if (i < 0) d.fonts.push(r); else d.fonts[i] = r;
+          }
+          const page = d.pages.find((p) => p.id === store.getState().pageId);
+          for (const id of ids) {
+            const n = page && (locate(page as Page, id)?.node as TextNode | undefined);
+            if (n?.type !== "text") continue;
+            n.fontFamily = family;
+            n.fontWeight = nearestWeight(family, n.fontWeight);
+            if (n.italic && !hasItalic(family, n.fontWeight)) n.italic = false;
+            fitText(n);
+          }
+        });
+      }} />}
       <div className="flex gap-2">
         <NumField label="Size" value={node.fontSize} onChange={(v) => v >= 1 && t("Font size", (n) => { n.fontSize = Math.min(5000, v); })} />
-        <select className="input" value={nearestWeight(node.fontFamily, node.fontWeight)} aria-label="Weight" onChange={(e) => t("Weight", (n) => { n.fontWeight = Number(e.target.value) as TextNode["fontWeight"]; })}>
-          {weights.map((w) => <option key={w} value={w}>{({ 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold", 800: "Extra bold" } as Record<number, string>)[w]}</option>)}
+        <select className="input" value={nearestWeight(node.fontFamily, node.fontWeight)} aria-label="Weight" onChange={(e) => t("Weight", (n) => { n.fontWeight = Number(e.target.value); })}>
+          {weights.map((w) => <option key={w} value={w}>{({ 100: "Thin", 200: "Extra light", 300: "Light", 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold", 800: "Extra bold", 900: "Black" } as Record<number, string>)[w] ?? w}</option>)}
         </select>
       </div>
       <div className="flex gap-1 flex-wrap">
@@ -221,7 +238,7 @@ function TextProps({ node }: { node: TextNode }) {
             <AlignIcon a={a} />
           </button>
         ))}
-        {fontDef(node.fontFamily).italic && <button className={`btn btn-icon ${node.italic ? "!bg-accent-soft !text-accent" : ""}`} aria-pressed={node.italic} aria-label="Italic" onClick={() => t("Italic", (n) => { n.italic = !n.italic; })}><Italic size={16} /></button>}
+        {fontDef(node.fontFamily).italics.length > 0 && <button className={`btn btn-icon ${node.italic ? "!bg-accent-soft !text-accent" : ""}`} aria-pressed={node.italic} aria-label="Italic" onClick={() => t("Italic", (n) => { n.italic = !n.italic; })}><Italic size={16} /></button>}
         <button className={`btn btn-icon ${node.underline ? "!bg-accent-soft !text-accent" : ""}`} aria-pressed={node.underline} aria-label="Underline" onClick={() => t("Underline", (n) => { n.underline = !n.underline; })}><Underline size={16} /></button>
       </div>
       <label className="flex items-center gap-2 text-sm">

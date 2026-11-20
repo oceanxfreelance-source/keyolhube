@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import type { DesignDoc } from "@/lib/doc/types";
-import { ensureFonts } from "@/lib/fonts";
+import { ensureFonts, loadDocFonts } from "@/lib/fonts";
 import { fontsUsed } from "@/lib/export/raster";
 import { createEditorStore } from "@/lib/editor/store";
 import { CanvasView } from "./CanvasView";
@@ -21,9 +21,17 @@ export function Editor({ project }: { project: LoadedProject }) {
   const [fontsReady, setFontsReady] = useState(false);
   // Read-only handle for automated tests and support debugging.
   useEffect(() => { (window as unknown as { __oceanx?: object }).__oceanx = { store, ui }; }, [store, ui]);
-  useEffect(() => { ensureFonts(fontsUsed(project.doc.pages)).finally(() => setFontsReady(true)); }, [project.doc]);
+  const [fontWarning, setFontWarning] = useState<string[]>([]);
+  useEffect(() => {
+    loadDocFonts(project.doc).then((failed) => { setFontWarning(failed); return ensureFonts(fontsUsed(project.doc.pages)); }).finally(() => setFontsReady(true));
+  }, [project.doc]);
   return (
     <EditorProvider value={{ store, ui, project: { id: project.id, title } }}>
+      {fontWarning.length > 0 && fontsReady && (
+        <div role="alert" className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 card px-4 py-2 text-sm text-danger">
+          Could not load: {fontWarning.join(", ")}. Text in those fonts shows in a fallback font. <button className="underline ml-1" onClick={() => setFontWarning([])}>OK</button>
+        </div>
+      )}
       {fontsReady ? <Shell project={project} title={title} setTitle={setTitle} /> : <div className="h-full grid place-items-center text-muted text-sm">Loading fonts…</div>}
     </EditorProvider>
   );

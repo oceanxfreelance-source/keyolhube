@@ -76,7 +76,7 @@ export interface TextNode extends BaseNode {
   text: string;
   fontFamily: string;
   fontSize: number;
-  fontWeight: 400 | 500 | 600 | 700 | 800;
+  fontWeight: number; // 100..900; snapped to the nearest weight the font has
   italic: boolean;
   underline: boolean;
   align: "left" | "center" | "right" | "justify";
@@ -113,6 +113,11 @@ export interface Page {
   children: DesignNode[];
 }
 
+/** A font the design uses beyond the built-in set, so any device can load it. */
+export type FontRef =
+  | { source: "google"; family: string; weights: number[]; italics: number[] }
+  | { source: "upload"; family: string; assetId: string; weight: number; italic: boolean };
+
 export interface DesignDoc {
   schemaVersion: 1;
   width: number;
@@ -120,6 +125,7 @@ export interface DesignDoc {
   dpi: number; // 96 for screen designs; 300 for print presets
   unit: "px" | "mm" | "in"; // what the UI shows; storage is always px
   pages: Page[];
+  fonts?: FontRef[];
 }
 
 export const SCHEMA_VERSION = 1 as const;

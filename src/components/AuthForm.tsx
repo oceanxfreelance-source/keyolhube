@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Logo } from "./Logo";
 
@@ -12,6 +12,10 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The button stays disabled until JavaScript runs, so the browser can never submit the form
+  // natively (which would put the email and password in the URL).
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +35,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   return (
     <main className="min-h-full grid place-items-center p-4">
-      <form onSubmit={submit} className="card w-full max-w-sm p-7 space-y-4">
+      <form onSubmit={submit} method="post" className="card w-full max-w-sm p-7 space-y-4">
         <Logo />
         <div>
           <h1 className="text-xl font-semibold">{mode === "sign-up" ? "Create your account" : "Welcome back"}</h1>
@@ -54,7 +58,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           {mode === "sign-up" && <span className="text-xs text-muted">At least 8 characters.</span>}
         </label>
         {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-        <button className="btn btn-primary w-full" disabled={busy}>{busy ? "Please wait…" : mode === "sign-up" ? "Create account" : "Sign in"}</button>
+        <button className="btn btn-primary w-full" disabled={busy || !ready}>{busy ? "Please wait…" : mode === "sign-up" ? "Create account" : "Sign in"}</button>
         <p className="text-sm text-muted text-center">
           {mode === "sign-up" ? <>Have an account? <Link className="text-accent font-medium" href="/sign-in">Sign in</Link></>
             : <>New here? <Link className="text-accent font-medium" href="/sign-up">Create an account</Link></>}

@@ -4,7 +4,7 @@ import { resolvedDirection } from "../doc/factory";
 import type { DesignDoc, DesignNode, Fill, Page, Shadow, Stroke } from "../doc/types";
 import { fontStack, nearestWeight } from "../fonts";
 import { fillProps, polyPoints, textProps } from "../editor/render";
-import { ensureFonts } from "../fonts";
+import { ensureFonts, googleCssUrl, loadDocFonts } from "../fonts";
 import { fontsUsed } from "./raster";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -15,6 +15,7 @@ const f = (v: number) => String(Math.round(v * 1000) / 1000);
  * Fonts are referenced by name (not embedded), so open it where the fonts are installed.
  */
 export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
+  await loadDocFonts(doc);
   await ensureFonts(fontsUsed([page]));
   const defs: string[] = [];
   let uid = 0;
@@ -116,9 +117,12 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
   };
 
   const content = (await Promise.all(page.children.map(node))).join("");
+  // Google Fonts are linked so browsers show them; uploaded fonts must be installed to display.
+  const googleImports = (doc.fonts ?? []).filter((x) => x.source === "google")
+    .map((x) => `<style>@import url("${esc(googleCssUrl(x as { family: string; weights: number[]; italics: number[] }))}");</style>`).join("");
   const bg = page.background.type === "none" ? "" : `<rect width="${doc.width}" height="${doc.height}" fill="${paint(page.background, doc.width, doc.height)}"/>`;
   const wPhys = doc.unit === "px" ? `${doc.width}` : `${f((doc.width / doc.dpi) * 25.4)}mm`;
   const hPhys = doc.unit === "px" ? `${doc.height}` : `${f((doc.height / doc.dpi) * 25.4)}mm`;
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${wPhys}" height="${hPhys}" viewBox="0 0 ${doc.width} ${doc.height}"><defs>${defs.join("")}</defs><clipPath id="page"><rect width="${doc.width}" height="${doc.height}"/></clipPath><g clip-path="url(#page)">${bg}${content}</g></svg>`;
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${wPhys}" height="${hPhys}" viewBox="0 0 ${doc.width} ${doc.height}"><defs>${googleImports}${defs.join("")}</defs><clipPath id="page"><rect width="${doc.width}" height="${doc.height}"/></clipPath><g clip-path="url(#page)">${bg}${content}</g></svg>`;
   return new Blob([svg], { type: "image/svg+xml" });
 }

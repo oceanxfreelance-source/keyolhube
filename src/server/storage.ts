@@ -16,6 +16,18 @@ export function sniffImage(b: Buffer): "image/png" | "image/jpeg" | "image/webp"
   return null;
 }
 
+export const MAX_FONT_BYTES = 10 * 1024 * 1024;
+/** Identify a font file by its signature (TrueType, OpenType, WOFF, WOFF2). */
+export function sniffFont(b: Buffer): "font/ttf" | "font/otf" | "font/woff" | "font/woff2" | null {
+  if (b.length < 12) return null;
+  const tag = b.toString("latin1", 0, 4);
+  if (tag === "wOF2") return "font/woff2";
+  if (tag === "wOFF") return "font/woff";
+  if (tag === "OTTO") return "font/otf";
+  if (b.readUInt32BE(0) === 0x00010000 || tag === "true") return "font/ttf";
+  return null;
+}
+
 /** Pixel size from the file header (PNG, JPEG, WebP, GIF), or null if it cannot be read. */
 export function imageSize(b: Buffer, mime: string): { width: number; height: number } | null {
   try {
@@ -46,6 +58,32 @@ export function imageSize(b: Buffer, mime: string): { width: number; height: num
     return null;
   }
   return null;
+}
+
+export async function putFont(ownerId: string, bytes: Buffer, filename: string, family: string, weight: number, italic: boolean) {
+  if (bytes.length > MAX_FONT_BYTES) throw new UploadError("Font file is larger than 10 MB");
+  const mime = sniffFont(bytes);
+  if (!mime) throw new UploadError("Only TTF, OTF, WOFF and WOFF2 font files are supported");
+  const db = await getDb();
+  const id = nanoid(16);
+  // Font metadata lives in the filename column as JSON: {file, family, weight, italic}.
+  const meta = JSON.stringify({ file: filename.slice(0, 120), family: family.slice(0, 100), weight, italic });
+  await db.insert(schema.asset).values({ id, ownerId, kind: "font", mime, bytes, size: bytes.length, filename: meta });
+  return { id, mime, family, weight, italic, size: bytes.length };
+}
+
+export async function listFonts(ownerId: string) {
+  const db = await getDb();
+  const { asset } = schema;
+  const rows = await db.select({ id: asset.id, filename: asset.filename, createdAt: asset.createdAt }).from(asset)
+    .where(and(eq(asset.ownerId, ownerId), eq(asset.kind, "font"))).limit(500);
+  return rows.map((r) => ({ id: r.id, ...(JSON.parse(r.filename ?? "{}") as { file: string; family: string; weight: number; italic: boolean }), createdAt: r.createdAt.toISOString() }));
+}
+
+export async function deleteAsset(ownerId: string, id: string) {
+  const db = await getDb();
+  const r = await db.delete(schema.asset).where(and(eq(schema.asset.id, id), eq(schema.asset.ownerId, ownerId))).returning({ id: schema.asset.id });
+  return r.length > 0;
 }
 
 export async function putAsset(ownerId: string, bytes: Buffer, opts: { kind?: "image" | "thumbnail"; filename?: string }) {

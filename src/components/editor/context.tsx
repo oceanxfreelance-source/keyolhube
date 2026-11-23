@@ -37,6 +37,8 @@ export interface UiState {
   brush: { color: string; size: number; opacity: number };
   /** Healing brush: the image being retouched and the painted strokes (page coordinates). */
   heal: { imageId: string; strokes: number[][]; size: number } | null;
+  /** Image being split into layers by the Magic layers dialog. */
+  magic: string | null;
 }
 export type BrandKit = { id: string; name: string; colors: string[]; fonts: { role: "heading" | "subheading" | "body"; family: string; weight: number; ref?: import("@/lib/doc/types").FontRef }[]; logos: { assetId: string; width: number; height: number; name: string }[] };
 
@@ -46,7 +48,7 @@ export function createUiStore() {
   try { pro = localStorage.getItem("pro") !== "0"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
-    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null, brush: { color: "#111827", size: 12, opacity: 1 }, heal: null,
+    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null, brush: { color: "#111827", size: 12, opacity: 1 }, heal: null, magic: null,
     set: (p) => set(p),
   }));
 }

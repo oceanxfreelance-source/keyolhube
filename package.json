@@ -43,6 +43,7 @@
     "react-dom": "^19.3.1",
     "react-konva": "^19.2.7",
     "server-only": "^0.0.1",
+    "tesseract.js": "^7.0.0",
     "zod": "^4.6.7",
     "zustand": "^5.1.0"
   },

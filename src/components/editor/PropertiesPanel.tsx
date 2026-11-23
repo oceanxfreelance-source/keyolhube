@@ -2,7 +2,7 @@
 import {
   AlignCenterHorizontal, ChevronDown, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalSpaceAround, AlignStartHorizontal,
   AlignStartVertical, AlignVerticalSpaceAround, ArrowDownToLine, ArrowUpToLine, BringToFront, Copy, Group as GroupIcon, Italic, Lock,
-  SendToBack, Trash2, Underline, Ungroup, Unlock,
+  Layers, SendToBack, Trash2, Underline, Ungroup, Unlock,
 } from "lucide-react";
 import type { Draft } from "immer";
 import { useMemo, useState } from "react";
@@ -410,6 +410,7 @@ function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
       <button className="btn w-full" onClick={async () => {
         try { const a = await pickPhoto(); if (a) replacePhoto(store, node.id, a); } catch (e) { alert((e as Error).message); }
       }}>Replace photo</button>
+      <button className="btn btn-primary w-full" onClick={() => ui.getState().set({ magic: node.id })}><Layers size={15} /> Magic layers: make text editable</button>
       <BackgroundRemoval node={node} />
       <button className="btn w-full" onClick={() => ui.getState().set({ heal: { imageId: node.id, strokes: [], size: Math.max(12, Math.round(node.width / 25)) }, tool: "select" })}>Remove objects (healing brush)</button>
       <div className="flex gap-2">

@@ -7,6 +7,7 @@ import { createEditorStore } from "@/lib/editor/store";
 import { CanvasView } from "./CanvasView";
 import { createUiStore, EditorProvider, useEd, useUi } from "./context";
 import { LeftPanel, LeftRail } from "./LeftPanel";
+import { MagicLayersDialog } from "./MagicLayersDialog";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { TopBar } from "./TopBar";
 import { useAutosave } from "./useAutosave";
@@ -49,7 +50,15 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
   const pageIndex = useEd((s) => s.doc.pages.findIndex((p) => p.id === s.pageId));
   const hasSelection = useEd((s) => s.selection.length > 0);
   const leftTab = useUi((s) => s.leftTab);
+  const magic = useUi((s) => s.magic);
   const mobile = useIsMobile();
+  // Opened from the dashboard's "Edit an image design": select the image and offer Magic layers.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("magic") !== "1") return;
+    const st = ctx.store.getState(); const img = st.page().children.find((n) => n.type === "image");
+    if (img) { st.select([img.id]); ctx.ui.getState().set({ magic: img.id }); }
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // On phones one panel at a time: picking something to add closes the menu so the canvas shows.
   useEffect(() => {
     if (!mobile) return;
@@ -87,6 +96,7 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
         </div>
         {(!mobile || (!leftTab && hasSelection)) && <PropertiesPanel />}
       </div>
+      {magic && <MagicLayersDialog imageId={magic} onClose={() => ctx.ui.getState().set({ magic: null })} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { Copy, FolderOpen, Home, ImageIcon, LayoutTemplate, LogOut, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { Copy, FolderOpen, Home, ImageIcon, Layers, LayoutTemplate, LogOut, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -7,7 +7,8 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TemplateCard } from "@/components/templates/TemplateCard";
 import { authClient } from "@/lib/auth-client";
-import { newDoc } from "@/lib/doc/factory";
+import { make, newDoc } from "@/lib/doc/factory";
+import { uploadImage } from "@/components/editor/useUploads";
 import type { DesignDoc } from "@/lib/doc/types";
 import { fromUnit, PRESETS, type Preset } from "@/lib/presets";
 import { BUILTIN_TEMPLATES, TEMPLATE_CATEGORIES } from "@/lib/templates/builtin";
@@ -37,12 +38,31 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
   }, [router]);
   useEffect(() => { const t = setTimeout(() => load(q), q ? 250 : 0); return () => clearTimeout(t); }, [q, load]);
 
-  async function createDoc(title: string, doc: DesignDoc) {
+  async function createDoc(title: string, doc: DesignDoc, query = "") {
     setCreating(true);
     const r = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title, doc }) });
     setCreating(false);
     if (!r.ok) return setError("Could not create the design.");
-    router.push(`/editor/${(await r.json()).id}`);
+    router.push(`/editor/${(await r.json()).id}${query}`);
+  }
+  /** "Edit an image design": a new design the size of the image, opened with Magic layers. */
+  function editImageDesign() {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/png,image/jpeg,image/webp";
+    input.onchange = async () => {
+      const f = input.files?.[0];
+      if (!f) return;
+      setCreating(true); setError(null);
+      try {
+        const a = await uploadImage(f);
+        const k = Math.min(1, 4000 / Math.max(a.width, a.height));
+        const w = Math.round(a.width * k), h = Math.round(a.height * k);
+        const d = newDoc(w, h, 96, "px");
+        d.pages[0].children = [{ ...make.image(0, 0, w, h, a.id, a.url, a.width, a.height), name: "Original design" }];
+        await createDoc(f.name.replace(/\.[a-z0-9]+$/i, "") || "Image design", d, "?magic=1");
+      } catch (e) { setError((e as Error).message); setCreating(false); }
+    };
+    input.click();
   }
   const create = (p: Pick<Preset, "name" | "width" | "height" | "dpi" | "unit">) => createDoc(`Untitled ${p.name.toLowerCase()}`, newDoc(p.width, p.height, p.dpi, p.unit));
   async function duplicate(id: string) { setMenu(null); if ((await fetch(`/api/projects/${id}/duplicate`, { method: "POST" })).ok) load(q); }
@@ -137,7 +157,10 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">What will you design today?</h1>
                 <p className="mt-2 text-white/80 text-[15px]">Posters, social posts, menus, jerseys and campaigns, in English and Dhivehi.</p>
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {PRESETS.slice(0, 9).map((p) => (
+                  <button disabled={creating} onClick={editImageDesign} className="h-9 px-3.5 rounded-full bg-white text-[#4c1d95] hover:bg-white/90 text-[13px] font-semibold flex items-center gap-1.5">
+                    <Layers size={15} /> Edit an image design
+                  </button>
+                  {PRESETS.slice(0, 8).map((p) => (
                     <button key={p.id} disabled={creating} onClick={() => create(p)} data-preset={p.id} className="h-9 px-3.5 rounded-full bg-white/15 hover:bg-white/25 text-[13px] font-medium backdrop-blur">
                       {p.name}
                     </button>

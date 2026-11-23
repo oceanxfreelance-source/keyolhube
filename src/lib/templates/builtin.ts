@@ -6,8 +6,9 @@ import type { DesignDoc, DesignNode, Fill, GroupNode, RectNode, TextNode } from 
 import { PRESETS } from "../presets";
 import { buildKit } from "../apparel/garments";
 import { PRO_TEMPLATES } from "./pro";
+import { GENERATED_TEMPLATES } from "./generated";
 
-export type Template = { id: string; title: string; category: string; tags: string[]; build: () => DesignDoc };
+export type Template = { id: string; title: string; category: string; tags: string[]; format?: string; build: () => DesignDoc };
 
 const lin = (angle: number, a: string, b: string): Fill => ({ type: "linear", angle, stops: [{ offset: 0, color: a }, { offset: 1, color: b }] });
 
@@ -201,7 +202,8 @@ BUILTIN_TEMPLATES.push(
   const replaced = new Set(["sale-post", "event-flyer", "menu", "yt-thumb", "quote"]);
   const kept = BUILTIN_TEMPLATES.filter((t) => !replaced.has(t.id));
   BUILTIN_TEMPLATES.length = 0;
-  BUILTIN_TEMPLATES.push(...PRO_TEMPLATES, ...kept);
+  BUILTIN_TEMPLATES.push(...PRO_TEMPLATES, ...kept, ...GENERATED_TEMPLATES);
 }
 
-export const TEMPLATE_CATEGORIES = [...new Set(BUILTIN_TEMPLATES.map((t) => t.category))];
+const ORDER = ["Social media", "Business", "Food", "Travel", "Events", "Sports", "Education", "Presentation", "Election", "Apparel"];
+export const TEMPLATE_CATEGORIES = [...new Set(BUILTIN_TEMPLATES.map((t) => t.category))].sort((a, b) => (ORDER.indexOf(a) + 99) % 99 - (ORDER.indexOf(b) + 99) % 99);

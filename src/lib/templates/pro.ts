@@ -8,7 +8,7 @@ import { STOCK, stockUrl } from "./stock";
 import type { Template } from "./builtin";
 
 // ---------- design helpers ----------
-function photo(slug: string, x: number, y: number, w: number, h: number, o: { radius?: number; adjust?: Adjustments; focusY?: number; focusX?: number } = {}): ImageNode {
+export function photo(slug: string, x: number, y: number, w: number, h: number, o: { radius?: number; adjust?: Adjustments; focusY?: number; focusX?: number } = {}): ImageNode {
   const s = STOCK[slug];
   const n = make.image(x, y, w, h, `stock-${slug}`, stockUrl(slug), s.width, s.height);
   const fa = w / h, na = s.width / s.height;
@@ -20,12 +20,12 @@ function photo(slug: string, x: number, y: number, w: number, h: number, o: { ra
   n.name = "Photo";
   return n;
 }
-const lin = (angle: number, stops: [number, string][]): Fill => ({ type: "linear", angle, stops: stops.map(([offset, color]) => ({ offset, color })) });
-function box(x: number, y: number, w: number, h: number, fill: Fill, o: Partial<RectNode> = {}): RectNode {
+export const lin = (angle: number, stops: [number, string][]): Fill => ({ type: "linear", angle, stops: stops.map(([offset, color]) => ({ offset, color })) });
+export function box(x: number, y: number, w: number, h: number, fill: Fill, o: Partial<RectNode> = {}): RectNode {
   return { ...make.rect(x, y, w, h), fill, name: "Shape", ...o };
 }
-type TOpts = { font?: string; weight?: number; color?: string; align?: TextNode["align"]; ls?: number; lh?: number; italic?: boolean; name?: string };
-function T(x: number, y: number, w: number, text: string, size: number, o: TOpts = {}): TextNode {
+export type TOpts = { font?: string; weight?: number; color?: string; align?: TextNode["align"]; ls?: number; lh?: number; italic?: boolean; name?: string };
+export function T(x: number, y: number, w: number, text: string, size: number, o: TOpts = {}): TextNode {
   const n = make.text(x, y, text, size, w);
   return Object.assign(n, {
     fontFamily: o.font ?? "Inter", fontWeight: o.weight ?? 400, fill: solid(o.color ?? "#111827"), align: o.align ?? "left",
@@ -39,7 +39,7 @@ function doc(preset: string, bg: Fill, children: DesignNode[]): DesignDoc {
   d.pages[0].children = children;
   return d;
 }
-const pill = (x: number, y: number, w: number, h: number, fill: string, label: string, color: string, size: number, font = "Inter") => [
+export const pill = (x: number, y: number, w: number, h: number, fill: string, label: string, color: string, size: number, font = "Inter") => [
   box(x, y, w, h, solid(fill), { cornerRadius: h / 2, name: "Button" }),
   T(x, y + (h - size * 1.2) / 2, w, label, size, { font, weight: 600, color, align: "center", name: "Button label" }),
 ];

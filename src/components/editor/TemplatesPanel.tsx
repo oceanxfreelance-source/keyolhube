@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DesignDoc } from "@/lib/doc/types";
 import { BUILTIN_TEMPLATES, TEMPLATE_CATEGORIES } from "@/lib/templates/builtin";
 import { pagesForSize } from "@/lib/templates/instantiate";
-import { useTemplateThumbs } from "@/components/templates/useTemplateThumbs";
+import { TemplateCard } from "@/components/templates/TemplateCard";
 import { activePage, useEditorCtx } from "./context";
 
 type Mine = { id: string; title: string; category: string; doc: DesignDoc; thumbnailAssetId: string | null };
@@ -16,7 +16,8 @@ export function TemplatesPanel() {
   const [mine, setMine] = useState<Mine[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const thumbs = useTemplateThumbs();
+  const [limit, setLimit] = useState(40);
+  useEffect(() => setLimit(40), [cat, q]);
   useEffect(() => { fetch("/api/templates").then((r) => r.json()).then((b) => setMine(b.templates)).catch(() => setMine([])); }, []);
 
   const needle = q.trim().toLowerCase();
@@ -72,15 +73,7 @@ export function TemplatesPanel() {
       </div>
       {note && <p role="status" className="text-xs text-ok">{note}</p>}
       <div className="grid grid-cols-2 gap-2">
-        {cat !== "My templates" && builtins.map((t) => (
-          <button key={t.id} onClick={() => apply(t.build())} className="text-start space-y-1 group" aria-label={`Use template ${t.title}`}>
-            <div className="aspect-square rounded-lg bg-surface-2 overflow-hidden grid place-items-center p-1.5 group-hover:ring-2 ring-accent">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {thumbs[t.id] ? <img src={thumbs[t.id]} alt="" className="max-w-full max-h-full shadow-sm" /> : <span className="text-xs text-muted">Loading…</span>}
-            </div>
-            <div className="text-xs leading-tight">{t.title}</div>
-          </button>
-        ))}
+        {cat !== "My templates" && builtins.slice(0, limit).map((t) => <TemplateCard key={t.id} t={t} compact onUse={() => apply(t.build())} />)}
         {myList.map((t) => (
           <div key={t.id} className="relative group">
             <button onClick={() => apply(t.doc)} className="text-start space-y-1 w-full" aria-label={`Use template ${t.title}`}>
@@ -94,9 +87,10 @@ export function TemplatesPanel() {
           </div>
         ))}
       </div>
+      {cat !== "My templates" && limit < builtins.length && <button className="btn w-full" onClick={() => setLimit((l) => l + 40)}>Show more ({builtins.length - limit} left)</button>}
       {builtins.length === 0 && myList.length === 0 && <p className="text-sm text-muted">No templates match.</p>}
       <button className="btn w-full" disabled={saving} onClick={saveAsTemplate}>{saving ? "Saving…" : "Save this design as a template"}</button>
-      <p className="text-xs text-muted">Photo areas in templates are frames: select one and choose “Put a photo in this shape”. Dhivehi template wording is placeholder text, so check and replace it.</p>
+      <p className="text-xs text-muted">To change a photo, select it and choose “Replace photo”. Dhivehi template wording is placeholder text, so check and replace it.</p>
     </div>
   );
 }

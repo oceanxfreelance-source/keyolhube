@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTemplateThumbs } from "@/components/templates/useTemplateThumbs";
+import { TemplateCard } from "@/components/templates/TemplateCard";
 import { authClient } from "@/lib/auth-client";
 import { newDoc } from "@/lib/doc/factory";
 import type { DesignDoc } from "@/lib/doc/types";
@@ -26,7 +26,8 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
   const [creating, setCreating] = useState(false);
   const [custom, setCustom] = useState({ w: 1080, h: 1080, unit: "px" as "px" | "mm" | "in" });
   const [menu, setMenu] = useState<string | null>(null);
-  const thumbs = useTemplateThumbs(320);
+  const [limit, setLimit] = useState(60);
+  useEffect(() => setLimit(60), [cat, q]);
 
   const load = useCallback(async (query: string) => {
     const r = await fetch(`/api/projects${query ? `?q=${encodeURIComponent(query)}` : ""}`);
@@ -60,15 +61,8 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
     { id: "home", label: "Home", icon: Home }, { id: "templates", label: "Templates", icon: LayoutTemplate }, { id: "designs", label: "Your designs", icon: FolderOpen },
   ];
 
-  const TemplateCard = ({ t }: { t: (typeof BUILTIN_TEMPLATES)[number] }) => (
-    <button disabled={creating} data-template={t.id} onClick={() => createDoc(t.title, instantiate(t.build()))} className="group text-left">
-      <div className="relative aspect-[4/5] rounded-xl bg-surface-2 border border-line overflow-hidden grid place-items-center group-hover:border-accent transition-colors">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {thumbs[t.id] ? <img src={thumbs[t.id]} alt="" className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain drop-shadow-lg group-hover:scale-[1.03] transition-transform" /> : <span className="text-xs text-muted">Loading…</span>}
-      </div>
-      <div className="mt-2 text-[13px] font-medium leading-tight">{t.title}</div>
-      <div className="text-[11.5px] text-muted">{t.category}</div>
-    </button>
+  const card = (t: (typeof BUILTIN_TEMPLATES)[number]) => (
+    <TemplateCard key={t.id} t={t} disabled={creating} onUse={() => createDoc(t.title, instantiate(t.build()))} />
   );
 
   const Designs = ({ limit }: { limit?: number }) => (
@@ -156,7 +150,7 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
                   <button className="text-[13px] text-accent" onClick={() => setView("templates")}>See all {BUILTIN_TEMPLATES.length}</button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {templates.slice(0, 12).map((t) => <TemplateCard key={t.id} t={t} />)}
+                  {templates.slice(0, 12).map(card)}
                 </div>
               </section>
               <section>
@@ -211,7 +205,11 @@ export function Dashboard({ user }: { user: { name: string; email: string } }) {
                 ))}
               </div>
               {templates.length === 0 ? <p className="text-sm text-muted">No templates match.</p> : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">{templates.map((t) => <TemplateCard key={t.id} t={t} />)}</div>
+                <>
+                  <p className="text-[13px] text-muted mb-4">{templates.length} templates, every one fully editable: click a template, then change the words, photos and colours.</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">{templates.slice(0, limit).map(card)}</div>
+                  {limit < templates.length && <div className="text-center mt-8"><button className="btn h-10 px-6" onClick={() => setLimit((l) => l + 60)}>Show more ({templates.length - limit} left)</button></div>}
+                </>
               )}
             </section>
           )}

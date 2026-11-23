@@ -7,6 +7,9 @@ import { PRESETS } from "../presets";
 import { buildKit } from "../apparel/garments";
 import { PRO_TEMPLATES } from "./pro";
 import { GENERATED_TEMPLATES } from "./generated";
+import { SPORTS_TEMPLATES } from "./sports";
+import { CERTIFICATE_TEMPLATES } from "./certificates";
+import { ELECTION_TEMPLATES } from "./election";
 
 export type Template = { id: string; title: string; category: string; tags: string[]; format?: string; build: () => DesignDoc };
 
@@ -202,8 +205,8 @@ BUILTIN_TEMPLATES.push(
   const replaced = new Set(["sale-post", "event-flyer", "menu", "yt-thumb", "quote"]);
   const kept = BUILTIN_TEMPLATES.filter((t) => !replaced.has(t.id));
   BUILTIN_TEMPLATES.length = 0;
-  BUILTIN_TEMPLATES.push(...PRO_TEMPLATES, ...kept, ...GENERATED_TEMPLATES);
+  BUILTIN_TEMPLATES.push(...PRO_TEMPLATES, ...SPORTS_TEMPLATES, ...CERTIFICATE_TEMPLATES, ...ELECTION_TEMPLATES, ...kept, ...GENERATED_TEMPLATES);
 }
 
-const ORDER = ["Social media", "Business", "Food", "Travel", "Events", "Sports", "Education", "Presentation", "Election", "Apparel"];
+const ORDER = ["Social media", "Business", "Sports", "Certificates", "Election", "Food", "Travel", "Events", "Education", "Presentation", "Apparel"];
 export const TEMPLATE_CATEGORIES = [...new Set(BUILTIN_TEMPLATES.map((t) => t.category))].sort((a, b) => (ORDER.indexOf(a) + 99) % 99 - (ORDER.indexOf(b) + 99) % 99);

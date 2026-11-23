@@ -5,7 +5,7 @@ import { newDesign, signUp, state, toScreen } from "./helpers";
 /** Read the rendered canvas pixel at a document coordinate. */
 async function pixelAt(page: Page, x: number, y: number) {
   const s = await toScreen(page, x, y);
-  const box = (await page.locator("[data-testid=canvas]").boundingBox())!;
+  const box = (await page.locator("[data-testid=canvas] .konvajs-content").boundingBox())!;
   return page.evaluate(({ sx, sy }) => {
     const stage = (window as unknown as { __oceanx: { ui: { getState(): { stage: { toCanvas(o: object): HTMLCanvasElement } } } } }).__oceanx.ui.getState().stage;
     const c = stage.toCanvas({ x: sx, y: sy, width: 1, height: 1, pixelRatio: 1 });

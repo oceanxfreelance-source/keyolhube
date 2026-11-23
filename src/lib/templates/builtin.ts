@@ -104,7 +104,7 @@ export const BUILTIN_TEMPLATES: Template[] = [
   {
     id: "event-flyer", title: "Event flyer", category: "Events", tags: ["event", "flyer", "party", "concert", "a4", "poster"],
     build: () => {
-      const W = 2480, H = 3508;
+      const W = 2480;
       return docFor("a4", lin(135, "#0f172a", "#1e293b"), [
         { ...make.star(W - 900, 260, 700, "#22d3ee"), opacity: 0.25, name: "Star" },
         frame(160, 520, W - 320, 1500, "rect", "#334155", 60),

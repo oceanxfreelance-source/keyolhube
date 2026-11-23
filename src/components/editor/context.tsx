@@ -9,7 +9,7 @@ import type { DesignNode, Page, TextNode } from "@/lib/doc/types";
 import { measureTextHeight } from "@/lib/editor/render";
 import type { EditorActions, EditorState, EditorStore } from "@/lib/editor/store";
 
-export type Tool = "select" | "hand" | "pen" | "brush";
+export type Tool = "select" | "hand" | "pen" | "brush" | "rect" | "ellipse" | "line" | "text";
 export type LeftTab = "templates" | "elements" | "text" | "brand" | "apparel" | "uploads" | "pages" | "layers";
 
 export interface UiState {
@@ -42,7 +42,8 @@ export type BrandKit = { id: string; name: string; colors: string[]; fonts: { ro
 
 export function createUiStore() {
   let pro = false;
-  try { pro = localStorage.getItem("pro") === "1"; } catch {}
+  pro = true; // professional controls by default; can be turned off in View
+  try { pro = localStorage.getItem("pro") !== "0"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
     editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null, brush: { color: "#111827", size: 12, opacity: 1 }, heal: null,

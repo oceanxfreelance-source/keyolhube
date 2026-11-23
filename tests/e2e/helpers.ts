@@ -27,7 +27,7 @@ export function state(page: Page): Promise<Snap> {
 
 /** Document coordinates -> page (screen) coordinates. */
 export async function toScreen(page: Page, x: number, y: number) {
-  const box = (await page.locator("[data-testid=canvas]").boundingBox())!;
+  const box = (await page.locator("[data-testid=canvas] .konvajs-content").boundingBox())!;
   const s = await state(page);
   return { x: box.x + s.panX + x * s.zoom, y: box.y + s.panY + y * s.zoom };
 }

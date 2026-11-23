@@ -4,7 +4,7 @@ import { drag, newDesign, signUp, state, toScreen } from "./helpers";
 
 async function pixelAt(page: Page, x: number, y: number) {
   const s = await toScreen(page, x, y);
-  const box = (await page.locator("[data-testid=canvas]").boundingBox())!;
+  const box = (await page.locator("[data-testid=canvas] .konvajs-content").boundingBox())!;
   return page.evaluate(({ sx, sy }) => {
     const stage = (window as unknown as { __oceanx: { ui: { getState(): { stage: { toCanvas(o: object): HTMLCanvasElement } } } } }).__oceanx.ui.getState().stage;
     return Array.from(stage.toCanvas({ x: sx, y: sy, width: 1, height: 1, pixelRatio: 1 }).getContext("2d")!.getImageData(0, 0, 1, 1).data);
@@ -73,4 +73,39 @@ test("healing brush removes an object from a photo (original kept)", async ({ pa
   await page.evaluate(() => (window as unknown as { __oceanx: { store: { getState(): { select(i: string[]): void } } } }).__oceanx.store.getState().select([]));
   await page.waitForTimeout(500);
   await page.screenshot({ path: process.env.SHOT ?? "test-results/healed.png" });
+});
+
+test("draw tools: drag to create a rectangle, ellipse and text box", async ({ page }) => {
+  await page.keyboard.press("r");
+  const a = await toScreen(page, 100, 100), z = (await state(page)).zoom;
+  await drag(page, a, 300 * z, 200 * z);
+  let n = (await state(page)).nodes[0] as unknown as N & { height: number };
+  expect(n.type).toBe("rect");
+  expect(Math.abs(n.width - 300)).toBeLessThan(4); expect(Math.abs(n.height - 200)).toBeLessThan(4);
+  await page.keyboard.press("o");
+  await drag(page, await toScreen(page, 500, 500), 200 * z, 200 * z);
+  n = (await state(page)).nodes[1] as unknown as N & { height: number };
+  expect(n.type).toBe("ellipse");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("t");
+  await drag(page, await toScreen(page, 100, 800), 600 * z, 50 * z);
+  await expect(page.locator('textarea[aria-label="Edit text"]')).toBeVisible();
+  await page.keyboard.type("Hello");
+  await page.mouse.click(5, 300);
+  expect(((await state(page)).nodes[2] as unknown as { text: string }).text).toBe("Hello");
+});
+
+test("elements library: search icons, add a sticker and a badge", async ({ page }) => {
+  await page.fill('input[aria-label="Search elements"]', "fish");
+  await page.click('button[aria-label="Add icon fish"]');
+  let s = await state(page);
+  expect(s.nodes[0].type).toBe("group");
+  await page.fill('input[aria-label="Search elements"]', "maldives");
+  await page.click('button[aria-label="Add sticker Maldives flag"]');
+  await expect.poll(async () => (await state(page)).nodes.length, { timeout: 30_000 }).toBe(2);
+  s = await state(page);
+  expect(s.nodes[1].type).toBe("image");
+  await page.fill('input[aria-label="Search elements"]', "");
+  await page.click('button[aria-label="Add Sale burst"]');
+  expect((await state(page)).nodes[2].type).toBe("group");
 });

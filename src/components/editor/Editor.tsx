@@ -75,7 +75,7 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
   }
 
   return (
-    <div className="h-dvh flex flex-col overflow-hidden">
+    <div className="pro-ui h-dvh flex flex-col overflow-hidden bg-bg">
       <TopBar title={title} onRename={rename} status={autosave.status} errorText={autosave.errorText}
         onRestored={(doc, rev) => { ctx.store.getState().load(doc); autosave.adopt(rev); }} onReloadLatest={reloadLatest} />
       <div className="flex-1 min-h-0 flex max-md:flex-col">
@@ -83,7 +83,7 @@ function Shell({ project, title, setTitle }: { project: LoadedProject; title: st
         {(!mobile || leftTab) && <LeftPanel />}
         <div className="flex-1 min-w-0 min-h-0 flex flex-col max-md:order-1">
           <CanvasView />
-          {pageCount > 1 && <div className="text-xs text-muted text-center py-1 bg-surface border-t border-line">Page {pageIndex + 1} of {pageCount}</div>}
+          <StatusBar pageIndex={pageIndex} pageCount={pageCount} />
         </div>
         {(!mobile || (!leftTab && hasSelection)) && <PropertiesPanel />}
       </div>
@@ -103,4 +103,26 @@ function useIsMobile() {
     return () => q.removeEventListener("change", on);
   }, []);
   return m;
+}
+
+function StatusBar({ pageIndex, pageCount }: { pageIndex: number; pageCount: number }) {
+  const ctx = useEdCtx();
+  const doc = useEd((s) => ({ w: s.doc.width, h: s.doc.height, dpi: s.doc.dpi, unit: s.doc.unit }));
+  const pages = useEd((s) => s.doc.pages.map((p) => p.id));
+  const zoom = useUi((s) => s.zoom);
+  const sel = useEd((s) => s.selection.length);
+  const size = doc.unit === "px" ? `${doc.w} × ${doc.h} px` : doc.unit === "mm" ? `${Math.round((doc.w / doc.dpi) * 254) / 10} × ${Math.round((doc.h / doc.dpi) * 254) / 10} mm` : `${Math.round((doc.w / doc.dpi) * 100) / 100} × ${Math.round((doc.h / doc.dpi) * 100) / 100} in`;
+  return (
+    <div className="h-7 shrink-0 flex items-center gap-3 px-3 text-[11px] text-muted bg-surface border-t border-line max-md:hidden" data-testid="status-bar">
+      <div className="flex items-center gap-1">
+        <button className="px-1 hover:text-ink disabled:opacity-30" disabled={pageIndex <= 0} onClick={() => ctx.store.getState().setPage(pages[pageIndex - 1])} aria-label="Previous page">‹</button>
+        <span>Page {pageIndex + 1} / {pageCount}</span>
+        <button className="px-1 hover:text-ink disabled:opacity-30" disabled={pageIndex >= pageCount - 1} onClick={() => ctx.store.getState().setPage(pages[pageIndex + 1])} aria-label="Next page">›</button>
+      </div>
+      <span>{size}{doc.unit !== "px" ? ` · ${doc.dpi} DPI` : ""}</span>
+      {sel > 0 && <span>{sel} selected</span>}
+      <span className="flex-1" />
+      <span className="tabular-nums">{Math.round(zoom * 100)}%</span>
+    </div>
+  );
 }

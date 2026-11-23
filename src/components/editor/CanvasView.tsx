@@ -8,6 +8,7 @@ import { flatten, locate, type Box } from "@/lib/doc/geometry";
 import { bakeScale } from "@/lib/doc/ops";
 import { snapBox, type Guide } from "@/lib/doc/snap";
 import type { DesignNode, ShapeNode, TextNode } from "@/lib/doc/types";
+import { make } from "@/lib/doc/factory";
 import { fontStack, nearestWeight } from "@/lib/fonts";
 import { fillProps, loadImage, primitive } from "@/lib/editor/render";
 import { activePage, fitText, useEd, useEditorCtx, useUi } from "./context";
@@ -35,6 +36,39 @@ export function CanvasView() {
   const [stroke, setStroke] = useState<number[] | null>(null);
   const strokeRef = useRef<number[] | null>(null);
   const healRef = useRef<number[] | null>(null);
+  // Drag-to-create for rectangle / ellipse / line / text tools.
+  const [draft, setDraft] = useState<{ x0: number; y0: number; x1: number; y1: number; shift: boolean } | null>(null);
+  const draftRef = useRef<typeof draft>(null);
+  const isDrawTool = tool === "rect" || tool === "ellipse" || tool === "line" || tool === "text";
+  const finishDraft = () => {
+    const d = draftRef.current;
+    draftRef.current = null; setDraft(null);
+    if (!d) return;
+    const W = doc.width, minSide = Math.round(Math.min(W, doc.height) * 0.25);
+    let x = Math.min(d.x0, d.x1), y = Math.min(d.y0, d.y1), w = Math.abs(d.x1 - d.x0), h = Math.abs(d.y1 - d.y0);
+    const clicked = Math.max(w, h) * ui.getState().zoom < 4;
+    if (d.shift && tool !== "line") { const m = Math.max(w, h); w = m; h = m; if (d.x1 < d.x0) x = d.x0 - m; if (d.y1 < d.y0) y = d.y0 - m; }
+    let n: DesignNode;
+    if (tool === "rect") n = clicked ? make.rect(d.x0 - minSide / 2, d.y0 - minSide / 2, minSide, minSide) : make.rect(x, y, w, h);
+    else if (tool === "ellipse") n = clicked ? make.ellipse(d.x0 - minSide / 2, d.y0 - minSide / 2, minSide, minSide) : make.ellipse(x, y, w, h);
+    else if (tool === "line") {
+      let dx = d.x1 - d.x0, dy = d.y1 - d.y0;
+      if (clicked) { dx = minSide; dy = 0; }
+      if (d.shift) { const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), len = Math.hypot(dx, dy); dx = Math.cos(a) * len; dy = Math.sin(a) * len; }
+      const ln = make.line(d.x0, d.y0, 1);
+      ln.points = [0, 0, dx, dy]; ln.width = Math.abs(dx); ln.height = Math.abs(dy);
+      ln.stroke.width = Math.max(2, Math.round(W / 300));
+      n = ln;
+    } else {
+      const t = make.text(clicked ? d.x0 : x, clicked ? d.y0 : y, "Type something", Math.round(W / 22), clicked ? Math.round(W * 0.5) : Math.max(40, w));
+      fitText(t);
+      n = t;
+    }
+    n.x = Math.round(n.x); n.y = Math.round(n.y);
+    store.getState().changePage(`Draw ${n.name.toLowerCase()}`, (p) => { p.children.push(n); });
+    store.getState().select([n.id]);
+    ui.getState().set({ tool: "select", ...(n.type === "text" ? { editingTextId: n.id } : {}) });
+  };
   const healing = useUi((s) => !!s.heal);
   const finishStroke = () => {
     const pts = strokeRef.current;
@@ -144,6 +178,7 @@ export function CanvasView() {
     if (e.target.getParent()?.className === "Transformer") return;
     if (tool === "pen") { penH.down(contentRef.current!.getRelativePointerPosition()!); return; }
     if (tool === "brush") { const p0 = contentRef.current!.getRelativePointerPosition()!; strokeRef.current = [p0.x, p0.y]; setStroke([p0.x, p0.y]); return; }
+    if (isDrawTool) { const p0 = contentRef.current!.getRelativePointerPosition()!; draftRef.current = { x0: p0.x, y0: p0.y, x1: p0.x, y1: p0.y, shift: evt.shiftKey }; setDraft(draftRef.current); return; }
     const healNow = ui.getState().heal;
     if (healNow) { const p0 = contentRef.current!.getRelativePointerPosition()!; healRef.current = [p0.x, p0.y]; ui.getState().set({ heal: { ...healNow, strokes: [...healNow.strokes, [p0.x, p0.y]] } }); return; }
     if (editingPathId) {
@@ -173,6 +208,12 @@ export function CanvasView() {
     const p = stage.getPointerPosition();
     if (!p) return;
     if (tool === "pen") { penH.move(contentRef.current!.getRelativePointerPosition()!); return; }
+    if (draftRef.current) {
+      const q = contentRef.current!.getRelativePointerPosition()!;
+      draftRef.current = { ...draftRef.current, x1: q.x, y1: q.y, shift: !!(window.event as MouseEvent | undefined)?.shiftKey };
+      setDraft(draftRef.current);
+      return;
+    }
     if (healRef.current) {
       const h0 = ui.getState().heal;
       if (!h0) { healRef.current = null; return; }
@@ -203,6 +244,7 @@ export function CanvasView() {
     pan.current = null;
     if (tool === "pen") { penH.up(); return; }
     if (tool === "brush") { finishStroke(); return; }
+    if (draftRef.current) { finishDraft(); return; }
     if (healRef.current) { healRef.current = null; return; }
     if (marqueeStart.current && marquee && (marquee.width > 2 || marquee.height > 2)) {
       const hits = flatten(page).filter((f) => f.depth === 0 && f.node.visible && !f.node.locked && intersects(f.box, marquee)).map((f) => f.node.id);
@@ -322,7 +364,7 @@ export function CanvasView() {
     return { x: (sx - s.panX - (rulers ? RULER : 0)) / s.zoom, y: (sy - s.panY - (rulers ? RULER : 0)) / s.zoom };
   });
 
-  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : tool === "pen" || tool === "brush" || healing ? "crosshair" : "default";
+  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : tool === "pen" || tool === "brush" || healing || isDrawTool ? (tool === "text" ? "text" : "crosshair") : "default";
   const stageW = Math.max(1, size.w - (rulers ? RULER : 0)), stageH = Math.max(1, size.h - (rulers ? RULER : 0));
   const editing = editingTextId ? (locate(page, editingTextId)?.node as TextNode | undefined) : undefined;
 
@@ -356,6 +398,11 @@ export function CanvasView() {
               {marquee && <Rect {...marquee} fill="rgba(91,76,240,0.08)" stroke="#5b4cf0" strokeWidth={1 / zoom} listening={false} />}
               {tool === "pen" && <PenPreview pen={pen} />}
               <HealStrokes />
+              {draft && (tool === "line"
+                ? <Line points={[draft.x0, draft.y0, draft.x1, draft.y1]} stroke="#7b7bff" strokeWidth={2 / zoom} listening={false} />
+                : tool === "ellipse"
+                  ? <Ellipse x={(draft.x0 + draft.x1) / 2} y={(draft.y0 + draft.y1) / 2} radiusX={Math.abs(draft.x1 - draft.x0) / 2} radiusY={Math.abs(draft.y1 - draft.y0) / 2} stroke="#7b7bff" strokeWidth={1.5 / zoom} dash={[4 / zoom, 3 / zoom]} listening={false} />
+                  : <Rect x={Math.min(draft.x0, draft.x1)} y={Math.min(draft.y0, draft.y1)} width={Math.abs(draft.x1 - draft.x0)} height={Math.abs(draft.y1 - draft.y0)} stroke="#7b7bff" strokeWidth={1.5 / zoom} dash={[4 / zoom, 3 / zoom]} listening={false} />)}
               {stroke && <Line points={stroke} stroke={brush.color} strokeWidth={brush.size} opacity={brush.opacity} lineCap="round" lineJoin="round" tension={0.4} listening={false} />}
               {editingPathId && <PointEditor pathId={editingPathId} />}
             </Group>
@@ -468,7 +515,12 @@ function TextEditor({ node, offset }: { node: TextNode; offset: number }) {
   const [value, setValue] = useState(node.text);
   const ref = useRef<HTMLTextAreaElement>(null);
   const done = useRef(false);
-  useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
+  // Focus as soon as the textarea exists (it can mount a frame after the text node is created).
+  const focused = useRef(false);
+  const attach = (el: HTMLTextAreaElement | null) => {
+    ref.current = el;
+    if (el && !focused.current) { focused.current = true; el.focus(); el.select(); }
+  };
   const k = stage?.findOne((n: Konva.Node) => n.id() === node.id);
   if (!k) return null;
   const pos = k.getAbsoluteTransform().point({ x: 0, y: 0 });
@@ -487,7 +539,7 @@ function TextEditor({ node, offset }: { node: TextNode; offset: number }) {
   const color = node.fill.type === "solid" ? node.fill.color : node.fill.type === "none" ? "#000" : node.fill.stops[0].color;
   const dir = resolvedDirection({ direction: node.direction, text: value });
   return (
-    <textarea ref={ref} value={value} dir={node.direction === "auto" ? "auto" : node.direction} spellCheck={false} aria-label="Edit text"
+    <textarea ref={attach} value={value} dir={node.direction === "auto" ? "auto" : node.direction} spellCheck={false} aria-label="Edit text"
       onChange={(e) => setValue(e.target.value)} onBlur={() => commit(true)}
       onKeyDown={(e) => {
         e.stopPropagation();

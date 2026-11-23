@@ -5,10 +5,10 @@ export const metadata: Metadata = {
   title: "OceanX Studio",
   description: "Design posters, social posts, jerseys and more, in English and Dhivehi.",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: [{ media: "(prefers-color-scheme: dark)", color: "#0f1115" }, { color: "#f6f7f9" }] };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#111215" };
 
 // Applies the saved theme before first paint so there is no flash of the wrong theme.
-const themeScript = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+const themeScript = `try{var t=localStorage.getItem("theme");document.documentElement.dataset.theme=t==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

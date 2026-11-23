@@ -1,6 +1,6 @@
 "use client";
 import {
-  AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalSpaceAround, AlignStartHorizontal,
+  AlignCenterHorizontal, ChevronDown, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalSpaceAround, AlignStartHorizontal,
   AlignStartVertical, AlignVerticalSpaceAround, ArrowDownToLine, ArrowUpToLine, BringToFront, Copy, Group as GroupIcon, Italic, Lock,
   SendToBack, Trash2, Underline, Ungroup, Unlock,
 } from "lucide-react";
@@ -24,8 +24,9 @@ export function PropertiesPanel() {
   const nodes = useEd(selectedNodes);
   const pro = useUi((s) => s.pro);
   return (
-    <aside className="max-md:order-2 w-full md:w-72 shrink-0 bg-surface md:border-l border-line max-md:border-t overflow-y-auto max-md:max-h-[38dvh]" aria-label="Properties">
-      <div className="p-4 space-y-5">
+    <aside className="max-md:order-2 w-full md:w-[17.5rem] shrink-0 bg-surface md:border-l border-line max-md:border-t overflow-y-auto max-md:max-h-[38dvh] scroll-thin" aria-label="Properties">
+      <div className="px-3 h-10 flex items-center border-b border-line text-[12.5px] font-semibold sticky top-0 bg-surface z-10">Design</div>
+      <div className="divide-y divide-line">
         {nodes.length === 0 ? <PageSettings /> : (
           <>
             <Arrange nodes={nodes} />
@@ -55,11 +56,19 @@ function useUpdate() {
 }
 
 // ---------- sections ----------
+/** Collapsible inspector section (open state remembered per title). */
 function Section({ title, children, right }: { title: string; children: React.ReactNode; right?: React.ReactNode }) {
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(`sec:${title}`) !== "0"; } catch { return true; } });
+  const toggle = () => { setOpen(!open); try { localStorage.setItem(`sec:${title}`, open ? "0" : "1"); } catch {} };
   return (
-    <section className="space-y-2.5">
-      <div className="flex items-center justify-between"><h3 className="label">{title}</h3>{right}</div>
-      {children}
+    <section className="px-3 py-3 space-y-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <button className="label flex items-center gap-1 text-start min-w-0" onClick={toggle} aria-expanded={open}>
+          <ChevronDown size={12} className={`shrink-0 transition-transform ${open ? "" : "-rotate-90"}`} /><span className="truncate">{title}</span>
+        </button>
+        {right}
+      </div>
+      {open && children}
     </section>
   );
 }
@@ -459,7 +468,7 @@ function PageSettings() {
           {showGrid && <Slider label="Grid size" value={gridSize} min={5} max={500} onChange={(v) => ui.getState().set({ gridSize: v })} />}
         </Section>
       )}
-      <p className="text-xs text-muted">Select an element to edit it. Shortcuts: Ctrl/⌘+Z undo, Ctrl/⌘+D duplicate, Ctrl/⌘+G group, Delete remove, arrows nudge, Space+drag to pan, Ctrl/⌘+scroll to zoom.</p>
+      <p className="text-xs text-muted px-3 py-3">Select an element to edit it. Shortcuts: V move, R rectangle, O ellipse, L line, T text, P pen, B brush; Ctrl/⌘+Z undo, Ctrl/⌘+D duplicate, Ctrl/⌘+G group, Delete remove, arrows nudge, Space+drag to pan, Ctrl/⌘+scroll to zoom.</p>
     </>
   );
 }

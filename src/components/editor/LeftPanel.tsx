@@ -6,12 +6,12 @@ import { locate } from "@/lib/doc/geometry";
 import { bakeScale, cloneWithNewIds } from "@/lib/doc/ops";
 import { importSvg } from "@/lib/vector/paths";
 import type { DesignNode, TextNode } from "@/lib/doc/types";
-import { polyPoints } from "@/lib/editor/render";
 import { activePage, fitText, type LeftTab, useEd, useEditorCtx, useUi } from "./context";
 import { uploadImage, useAddImage, type UploadedAsset } from "./useUploads";
 import { TemplatesPanel } from "./TemplatesPanel";
 import { BrandPanel } from "./BrandPanel";
 import { ApparelPanel } from "./ApparelPanel";
+import { ElementsPanel } from "./ElementsPanel";
 
 const TABS: { id: LeftTab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { id: "templates", label: "Templates", icon: LayoutTemplate },
@@ -28,11 +28,11 @@ export function LeftRail() {
   const tab = useUi((s) => s.leftTab);
   const set = useUi((s) => s.set);
   return (
-    <nav className="max-md:order-3 flex md:flex-col gap-1 p-1.5 bg-surface border-line md:border-r max-md:border-t max-md:overflow-x-auto shrink-0" aria-label="Editor panels">
+    <nav className="max-md:order-3 flex md:flex-col gap-0.5 p-1 bg-surface border-line md:border-r max-md:border-t max-md:overflow-x-auto shrink-0 scroll-thin" aria-label="Editor panels">
       {TABS.map((t) => (
         <button key={t.id} onClick={() => set({ leftTab: tab === t.id ? null : t.id })} aria-pressed={tab === t.id}
-          className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium w-16 shrink-0 ${tab === t.id ? "bg-accent-soft text-accent" : "text-muted hover:text-ink hover:bg-surface-2"}`}>
-          <t.icon size={20} />
+          className={`flex flex-col items-center gap-1 rounded-md px-1 py-2 text-[10px] font-medium w-14 shrink-0 ${tab === t.id ? "bg-accent-soft text-accent" : "text-muted hover:text-ink hover:bg-surface-2"}`}>
+          <t.icon size={18} />
           {t.label}
         </button>
       ))}
@@ -45,16 +45,16 @@ export function LeftPanel() {
   const set = useUi((s) => s.set);
   if (!tab) return null;
   return (
-    <aside className="max-md:order-2 w-full md:w-72 shrink-0 bg-surface border-line md:border-r max-md:border-t max-md:max-h-[40dvh] overflow-y-auto" aria-label={tab}>
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <h2 className="font-semibold capitalize">{tab}</h2>
-        <button className="btn btn-ghost btn-icon" onClick={() => set({ leftTab: null })} aria-label="Close panel"><X size={16} /></button>
+    <aside className="max-md:order-2 w-full md:w-[17rem] shrink-0 bg-surface border-line md:border-r max-md:border-t max-md:max-h-[40dvh] overflow-y-auto scroll-thin" aria-label={tab}>
+      <div className="flex items-center justify-between px-3 h-10 border-b border-line sticky top-0 bg-surface z-10">
+        <h2 className="text-[12.5px] font-semibold capitalize">{tab}</h2>
+        <button className="btn btn-ghost btn-icon" onClick={() => set({ leftTab: null })} aria-label="Close panel"><X size={14} /></button>
       </div>
-      <div className="p-4 pt-2">
+      <div className="p-3">
         {tab === "templates" && <TemplatesPanel />}
         {tab === "brand" && <BrandPanel />}
         {tab === "apparel" && <ApparelPanel />}
-        {tab === "elements" && <ElementsTab />}
+        {tab === "elements" && <ElementsPanel />}
         {tab === "text" && <TextTab />}
         {tab === "uploads" && <UploadsTab />}
         {tab === "pages" && <PagesTab />}
@@ -75,46 +75,6 @@ function useAdd() {
     s.select([n.id]);
   };
 }
-
-function ElementsTab() {
-  const add = useAdd();
-  const W = useEd((s) => s.doc.width), H = useEd((s) => s.doc.height);
-  const u = Math.round(Math.min(W, H) * 0.3);
-  const items: { label: string; make: () => DesignNode; preview: React.ReactNode }[] = [
-    { label: "Square", make: () => make.rect(0, 0, u, u), preview: <rect x="6" y="6" width="36" height="36" fill="#3b82f6" /> },
-    { label: "Rounded", make: () => ({ ...make.rect(0, 0, u, u), cornerRadius: Math.round(u * 0.15), name: "Rounded rectangle" }), preview: <rect x="6" y="6" width="36" height="36" rx="7" fill="#6366f1" /> },
-    { label: "Circle", make: () => make.ellipse(0, 0, u, u), preview: <circle cx="24" cy="24" r="18" fill="#f59e0b" /> },
-    { label: "Triangle", make: () => make.polygon(0, 0, u, 3), preview: <polygon points={pts("polygon", 3)} fill="#10b981" /> },
-    { label: "Hexagon", make: () => ({ ...make.polygon(0, 0, u, 6, "#14b8a6"), name: "Hexagon" }), preview: <polygon points={pts("polygon", 6)} fill="#14b8a6" /> },
-    { label: "Star", make: () => make.star(0, 0, u), preview: <polygon points={pts("star", 5)} fill="#ef4444" /> },
-    { label: "Line", make: () => make.line(0, 0, u * 1.5), preview: <line x1="6" y1="24" x2="42" y2="24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /> },
-    {
-      label: "Arrow", make: () => ({ ...make.line(0, 0, u * 1.5), arrowEnd: true, name: "Arrow" }),
-      preview: <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"><line x1="6" y1="24" x2="40" y2="24" /><polyline points="31,16 40,24 31,32" /></g>,
-    },
-  ];
-  return (
-    <div className="space-y-4">
-      <div>
-        <div className="label mb-2">Shapes</div>
-        <div className="grid grid-cols-4 gap-2">
-          {items.map((it) => (
-            <button key={it.label} onClick={() => add(it.make())} title={it.label} aria-label={`Add ${it.label}`}
-              className="aspect-square rounded-lg bg-surface-2 hover:bg-accent-soft grid place-items-center">
-              <svg viewBox="0 0 48 48" className="w-9 h-9">{it.preview}</svg>
-            </button>
-          ))}
-        </div>
-      </div>
-      <p className="text-xs text-muted">Tip: drop image files straight onto the page, or paste them with Ctrl/⌘+V.</p>
-    </div>
-  );
-}
-
-const pts = (k: "polygon" | "star", n: number) => {
-  const p = polyPoints(k, n, 36, 36, 0.45);
-  return p.map((v) => v + 6).join(",");
-};
 
 function TextTab() {
   const add = useAdd();

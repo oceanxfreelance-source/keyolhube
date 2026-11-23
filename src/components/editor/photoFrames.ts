@@ -59,8 +59,8 @@ export function replacePhoto(store: EditorStore, id: string, a: UploadedAsset) {
 }
 
 /** Swap an image's picture for a new version (e.g. a cut-out), keeping the original for undo-free restore. */
-export function setCutout(store: EditorStore, id: string, a: UploadedAsset) {
-  store.getState().changePage("Remove background", (p) => {
+export function setCutout(store: EditorStore, id: string, a: UploadedAsset, label = "Remove background") {
+  store.getState().changePage(label, (p) => {
     const img = locate(p as Page, id)?.node;
     if (img?.type !== "image") return;
     img.original ??= { assetId: img.assetId, src: img.src, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight };

@@ -89,6 +89,8 @@ export interface TextNode extends BaseNode {
   letterSpacing: number;
   fill: Fill;
   stroke: Stroke;
+  /** Curved text: -100 (smile) .. 100 (arch); 0 or absent = straight. */
+  curve?: number;
 }
 export type ImageCrop = { x: number; y: number; width: number; height: number }; // in source pixels
 export type { Adjustments } from "../photo/adjust";

@@ -9,7 +9,7 @@ import type { DesignNode, Page, TextNode } from "@/lib/doc/types";
 import { measureTextHeight } from "@/lib/editor/render";
 import type { EditorActions, EditorState, EditorStore } from "@/lib/editor/store";
 
-export type Tool = "select" | "hand" | "pen";
+export type Tool = "select" | "hand" | "pen" | "brush";
 export type LeftTab = "templates" | "elements" | "text" | "brand" | "apparel" | "uploads" | "pages" | "layers";
 
 export interface UiState {
@@ -34,6 +34,9 @@ export interface UiState {
   saveNow: (() => Promise<void>) | null;
   /** The user's brand kits (loaded once, shared by panels and colour pickers). */
   brandKits: BrandKit[] | null;
+  brush: { color: string; size: number; opacity: number };
+  /** Healing brush: the image being retouched and the painted strokes (page coordinates). */
+  heal: { imageId: string; strokes: number[][]; size: number } | null;
 }
 export type BrandKit = { id: string; name: string; colors: string[]; fonts: { role: "heading" | "subheading" | "body"; family: string; weight: number; ref?: import("@/lib/doc/types").FontRef }[]; logos: { assetId: string; width: number; height: number; name: string }[] };
 
@@ -42,7 +45,7 @@ export function createUiStore() {
   try { pro = localStorage.getItem("pro") === "1"; } catch {}
   return createStore<UiState & { set: (p: Partial<UiState>) => void }>()((set) => ({
     zoom: 1, panX: 0, panY: 0, tool: "select", pro, showGrid: false, showRulers: pro, gridSize: 50,
-    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null,
+    editingTextId: null, leftTab: "elements", fitRequest: 0, stage: null, showOriginal: false, editingPathId: null, saveNow: null, brandKits: null, brush: { color: "#111827", size: 12, opacity: 1 }, heal: null,
     set: (p) => set(p),
   }));
 }

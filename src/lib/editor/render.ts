@@ -5,7 +5,7 @@ import { resolvedDirection } from "../doc/factory";
 import type { DesignNode, Fill, ShapeNode, Shadow, Stroke } from "../doc/types";
 import { fontStack, nearestWeight } from "../fonts";
 
-export type PrimitiveKind = "Rect" | "Ellipse" | "Line" | "Arrow" | "Path" | "Text" | "Image";
+export type PrimitiveKind = "Rect" | "Ellipse" | "Line" | "Arrow" | "Path" | "Text" | "TextPath" | "Image";
 export type Primitive = { kind: PrimitiveKind; props: Record<string, unknown> };
 
 export function fillProps(fill: Fill, w: number, h: number): Record<string, unknown> {
@@ -97,6 +97,15 @@ export function primitive(n: ShapeNode, image?: CanvasImageSource | null): Primi
         props: { ...common, data: n.data, scaleX: n.width / n.sourceWidth, scaleY: n.height / n.sourceHeight, strokeScaleEnabled: false, ...fillProps(n.fill, n.sourceWidth, n.sourceHeight), ...strokeProps(n.stroke) },
       };
     case "text":
+      if (n.curve) {
+        const arc = textArc(n);
+        return {
+          kind: "TextPath",
+          props: { ...common, data: arc.data, text: n.text.replace(/\s*\n\s*/g, " "), fontFamily: fontStack(n.fontFamily), fontSize: n.fontSize,
+            fontStyle: `${n.italic ? "italic " : ""}${nearestWeight(n.fontFamily, n.fontWeight)}`, letterSpacing: n.letterSpacing, align: "center",
+            textBaseline: "middle", textDecoration: n.underline ? "underline" : "", ...fillProps(n.fill, n.width, n.height), ...strokeProps(n.stroke), fillAfterStrokeEnabled: true },
+        };
+      }
       return { kind: "Text", props: { ...common, ...textProps(n), ...fillProps(n.fill, n.width, n.height), ...strokeProps(n.stroke), fillAfterStrokeEnabled: true } };
     case "image": {
       const crop = n.crop ?? { x: 0, y: 0, width: n.naturalWidth, height: n.naturalHeight };
@@ -135,7 +144,28 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 // ---------- text measurement ----------
 let measurer: Konva.Text | null = null;
 /** Height a text box needs for its content (used to keep text bounds correct). */
+/**
+ * Arc for curved text inside the text box (width = box width). curve > 0 arches upward,
+ * curve < 0 bends like a smile; |curve| = 100 is almost a full circle. Text is centred on it.
+ */
+export function textArc(n: Pick<Extract<ShapeNode, { type: "text" }>, "curve" | "width" | "fontSize">): { data: string; height: number } {
+  const c = Math.max(-100, Math.min(100, n.curve ?? 0));
+  const theta = Math.max(0.05, (Math.abs(c) / 100) * Math.PI * 1.9);
+  const R = n.width / theta, half = n.fontSize * 0.6, cx = n.width / 2;
+  const up = c > 0;
+  const a0 = up ? -Math.PI / 2 - theta / 2 : Math.PI / 2 + theta / 2;
+  const a1 = up ? -Math.PI / 2 + theta / 2 : Math.PI / 2 - theta / 2;
+  // extent of the arc, then place it so text (half height around the path) starts at y = 0
+  const ys: number[] = [];
+  for (let i = 0; i <= 32; i++) { const a = a0 + ((a1 - a0) * i) / 32; ys.push(R * Math.sin(a)); }
+  const cy = half - Math.min(...ys);
+  const p = (a: number) => `${(cx + R * Math.cos(a)).toFixed(2)},${(cy + R * Math.sin(a)).toFixed(2)}`;
+  const large = theta > Math.PI ? 1 : 0;
+  return { data: `M${p(a0)} A${R.toFixed(2)},${R.toFixed(2)} 0 ${large} ${up ? 1 : 0} ${p(a1)}`, height: Math.ceil(cy + Math.max(...ys) + half) };
+}
+
 export function measureTextHeight(KonvaNs: typeof Konva, n: Extract<ShapeNode, { type: "text" }>): number {
+  if (n.curve) return textArc(n).height;
   measurer ??= new KonvaNs.Text({});
   measurer.setAttrs({ ...textProps(n), height: undefined });
   return Math.ceil(measurer.height());

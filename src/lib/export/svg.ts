@@ -3,7 +3,7 @@ import Konva from "konva";
 import { resolvedDirection } from "../doc/factory";
 import type { DesignDoc, DesignNode, Fill, Page, Shadow, Stroke } from "../doc/types";
 import { fontStack, nearestWeight } from "../fonts";
-import { fillProps, loadImage, polyPoints, textProps } from "../editor/render";
+import { fillProps, loadImage, polyPoints, textArc, textProps } from "../editor/render";
 import { applyAdjustments, isNeutral } from "../photo/adjust";
 import { maskData } from "../editor/mask";
 import { ensureFonts, googleCssUrl, loadDocFonts } from "../fonts";
@@ -92,6 +92,13 @@ export async function exportSvg(doc: DesignDoc, page: Page): Promise<Blob> {
         body = `<path d="${esc(n.data)}" transform="scale(${f(n.width / n.sourceWidth)} ${f(n.height / n.sourceHeight)})" fill="${paint(n.fill, n.sourceWidth, n.sourceHeight)}"${strokeAttr(n.stroke)} vector-effect="non-scaling-stroke"/>`;
         break;
       case "text": {
+        if (n.curve) {
+          const arc = textArc(n), pid = id("arc");
+          defs.push(`<path id="${pid}" d="${arc.data}"/>`);
+          const style = `font-family:${esc(fontStack(n.fontFamily))};font-size:${f(n.fontSize)}px;font-weight:${nearestWeight(n.fontFamily, n.fontWeight)};${n.italic ? "font-style:italic;" : ""}${n.letterSpacing ? `letter-spacing:${f(n.letterSpacing)}px;` : ""}`;
+          body = `<text style="${style}" fill="${paint(n.fill, n.width, n.height)}"${strokeAttr(n.stroke)} dominant-baseline="central"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(n.text.replace(/\s*\n\s*/g, " "))}</textPath></text>`;
+          break;
+        }
         // Use Konva's own line breaking so the SVG wraps exactly like the canvas.
         const k = new Konva.Text({ ...textProps(n) });
         const lh = n.fontSize * n.lineHeight;

@@ -34,6 +34,7 @@ export function useShortcuts() {
       if (k === "h" && !mod) return run(() => u.set({ tool: u.tool === "hand" ? "select" : "hand" }));
       if (k === "v" && !mod) return run(() => u.set({ tool: "select" }));
       if (k === "p" && !mod) return run(() => u.set({ tool: "pen", editingPathId: null }));
+      if (k === "b" && !mod) return run(() => u.set({ tool: "brush", editingPathId: null }));
       if (k === "t" && !mod) return run(() => {
         const n = make.text(0, 0, "Add text", Math.round(s.doc.width / 20), Math.round(s.doc.width * 0.5));
         n.x = Math.round(s.doc.width / 2 - n.width / 2); n.y = Math.round(s.doc.height / 2 - n.height / 2);

@@ -330,6 +330,7 @@ function TextProps({ node }: { node: TextNode }) {
           <option value="ltr">Left to right</option>
         </select>
       </label>
+      <Slider label="Curve" value={node.curve ?? 0} min={-100} max={100} onChange={(v) => t("Curve text", (n) => { if (v === 0) delete n.curve; else n.curve = v; }, "curve")} />
       <Slider label="Line height" value={Math.round(node.lineHeight * 100) / 100} min={0.6} max={3} step={0.05} onChange={(v) => t("Line height", (n) => { n.lineHeight = v; }, "lh")} />
       <Slider label="Spacing" value={node.letterSpacing} min={-Math.round(W / 200)} max={Math.round(W / 20)} onChange={(v) => t("Letter spacing", (n) => { n.letterSpacing = v; }, "ls")} />
     </Section>
@@ -378,7 +379,7 @@ function BackgroundRemoval({ node }: { node: ImageNode }) {
 
 function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
   const upd = useUpdate();
-  const { store } = useEditorCtx();
+  const { store, ui } = useEditorCtx();
   const crop = node.crop ?? { x: 0, y: 0, width: node.naturalWidth, height: node.naturalHeight };
   // Crop as zoom (1 = whole image) + focus point, keeping the frame's aspect ratio.
   const frameAspect = node.width / node.height, natAspect = node.naturalWidth / node.naturalHeight;
@@ -401,6 +402,7 @@ function ImageProps({ node, pro }: { node: ImageNode; pro: boolean }) {
         try { const a = await pickPhoto(); if (a) replacePhoto(store, node.id, a); } catch (e) { alert((e as Error).message); }
       }}>Replace photo</button>
       <BackgroundRemoval node={node} />
+      <button className="btn w-full" onClick={() => ui.getState().set({ heal: { imageId: node.id, strokes: [], size: Math.max(12, Math.round(node.width / 25)) }, tool: "select" })}>Remove objects (healing brush)</button>
       <div className="flex gap-2">
         <button className="btn flex-1" onClick={() => setCrop(1, 0.5, 0.5)}>Fill frame</button>
         <button className="btn flex-1" disabled={!cropped && Math.abs(node.width / node.height - natAspect) < 0.01}

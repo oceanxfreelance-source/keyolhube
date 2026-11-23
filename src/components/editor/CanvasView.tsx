@@ -2,7 +2,7 @@
 import { isTypingTarget } from "@/lib/editor/keys";
 import Konva from "konva";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Arrow, Ellipse, Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
+import { Arrow, Ellipse, Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, TextPath, Transformer } from "react-konva";
 import { resolvedDirection } from "@/lib/doc/factory";
 import { flatten, locate, type Box } from "@/lib/doc/geometry";
 import { bakeScale } from "@/lib/doc/ops";
@@ -14,11 +14,13 @@ import { activePage, fitText, useEd, useEditorCtx, useUi } from "./context";
 import { Rulers } from "./Rulers";
 import { useImageDrop } from "./useUploads";
 import { PenPreview, PointEditor, usePen } from "./VectorTools";
+import { HealBar, HealStrokes } from "./HealTool";
+import { brushPathData, nodeFromItemData } from "@/lib/vector/paths";
 import { applyToNode } from "@/lib/photo/konva";
 import { maskClipFunc } from "@/lib/editor/mask";
 
 Konva.pixelRatio = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
-const PRIM = { Rect, Ellipse, Line, Arrow, Path, Text, Image: KImage } as const;
+const PRIM = { Rect, Ellipse, Line, Arrow, Path, Text, TextPath, Image: KImage } as const;
 const ZMIN = 0.02, ZMAX = 16;
 const RULER = 20;
 
@@ -29,6 +31,24 @@ export function CanvasView() {
   const selection = useEd((s) => s.selection);
   const { zoom, panX, panY, tool, showGrid, gridSize, editingTextId, fitRequest, showRulers, pro, editingPathId } = useUi((s) => s);
   const { pen, handlers: penH } = usePen();
+  const brush = useUi((s) => s.brush);
+  const [stroke, setStroke] = useState<number[] | null>(null);
+  const strokeRef = useRef<number[] | null>(null);
+  const healRef = useRef<number[] | null>(null);
+  const healing = useUi((s) => !!s.heal);
+  const finishStroke = () => {
+    const pts = strokeRef.current;
+    strokeRef.current = null; setStroke(null);
+    if (!pts || pts.length < 4) return;
+    const vs = []; for (let i = 0; i < pts.length; i += 2) vs.push({ x: pts[i], y: pts[i + 1] });
+    const data = brushPathData(vs, Math.max(0.5, 1.5 / ui.getState().zoom));
+    if (!data) return;
+    const b = ui.getState().brush;
+    const n = nodeFromItemData(data, { type: "none" }, { color: b.color, width: b.size, cap: "round", join: "round" }, "Brush stroke");
+    if (!n) return;
+    n.opacity = b.opacity;
+    store.getState().changePage("Brush stroke", (p) => { p.children.push(n); });
+  };
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const contentRef = useRef<Konva.Group>(null);
@@ -123,6 +143,9 @@ export function CanvasView() {
     }
     if (e.target.getParent()?.className === "Transformer") return;
     if (tool === "pen") { penH.down(contentRef.current!.getRelativePointerPosition()!); return; }
+    if (tool === "brush") { const p0 = contentRef.current!.getRelativePointerPosition()!; strokeRef.current = [p0.x, p0.y]; setStroke([p0.x, p0.y]); return; }
+    const healNow = ui.getState().heal;
+    if (healNow) { const p0 = contentRef.current!.getRelativePointerPosition()!; healRef.current = [p0.x, p0.y]; ui.getState().set({ heal: { ...healNow, strokes: [...healNow.strokes, [p0.x, p0.y]] } }); return; }
     if (editingPathId) {
       const nm = e.target.name();
       if (nm === "anchor" || nm === "handle" || nm === "path-hit") return;
@@ -150,6 +173,22 @@ export function CanvasView() {
     const p = stage.getPointerPosition();
     if (!p) return;
     if (tool === "pen") { penH.move(contentRef.current!.getRelativePointerPosition()!); return; }
+    if (healRef.current) {
+      const h0 = ui.getState().heal;
+      if (!h0) { healRef.current = null; return; }
+      const q = contentRef.current!.getRelativePointerPosition()!;
+      healRef.current = [...healRef.current, q.x, q.y];
+      ui.getState().set({ heal: { ...h0, strokes: [...h0.strokes.slice(0, -1), healRef.current] } });
+      return;
+    }
+    if (tool === "brush") {
+      if (!strokeRef.current) return;
+      const q = contentRef.current!.getRelativePointerPosition()!;
+      const s0 = strokeRef.current, lx = s0[s0.length - 2], ly = s0[s0.length - 1];
+      if (Math.hypot(q.x - lx, q.y - ly) * ui.getState().zoom < 1.5) return; // ignore sub-pixel jitter
+      strokeRef.current = [...s0, q.x, q.y]; setStroke(strokeRef.current);
+      return;
+    }
     if (pan.current) {
       ui.getState().set({ panX: pan.current.px + p.x - pan.current.x, panY: pan.current.py + p.y - pan.current.y });
       return;
@@ -163,6 +202,8 @@ export function CanvasView() {
   const onMouseUp = () => {
     pan.current = null;
     if (tool === "pen") { penH.up(); return; }
+    if (tool === "brush") { finishStroke(); return; }
+    if (healRef.current) { healRef.current = null; return; }
     if (marqueeStart.current && marquee && (marquee.width > 2 || marquee.height > 2)) {
       const hits = flatten(page).filter((f) => f.depth === 0 && f.node.visible && !f.node.locked && intersects(f.box, marquee)).map((f) => f.node.id);
       const s = store.getState();
@@ -281,7 +322,7 @@ export function CanvasView() {
     return { x: (sx - s.panX - (rulers ? RULER : 0)) / s.zoom, y: (sy - s.panY - (rulers ? RULER : 0)) / s.zoom };
   });
 
-  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : tool === "pen" ? "crosshair" : "default";
+  const cursor = tool === "hand" || spaceDown ? (pan.current ? "grabbing" : "grab") : tool === "pen" || tool === "brush" || healing ? "crosshair" : "default";
   const stageW = Math.max(1, size.w - (rulers ? RULER : 0)), stageH = Math.max(1, size.h - (rulers ? RULER : 0));
   const editing = editingTextId ? (locate(page, editingTextId)?.node as TextNode | undefined) : undefined;
 
@@ -300,7 +341,7 @@ export function CanvasView() {
               <Rect name="page-bg" x={0} y={0} width={doc.width} height={doc.height}
                 {...(page.background.type === "none" ? { fill: "#ffffff" } : fillProps(page.background, doc.width, doc.height))} />
               {page.children.map((n) => (
-                <NodeView key={n.id} node={n} selection={selection} editingTextId={editingTextId} canDrag={tool === "select" && !spaceDown && !editingPathId}
+                <NodeView key={n.id} node={n} selection={selection} editingTextId={editingTextId} canDrag={tool === "select" && !spaceDown && !editingPathId && !healing}
                   onDragMove={stableDragMove} onDragEnd={stableDragEnd} />
               ))}
               {showGrid && <Grid w={doc.width} h={doc.height} step={gridSize} zoom={zoom} />}
@@ -314,6 +355,8 @@ export function CanvasView() {
               ))}
               {marquee && <Rect {...marquee} fill="rgba(91,76,240,0.08)" stroke="#5b4cf0" strokeWidth={1 / zoom} listening={false} />}
               {tool === "pen" && <PenPreview pen={pen} />}
+              <HealStrokes />
+              {stroke && <Line points={stroke} stroke={brush.color} strokeWidth={brush.size} opacity={brush.opacity} lineCap="round" lineJoin="round" tension={0.4} listening={false} />}
               {editingPathId && <PointEditor pathId={editingPathId} />}
             </Group>
             <Transformer ref={trRef} rotateEnabled flipEnabled={false} anchorSize={9} anchorCornerRadius={5} borderStroke="#5b4cf0" anchorStroke="#5b4cf0"
@@ -323,6 +366,16 @@ export function CanvasView() {
         </Stage>
       </div>
       {editing && <TextEditor node={editing} offset={rulers ? RULER : 0} />}
+      <HealBar />
+      {tool === "brush" && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 card flex items-center gap-3 px-3 py-2 text-sm" data-testid="brush-bar">
+          <span className="font-medium">Brush</span>
+          <input type="color" value={brush.color} aria-label="Brush colour" onChange={(e) => ui.getState().set({ brush: { ...brush, color: e.target.value } })} />
+          <label className="flex items-center gap-1">Size <input type="range" min={1} max={Math.max(50, Math.round(doc.width / 20))} value={brush.size} aria-label="Brush size" onChange={(e) => ui.getState().set({ brush: { ...brush, size: Number(e.target.value) } })} /></label>
+          <label className="flex items-center gap-1">Opacity <input type="range" min={0.1} max={1} step={0.05} value={brush.opacity} aria-label="Brush opacity" onChange={(e) => ui.getState().set({ brush: { ...brush, opacity: Number(e.target.value) } })} /></label>
+          <button className="btn h-7 px-2" onClick={() => ui.getState().set({ tool: "select" })}>Done</button>
+        </div>
+      )}
     </div>
   );
 }

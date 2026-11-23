@@ -248,3 +248,12 @@ export function translateData(data: string, dx: number, dy: number): string {
 }
 
 const round = (v: number) => Math.round(v * 100) / 100;
+
+/** Freehand points -> a smooth, simplified path (fewer anchors, same shape). */
+export function brushPathData(points: Vec[], tolerance: number): string | null {
+  if (points.length < 2) return null;
+  const P = ps();
+  const path = new P.Path({ segments: points.map((p) => new P.Point(p.x, p.y)) });
+  if (points.length > 3) path.simplify(tolerance);
+  return path.pathData;
+}

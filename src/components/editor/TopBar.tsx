@@ -1,5 +1,5 @@
 "use client";
-import { PenTool, ChevronLeft, CloudOff, Download, Hand, History, Loader2, Maximize, Minus, MousePointer2, Plus, Redo2, Undo2, Check, AlertTriangle } from "lucide-react";
+import { Brush, PenTool, ChevronLeft, CloudOff, Download, Hand, History, Loader2, Maximize, Minus, MousePointer2, Plus, Redo2, Undo2, Check, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -29,6 +29,7 @@ export function TopBar({ title, onRename, status, errorText, onRestored, onReloa
       <div className="hidden sm:flex items-center gap-0.5">
         <button className={`btn btn-ghost btn-icon ${tool === "select" ? "!text-accent" : ""}`} aria-pressed={tool === "select"} title="Select (V)" aria-label="Select tool" onClick={() => ui.getState().set({ tool: "select" })}><MousePointer2 size={18} /></button>
         <button className={`btn btn-ghost btn-icon ${tool === "pen" ? "!text-accent" : ""}`} aria-pressed={tool === "pen"} title="Pen: click for corners, drag for curves, click the first point to close, Enter to finish (P)" aria-label="Pen tool" onClick={() => ui.getState().set({ tool: "pen", editingPathId: null })}><PenTool size={18} /></button>
+        <button className={`btn btn-ghost btn-icon ${tool === "brush" ? "!text-accent" : ""}`} aria-pressed={tool === "brush"} title="Brush: draw freehand; strokes become editable paths (B)" aria-label="Brush tool" onClick={() => ui.getState().set({ tool: "brush", editingPathId: null })}><Brush size={18} /></button>
         <button className={`btn btn-ghost btn-icon ${tool === "hand" ? "!text-accent" : ""}`} aria-pressed={tool === "hand"} title="Hand: pan the canvas (H or hold Space)" aria-label="Hand tool" onClick={() => ui.getState().set({ tool: "hand" })}><Hand size={18} /></button>
       </div>
       <button className="btn btn-ghost btn-icon" disabled={!canUndo} onClick={() => store.getState().undo()} title="Undo (Ctrl+Z)" aria-label="Undo"><Undo2 size={18} /></button>

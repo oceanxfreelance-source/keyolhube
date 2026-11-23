@@ -28,7 +28,7 @@ const shapes = [
     ...base, type: z.literal("text"), text: z.string().max(20_000), fontFamily: z.string().max(100), fontSize: num.min(1).max(5000),
     fontWeight: z.number().int().min(100).max(900), italic: z.boolean(),
     underline: z.boolean(), align: z.enum(["left", "center", "right", "justify"]), direction: z.enum(["auto", "ltr", "rtl"]),
-    lineHeight: num.min(0.5).max(5), letterSpacing: num.min(-50).max(500), fill, stroke,
+    lineHeight: num.min(0.5).max(5), letterSpacing: num.min(-50).max(500), fill, stroke, curve: num.min(-100).max(100).optional(),
   }),
   z.object({
     ...base, type: z.literal("image"), assetId: z.string().max(40), src: z.string().max(500),

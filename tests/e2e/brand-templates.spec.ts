@@ -8,6 +8,8 @@ const editorReady = (page: import("@playwright/test").Page) => page.waitForFunct
 test("templates: start from one, apply in the editor, save your own", async ({ page }) => {
   await signUp(page);
   await page.getByRole("button", { name: "Templates", exact: true }).first().click();
+  await page.click('button[aria-pressed]:has-text("Election")');
+  await page.locator("[data-template=election-poster-dv]").scrollIntoViewIfNeeded();
   await expect(page.locator("[data-template=election-poster-dv] img")).toBeVisible({ timeout: 30_000 });
   await page.click("[data-template=election-poster-dv]");
   await page.waitForURL(/editor/);

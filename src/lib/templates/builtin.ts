@@ -4,6 +4,7 @@
 import { make, newDoc, newId, solid } from "../doc/factory";
 import type { DesignDoc, DesignNode, Fill, GroupNode, RectNode, TextNode } from "../doc/types";
 import { PRESETS } from "../presets";
+import { buildKit } from "../apparel/garments";
 
 export type Template = { id: string; title: string; category: string; tags: string[]; build: () => DesignDoc };
 
@@ -187,5 +188,11 @@ export const BUILTIN_TEMPLATES: Template[] = [
     },
   },
 ];
+
+BUILTIN_TEMPLATES.push(
+  { id: "kit-football", title: "Football kit (shirt + shorts)", category: "Apparel", tags: ["jersey", "football", "soccer", "kit", "team", "sports", "uniform", "shorts"], build: () => buildKit("football") },
+  { id: "kit-basketball", title: "Basketball jersey", category: "Apparel", tags: ["jersey", "basketball", "team", "sports", "uniform"], build: () => buildKit("basketball", { primary: "#7c3aed", secondary: "#facc15", accent: "#ffffff" }, "solid") },
+  { id: "kit-tshirt", title: "T-shirt", category: "Apparel", tags: ["t-shirt", "tshirt", "shirt", "apparel", "merch", "event"], build: () => buildKit("tshirt", { primary: "#111827", secondary: "#22d3ee", accent: "#ffffff" }, "chevron") },
+);
 
 export const TEMPLATE_CATEGORIES = [...new Set(BUILTIN_TEMPLATES.map((t) => t.category))];

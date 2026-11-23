@@ -1,5 +1,5 @@
 "use client";
-import { LayoutTemplate, Palette, ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FileText, Layers, Lock, Plus, Shapes, Trash2, Type, Unlock, Upload, X } from "lucide-react";
+import { Shirt, LayoutTemplate, Palette, ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, Eye, EyeOff, FileText, Layers, Lock, Plus, Shapes, Trash2, Type, Unlock, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { make, newId, newPage } from "@/lib/doc/factory";
 import { locate } from "@/lib/doc/geometry";
@@ -11,12 +11,14 @@ import { activePage, fitText, type LeftTab, useEd, useEditorCtx, useUi } from ".
 import { uploadImage, useAddImage, type UploadedAsset } from "./useUploads";
 import { TemplatesPanel } from "./TemplatesPanel";
 import { BrandPanel } from "./BrandPanel";
+import { ApparelPanel } from "./ApparelPanel";
 
 const TABS: { id: LeftTab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { id: "templates", label: "Templates", icon: LayoutTemplate },
   { id: "elements", label: "Elements", icon: Shapes },
   { id: "text", label: "Text", icon: Type },
   { id: "brand", label: "Brand", icon: Palette },
+  { id: "apparel", label: "Apparel", icon: Shirt },
   { id: "uploads", label: "Uploads", icon: Upload },
   { id: "pages", label: "Pages", icon: FileText },
   { id: "layers", label: "Layers", icon: Layers },
@@ -51,6 +53,7 @@ export function LeftPanel() {
       <div className="p-4 pt-2">
         {tab === "templates" && <TemplatesPanel />}
         {tab === "brand" && <BrandPanel />}
+        {tab === "apparel" && <ApparelPanel />}
         {tab === "elements" && <ElementsTab />}
         {tab === "text" && <TextTab />}
         {tab === "uploads" && <UploadsTab />}

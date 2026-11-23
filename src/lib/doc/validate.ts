@@ -15,7 +15,7 @@ const stroke = z.object({ color, width: num.min(0).max(1000), dash: z.array(num.
 const shadow = z.object({ color, blur: num.min(0).max(500), offsetX: num, offsetY: num, opacity: num.min(0).max(1) }).nullable();
 const base = {
   id: z.string().min(1).max(40), name: z.string().max(200), x: num, y: num, width: num.min(0), height: num.min(0),
-  rotation: num, opacity: num.min(0).max(1), visible: z.boolean(), locked: z.boolean(), blendMode: z.enum(BLEND_MODES), shadow,
+  rotation: num, opacity: num.min(0).max(1), visible: z.boolean(), locked: z.boolean(), blendMode: z.enum(BLEND_MODES), shadow, tag: z.string().max(40).optional(),
 };
 const shapes = [
   z.object({ ...base, type: z.literal("rect"), fill, stroke, cornerRadius: num.min(0) }),
@@ -61,6 +61,7 @@ export const docSchema = z.object({
     z.object({ source: z.literal("google"), family: z.string().min(1).max(100), weights: z.array(z.number().int().min(1).max(1000)).max(20), italics: z.array(z.number().int().min(1).max(1000)).max(20) }),
     z.object({ source: z.literal("upload"), family: z.string().min(1).max(100), assetId: z.string().max(40), weight: z.number().int().min(1).max(1000), italic: z.boolean() }),
   ])).max(200).optional(),
+  roster: z.array(z.object({ name: z.string().max(60), number: z.string().max(4), size: z.string().max(8).optional() })).max(200).optional(),
 });
 
 export function parseDoc(input: unknown): { ok: true; doc: DesignDoc } | { ok: false; error: string } {

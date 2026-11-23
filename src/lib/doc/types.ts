@@ -32,6 +32,8 @@ export interface BaseNode {
   locked: boolean;
   blendMode: BlendMode;
   shadow: Shadow;
+  /** Role label used by studios (e.g. "player-name", "jersey-pattern"). */
+  tag?: string;
 }
 
 export interface RectNode extends BaseNode {
@@ -135,6 +137,9 @@ export interface DesignDoc {
   unit: "px" | "mm" | "in"; // what the UI shows; storage is always px
   pages: Page[];
   fonts?: FontRef[];
+  /** Team roster for apparel designs: one design, one version per player. */
+  roster?: RosterEntry[];
 }
+export type RosterEntry = { name: string; number: string; size?: string };
 
 export const SCHEMA_VERSION = 1 as const;

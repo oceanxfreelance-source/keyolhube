@@ -10,7 +10,7 @@ import { measureTextHeight } from "@/lib/editor/render";
 import type { EditorActions, EditorState, EditorStore } from "@/lib/editor/store";
 
 export type Tool = "select" | "hand" | "pen";
-export type LeftTab = "templates" | "elements" | "text" | "brand" | "uploads" | "pages" | "layers";
+export type LeftTab = "templates" | "elements" | "text" | "brand" | "apparel" | "uploads" | "pages" | "layers";
 
 export interface UiState {
   zoom: number;

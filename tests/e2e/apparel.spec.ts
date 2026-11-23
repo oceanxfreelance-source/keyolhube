@@ -10,6 +10,7 @@ const all = (ns: N[]): N[] => ns.flatMap((n) => (n.type === "group" ? [n, ...all
 
 test("kit: colours, pattern, roster, preview and per-player PDF", async ({ page }) => {
   await signUp(page);
+  await page.getByRole("button", { name: "Templates", exact: true }).first().click();
   await page.click('[data-template=kit-football]');
   await page.waitForURL(/editor/);
   await page.waitForFunction(() => (window as unknown as { __oceanx?: unknown }).__oceanx, null, { timeout: 60_000 });

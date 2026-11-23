@@ -5,6 +5,7 @@ import { make, newDoc, newId, solid } from "../doc/factory";
 import type { DesignDoc, DesignNode, Fill, GroupNode, RectNode, TextNode } from "../doc/types";
 import { PRESETS } from "../presets";
 import { buildKit } from "../apparel/garments";
+import { PRO_TEMPLATES } from "./pro";
 
 export type Template = { id: string; title: string; category: string; tags: string[]; build: () => DesignDoc };
 
@@ -194,5 +195,13 @@ BUILTIN_TEMPLATES.push(
   { id: "kit-basketball", title: "Basketball jersey", category: "Apparel", tags: ["jersey", "basketball", "team", "sports", "uniform"], build: () => buildKit("basketball", { primary: "#7c3aed", secondary: "#facc15", accent: "#ffffff" }, "solid") },
   { id: "kit-tshirt", title: "T-shirt", category: "Apparel", tags: ["t-shirt", "tshirt", "shirt", "apparel", "merch", "event"], build: () => buildKit("tshirt", { primary: "#111827", secondary: "#22d3ee", accent: "#ffffff" }, "chevron") },
 );
+
+// Professional photo templates first; retire the simpler versions they replace.
+{
+  const replaced = new Set(["sale-post", "event-flyer", "menu", "yt-thumb", "quote"]);
+  const kept = BUILTIN_TEMPLATES.filter((t) => !replaced.has(t.id));
+  BUILTIN_TEMPLATES.length = 0;
+  BUILTIN_TEMPLATES.push(...PRO_TEMPLATES, ...kept);
+}
 
 export const TEMPLATE_CATEGORIES = [...new Set(BUILTIN_TEMPLATES.map((t) => t.category))];

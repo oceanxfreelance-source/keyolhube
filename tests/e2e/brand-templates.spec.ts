@@ -7,6 +7,7 @@ const editorReady = (page: import("@playwright/test").Page) => page.waitForFunct
 
 test("templates: start from one, apply in the editor, save your own", async ({ page }) => {
   await signUp(page);
+  await page.getByRole("button", { name: "Templates", exact: true }).first().click();
   await expect(page.locator("[data-template=election-poster-dv] img")).toBeVisible({ timeout: 30_000 });
   await page.click("[data-template=election-poster-dv]");
   await page.waitForURL(/editor/);
@@ -25,7 +26,7 @@ test("templates: start from one, apply in the editor, save your own", async ({ p
 
   // apply another template: page has content -> added as a new page
   await page.click('nav button:has-text("Templates")');
-  await page.click('button[aria-label="Use template Sale post"]');
+  await page.click('button[aria-label="Use template Season sale story"]');
   s = await state(page);
   expect(s.pages).toBe(2);
   expect((s.nodes as unknown as N[]).some((n) => n.text === "SALE")).toBe(true);

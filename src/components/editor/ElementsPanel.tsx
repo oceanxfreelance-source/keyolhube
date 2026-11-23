@@ -9,6 +9,7 @@ import { CATEGORIES, ELEMENTS, iconLabel, iconSvg, loadIcons, stickerPng, STICKE
 import { measureTextHeight } from "@/lib/editor/render";
 import { renderPageCanvas } from "@/lib/export/raster";
 import { importSvg } from "@/lib/vector/paths";
+import { STOCK, stockUrl } from "@/lib/templates/stock";
 import { useEditorCtx } from "./context";
 import { uploadImage, useAddImage } from "./useUploads";
 
@@ -52,6 +53,7 @@ export function ElementsPanel() {
   const els = ELEMENTS.filter((e) => match(`${e.name} ${e.tags} ${e.category}`));
   const iconHits = useMemo(() => (icons ?? []).filter(([n]) => match(iconLabel(n))), [icons, needle]); // eslint-disable-line react-hooks/exhaustive-deps
   const stickerHits = STICKERS.filter((s) => match(`${s.label} sticker emoji`));
+  const photoHits = Object.values(STOCK).filter((ph) => match(`${ph.slug.replace(/-/g, " ")} ${ph.tags} photo`));
 
   function place(n: DesignNode, label: string) {
     const s = store.getState();
@@ -123,6 +125,15 @@ export function ElementsPanel() {
           </button>
         ))}
       </Section>
+      <Section id="photos" title="Photos" count={photoHits.length}>
+        {(limit) => photoHits.slice(0, limit).map((ph) => (
+          <button key={ph.slug} onClick={() => addImage({ id: `stock-${ph.slug}`, url: stockUrl(ph.slug), width: ph.width, height: ph.height })} title={ph.slug.replace(/-/g, " ")} aria-label={`Add photo ${ph.slug.replace(/-/g, " ")}`}
+            className="aspect-square rounded-md bg-surface-2 overflow-hidden hover:ring-2 ring-accent">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={stockUrl(ph.slug)} alt="" loading="lazy" className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </Section>
       <Section id="stickers" title="Stickers" count={stickerHits.length}>
         {(limit) => stickerHits.slice(0, limit).map((s) => (
           <button key={s.id} onClick={() => addSticker(s.id, s.url, s.label)} title={s.label} aria-label={`Add sticker ${s.label}`} disabled={busy === s.id}
@@ -133,7 +144,7 @@ export function ElementsPanel() {
         ))}
       </Section>
       {!els.length && !iconHits.length && !stickerHits.length && <p className="text-sm text-muted">Nothing matches “{q}”.</p>}
-      <p className="text-[11px] text-muted">Icons: Lucide (ISC licence). Stickers: Google Noto Emoji (Apache 2.0). Free for commercial use. Frames: select one and use “Put a photo in this shape”.</p>
+      <p className="text-[11px] text-muted">Photos: public domain (CC0) via Openverse. Icons: Lucide (ISC licence). Stickers: Google Noto Emoji (Apache 2.0). Free for commercial use. Frames: select one and use “Put a photo in this shape”.</p>
     </div>
   );
 }

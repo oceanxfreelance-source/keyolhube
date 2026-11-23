@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { renderPageCanvas } from "@/lib/export/raster";
 import type { Template } from "@/lib/templates/builtin";
-import { instantiate } from "@/lib/templates/instantiate";
 
 // Thumbnails are rendered from the template documents themselves (same renderer as exports),
 // lazily: only when a card scrolls into view, one at a time, and cached for the session.
@@ -17,6 +15,8 @@ async function pump() {
     const [key, job] = waiting.entries().next().value!;
     waiting.delete(key);
     try {
+      // Loaded in the browser only: the renderer depends on canvas and vector libraries.
+      const [{ renderPageCanvas }, { instantiate }] = await Promise.all([import("@/lib/export/raster"), import("@/lib/templates/instantiate")]);
       const d = instantiate(job.t.build());
       const { canvas } = await renderPageCanvas(d, d.pages[0], { pixelRatio: job.size / Math.max(d.width, d.height), transparent: false });
       const url = canvas.toDataURL("image/jpeg", 0.85);
